@@ -4,11 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'features/auth/auth_controller.dart';
 import 'features/auth/auth_state.dart';
 import 'features/auth/login_screen.dart';
-import 'features/home/home_screen.dart';
+import 'features/root/root_screen.dart';
 
 /// Navigation is state-driven off [authControllerProvider] rather than a
-/// router: the whole app only has two destinations for now (login, home),
-/// and the auth state already models exactly when each applies.
+/// router: the top level only has two destinations (login, the post-login
+/// shell), and the auth state already models exactly when each applies.
+/// Navigation among Home/Jobs/Profile once signed in lives in [RootScreen].
 class SkillProofApp extends ConsumerWidget {
   const SkillProofApp({super.key});
 
@@ -24,7 +25,7 @@ class SkillProofApp extends ConsumerWidget {
         useMaterial3: true,
       ),
       home: switch (authState) {
-        AuthAuthenticated() => const HomeScreen(),
+        AuthAuthenticated() => const RootScreen(),
         AuthInitial() || AuthLoading() => const _SplashScreen(),
         AuthUnauthenticated() => const LoginScreen(),
       },

@@ -6,10 +6,16 @@ import '../config/api_config.dart';
 import 'token_storage.dart';
 
 class ApiException implements Exception {
-  ApiException(this.message, this.statusCode);
+  ApiException(this.message, this.statusCode, [this.body]);
 
   final String message;
   final int statusCode;
+
+  /// Raw decoded error body, when the response was JSON. Nest exceptions
+  /// like `BadRequestException({ code: '...', message: '...' })` put a
+  /// machine-readable `code` here so callers can react to specific failure
+  /// reasons instead of pattern-matching on [message].
+  final dynamic body;
 
   @override
   String toString() => message;
@@ -117,7 +123,7 @@ class ApiClient {
       final message = decoded is Map && decoded['message'] != null
           ? decoded['message'].toString()
           : 'Request failed (${response.statusCode})';
-      throw ApiException(message, response.statusCode);
+      throw ApiException(message, response.statusCode, decoded);
     }
     return decoded;
   }
