@@ -52,13 +52,31 @@ class AuthController extends StateNotifier<AuthState> {
     }
   }
 
+  /// Same shared AuthState/RootScreen routing as [verifyOtp] — a
+  /// successful sign-in of either kind flips state to [AuthAuthenticated]
+  /// and the rest of the app doesn't know or care which one happened.
+  Future<void> signInWithGoogle() async {
+    state = const AuthLoading();
+    try {
+      final user = await _repository.signInWithGoogle();
+      state = AuthAuthenticated(user);
+    } on GoogleSignInCancelled {
+      // Not an error — back to how things were, no error message, so the
+      // login screen doesn't show a banner for an ordinary cancel.
+      state = const AuthUnauthenticated();
+    } catch (e) {
+      state = AuthUnauthenticated(error: e.toString());
+      rethrow;
+    }
+  }
+
   Future<void> logout() async {
     await _repository.logout();
     state = const AuthUnauthenticated();
   }
 
   /// Invoked by [ApiClient] when a background token refresh is rejected
-  /// by the server, so a stale session doesn't linger on screen.
+  /// by the server (expired/revoked refresh token).
   void handleSessionExpired() {
     state = const AuthUnauthenticated(
       error: 'Your session expired. Please sign in again.',

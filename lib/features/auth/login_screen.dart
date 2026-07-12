@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../theme/app_colors.dart';
+import '../../theme/app_typography.dart';
+import '../../widgets/app_button.dart';
+import '../../widgets/app_card.dart';
 import 'auth_controller.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -15,7 +19,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _otpController = TextEditingController();
   bool _otpSent = false;
   bool _submitting = false;
+  bool _googleSubmitting = false;
   String? _error;
+
+  bool get _anySubmitting => _submitting || _googleSubmitting;
 
   @override
   void dispose() {
@@ -52,7 +59,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             otp: _otpController.text.trim(),
           );
       // A successful verify flips global auth state to Authenticated;
-      // SkillProofApp swaps to HomeScreen on its own.
+      // SkillProofApp swaps to RootScreen on its own.
     } catch (e) {
       setState(() => _error = e.toString());
     } finally {
@@ -60,80 +67,160 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  Future<void> _signInWithGoogle() async {
+    setState(() {
+      _googleSubmitting = true;
+      _error = null;
+    });
+    try {
+      await ref.read(authControllerProvider.notifier).signInWithGoogle();
+      // Same routing as _verifyOtp: a successful sign-in flips global auth
+      // state to Authenticated and SkillProofApp swaps to RootScreen on its
+      // own. A cancelled native chooser resolves normally (no throw) —
+      // AuthController absorbs that case, so there's nothing to show here.
+    } catch (e) {
+      setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _googleSubmitting = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'SkillProof',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Verify your AI skills. Get hired on proof.',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 40),
-              TextField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                enabled: !_otpSent,
-                decoration: const InputDecoration(
-                  labelText: 'Phone number',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              if (_otpSent) ...[
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _otpController,
-                  keyboardType: TextInputType.number,
-                  maxLength: 6,
-                  decoration: const InputDecoration(
-                    labelText: 'OTP (dev: 123456)',
-                    border: OutlineInputBorder(),
-                    counterText: '',
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.space6),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Global AI Talent Hub',
+                    style: AppTypography.headlineMedium,
+                    textAlign: TextAlign.center,
                   ),
-                ),
-              ],
-              const SizedBox(height: 16),
-              FilledButton(
-                onPressed: _submitting ? null : (_otpSent ? _verifyOtp : _sendOtp),
-                child: Text(
-                  _submitting
-                      ? 'Please wait…'
-                      : (_otpSent ? 'Verify OTP' : 'Send OTP'),
-                ),
+                  const SizedBox(height: AppSpacing.space7),
+                  AppCard(
+                    elevated: true,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'SkillProof',
+                          style: AppTypography.titleMedium,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: AppSpacing.space2),
+                        Text(
+                          'Verify your AI skills. Get hired on proof.',
+                          textAlign: TextAlign.center,
+                          style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
+                        ),
+                        const SizedBox(height: AppSpacing.space5),
+                        TextField(
+                          controller: _phoneController,
+                          keyboardType: TextInputType.phone,
+                          enabled: !_otpSent && !_anySubmitting,
+                          style: AppTypography.bodyLarge,
+                          decoration: const InputDecoration(labelText: 'Phone number'),
+                        ),
+                        if (_otpSent) ...[
+                          const SizedBox(height: AppSpacing.space4),
+                          TextField(
+                            controller: _otpController,
+                            keyboardType: TextInputType.number,
+                            maxLength: 6,
+                            enabled: !_googleSubmitting,
+                            style: AppTypography.bodyLarge,
+                            decoration: const InputDecoration(
+                              labelText: 'OTP (dev: 123456)',
+                              counterText: '',
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: AppSpacing.space4),
+                        AppButton(
+                          label: _otpSent ? 'Verify OTP' : 'Send OTP',
+                          busy: _submitting,
+                          expand: true,
+                          onPressed: _googleSubmitting ? null : (_otpSent ? _verifyOtp : _sendOtp),
+                        ),
+                        if (_otpSent) ...[
+                          const SizedBox(height: AppSpacing.space2),
+                          TextButton(
+                            onPressed: _anySubmitting
+                                ? null
+                                : () => setState(() {
+                                      _otpSent = false;
+                                      _error = null;
+                                    }),
+                            child: const Text('Change number'),
+                          ),
+                        ],
+                        const SizedBox(height: AppSpacing.space5),
+                        Row(
+                          children: [
+                            Expanded(child: Divider(color: AppColors.border)),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space3),
+                              child: Text('or', style: AppTypography.bodySmall),
+                            ),
+                            Expanded(child: Divider(color: AppColors.border)),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.space5),
+                        AppButton(
+                          label: 'Sign in with Google',
+                          variant: AppButtonVariant.secondary,
+                          icon: const _GoogleGlyph(),
+                          busy: _googleSubmitting,
+                          expand: true,
+                          onPressed: _submitting ? null : _signInWithGoogle,
+                        ),
+                        if (_error != null) ...[
+                          const SizedBox(height: AppSpacing.space3),
+                          Text(
+                            _error!,
+                            style: AppTypography.bodySmall.copyWith(color: AppColors.dangerBright),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              if (_otpSent) ...[
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: _submitting
-                      ? null
-                      : () => setState(() {
-                            _otpSent = false;
-                            _error = null;
-                          }),
-                  child: const Text('Change number'),
-                ),
-              ],
-              if (_error != null) ...[
-                const SizedBox(height: 16),
-                Text(
-                  _error!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
-                ),
-              ],
-            ],
+            ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Minimal "G" mark — no image asset/package required. Sized to sit
+/// comfortably next to the button label at the same visual weight as a
+/// real Google logo glyph would.
+class _GoogleGlyph extends StatelessWidget {
+  const _GoogleGlyph();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 18,
+      height: 18,
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+      child: const Text(
+        'G',
+        style: TextStyle(
+          color: Color(0xFF4285F4),
+          fontWeight: FontWeight.w800,
+          fontSize: 13,
+          height: 1,
         ),
       ),
     );

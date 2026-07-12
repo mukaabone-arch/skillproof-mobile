@@ -44,6 +44,34 @@ class ApiClient {
   Future<dynamic> post(String path, [Map<String, dynamic>? body]) =>
       _send('POST', path, body);
 
+  Future<dynamic> patch(String path, [Map<String, dynamic>? body]) =>
+      _send('PATCH', path, body);
+
+  Future<dynamic> delete(String path) => _send('DELETE', path);
+
+  // TODO: resume upload — blocked on file_picker / compileSdk 36 conflict.
+  // Resume upload works on web; revisit when updating the Android toolchain
+  // for release builds.
+  //
+  // /// Multipart file upload (used for the resume PDF) — separate from
+  // /// [_send] since a multipart body can't be built by the same
+  // /// jsonEncode-a-Map path, but shares the same 401→refresh→retry contract.
+  // /// [file] is re-read from disk on a retry, not just replayed from a
+  // /// consumed stream, since a fresh [http.MultipartFile] has to be built
+  // /// per attempt anyway.
+  // Future<dynamic> postMultipart(
+  //   String path, {
+  //   required File file,
+  //   required String fieldName,
+  //   MediaType? contentType,
+  // }) async {
+  //   var response = await _rawMultipartRequest(path, file: file, fieldName: fieldName, contentType: contentType);
+  //   if (response.statusCode == 401 && await _tryRefresh()) {
+  //     response = await _rawMultipartRequest(path, file: file, fieldName: fieldName, contentType: contentType);
+  //   }
+  //   return _decode(response);
+  // }
+
   void close() => _http.close();
 
   Future<dynamic> _send(
@@ -77,10 +105,31 @@ class ApiClient {
         return _http.get(uri, headers: headers);
       case 'POST':
         return _http.post(uri, headers: headers, body: jsonEncode(body ?? {}));
+      case 'PATCH':
+        return _http.patch(uri, headers: headers, body: jsonEncode(body ?? {}));
+      case 'DELETE':
+        return _http.delete(uri, headers: headers);
       default:
         throw UnimplementedError('Unsupported method: $method');
     }
   }
+
+  // Future<http.Response> _rawMultipartRequest(
+  //   String path, {
+  //   required File file,
+  //   required String fieldName,
+  //   MediaType? contentType,
+  // }) async {
+  //   final token = await _tokens.readAccessToken();
+  //   final uri = Uri.parse('${ApiConfig.baseUrl}$path');
+  //   final request = http.MultipartRequest('POST', uri);
+  //   if (token != null) request.headers['Authorization'] = 'Bearer $token';
+  //   request.files.add(
+  //     await http.MultipartFile.fromPath(fieldName, file.path, contentType: contentType),
+  //   );
+  //   final streamedResponse = await _http.send(request);
+  //   return http.Response.fromStream(streamedResponse);
+  // }
 
   Future<bool> _tryRefresh() async {
     final refreshToken = await _tokens.readRefreshToken();

@@ -5,6 +5,8 @@ import 'features/auth/auth_controller.dart';
 import 'features/auth/auth_state.dart';
 import 'features/auth/login_screen.dart';
 import 'features/root/root_screen.dart';
+import 'theme/app_colors.dart';
+import 'theme/app_theme.dart';
 
 /// Navigation is state-driven off [authControllerProvider] rather than a
 /// router: the top level only has two destinations (login, the post-login
@@ -20,10 +22,9 @@ class SkillProofApp extends ConsumerWidget {
     return MaterialApp(
       title: 'SkillProof',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF3240B8)),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.dark,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.dark,
       home: switch (authState) {
         AuthAuthenticated() => const RootScreen(),
         AuthInitial() || AuthLoading() => const _SplashScreen(),
@@ -38,6 +39,9 @@ class _SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    return const Scaffold(
+      backgroundColor: AppColors.background,
+      body: Center(child: CircularProgressIndicator()),
+    );
   }
 }

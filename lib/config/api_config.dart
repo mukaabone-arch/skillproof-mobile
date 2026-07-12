@@ -12,4 +12,18 @@ class ApiConfig {
     'API_BASE_URL',
     defaultValue: 'http://10.0.2.2:4000',
   );
+
+  /// Base URL of the web app — for links that only make sense in a full
+  /// browser: the public badge certificate page, and assessments (their
+  /// integrity monitoring is browser-based, so assessments are
+  /// deliberately not part of this native app at all). Opened via
+  /// url_launcher, not fetched, so unlike [baseUrl] this needs to be
+  /// reachable by the device's own browser — the 10.0.2.2 emulator-only
+  /// loopback alias would not work here even on an emulator. Override at
+  /// build/run time, e.g.:
+  ///   flutter run --dart-define=WEB_BASE_URL=http://192.168.1.50:3000
+  static const String webBaseUrl = String.fromEnvironment(
+    'WEB_BASE_URL',
+    defaultValue: 'http://192.168.0.101:3000',
+  );
 }

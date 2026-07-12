@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.flairfuture.skillproof"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

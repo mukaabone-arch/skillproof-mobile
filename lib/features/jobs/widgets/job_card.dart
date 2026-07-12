@@ -1,62 +1,62 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/job.dart';
+import '../../../theme/app_colors.dart';
+import '../../../theme/app_typography.dart';
+import '../../../widgets/app_card.dart';
 
 /// Summary card shared by the Browse and Matched tabs. [trailing] carries
-/// the tab-specific bit (score for Matched, nothing for Browse); "Applied"
-/// is shown consistently across both since it's true regardless of tab.
+/// the tab-specific bit ([ScoreBar] for Matched, nothing for Browse);
+/// "Applied" is shown consistently across both since it's true regardless
+/// of tab. Deliberately indigo, not green — an application's status isn't
+/// a verified-skill signal (see the color rule on AppColors).
 class JobCard extends StatelessWidget {
-  const JobCard({required this.job, this.trailing, this.onTap, super.key});
+  const JobCard({required this.job, this.trailing, this.onTap, this.child, super.key});
 
   final Job job;
   final Widget? trailing;
   final VoidCallback? onTap;
+  /// Extra content rendered below the skills/applied lines — e.g. a row of
+  /// [SkillBadge]s for verified matched skills on the "Matched to you" tab.
+  final Widget? child;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
+    return AppCard(
+      onTap: onTap,
+      padding: const EdgeInsets.all(AppSpacing.space4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      job.title,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                  ),
-                  if (trailing != null) trailing!,
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(_metaLine(job), style: Theme.of(context).textTheme.bodySmall),
-              if (job.requiredSkills.isNotEmpty) ...[
-                const SizedBox(height: 6),
-                Text(
-                  'Skills: ${job.requiredSkills.map((s) => s.skillName).join(', ')}',
-                  style: Theme.of(context).textTheme.bodySmall,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-              if (job.alreadyApplied) ...[
-                const SizedBox(height: 6),
-                Text(
-                  '✓ Applied',
-                  style: TextStyle(color: Theme.of(context).colorScheme.primary),
-                ),
-              ],
+              Expanded(child: Text(job.title, style: AppTypography.titleMedium)),
+              if (trailing != null) trailing!,
             ],
           ),
-        ),
+          const SizedBox(height: AppSpacing.space1),
+          Text(_metaLine(job), style: AppTypography.bodySmall),
+          if (job.requiredSkills.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.space2),
+            Text(
+              'Skills: ${job.requiredSkills.map((s) => s.skillName).join(', ')}',
+              style: AppTypography.bodySmall,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+          if (job.alreadyApplied) ...[
+            const SizedBox(height: AppSpacing.space2),
+            Text('✓ Applied', style: AppTypography.labelMedium.copyWith(color: AppColors.indigoLight)),
+          ],
+          if (child != null) ...[
+            const SizedBox(height: AppSpacing.space2),
+            child!,
+          ],
+        ],
       ),
     );
   }
