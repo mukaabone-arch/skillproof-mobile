@@ -5,6 +5,7 @@ import '../../models/job.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../../widgets/app_button.dart';
+import '../../widgets/job_description.dart';
 import '../root/root_tab_provider.dart';
 import 'job_detail_controller.dart';
 import 'jobs_state.dart';
@@ -89,7 +90,7 @@ class _JobDetailBody extends ConsumerWidget {
           const SizedBox(height: AppSpacing.space6),
           Text('Description', style: AppTypography.titleMedium),
           const SizedBox(height: AppSpacing.space3),
-          Text(job.description!, style: AppTypography.bodyLarge),
+          JobDescription(description: job.description!),
         ],
         const SizedBox(height: AppSpacing.space7),
         Row(

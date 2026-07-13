@@ -23,6 +23,7 @@ class ProfileView extends StatelessWidget {
           _field('Full name', profile.fullName),
           _field('Email', profile.email),
           _field('Headline', profile.headline),
+          _field('Role', profile.roleTitleLabel),
           _field('Location', profile.location),
           _field('Years of experience', profile.yearsOfExp != null ? _formatYears(profile.yearsOfExp!) : null),
           _field('GitHub', profile.githubUrl),

@@ -29,6 +29,8 @@ class _ProfileEditFormState extends ConsumerState<ProfileEditForm> {
   late final _fullNameController = TextEditingController(text: widget.profile.fullName ?? '');
   late final _emailController = TextEditingController(text: widget.profile.email ?? '');
   late final _headlineController = TextEditingController(text: widget.profile.headline ?? '');
+  late String? _roleTitle = widget.profile.roleTitle;
+  late final _roleTitleOtherController = TextEditingController(text: widget.profile.roleTitleOther ?? '');
   late final _locationController = TextEditingController(text: widget.profile.location ?? '');
   late final _yearsController = TextEditingController(
     text: widget.profile.yearsOfExp != null ? _formatYears(widget.profile.yearsOfExp!) : '',
@@ -41,6 +43,7 @@ class _ProfileEditFormState extends ConsumerState<ProfileEditForm> {
     _fullNameController.dispose();
     _emailController.dispose();
     _headlineController.dispose();
+    _roleTitleOtherController.dispose();
     _locationController.dispose();
     _yearsController.dispose();
     _githubController.dispose();
@@ -54,6 +57,8 @@ class _ProfileEditFormState extends ConsumerState<ProfileEditForm> {
           fullName: _fullNameController.text.trim(),
           email: _emailController.text.trim(),
           headline: _headlineController.text.trim(),
+          roleTitle: _roleTitle,
+          roleTitleOther: _roleTitleOtherController.text.trim(),
           location: _locationController.text.trim(),
           yearsOfExp: double.tryParse(_yearsController.text.trim()),
           githubUrl: _githubController.text.trim(),
@@ -130,6 +135,26 @@ class _ProfileEditFormState extends ConsumerState<ProfileEditForm> {
                 counterText: '',
               ),
             ),
+            const SizedBox(height: AppSpacing.space3),
+            // Structured role dropdown — display/filter only, shown to
+            // employers and used in candidate search. NEVER wired into match
+            // scoring; see candidateRoleTitleLabels' own doc comment.
+            DropdownButtonFormField<String>(
+              value: _roleTitle,
+              decoration: const InputDecoration(labelText: 'Role'),
+              items: candidateRoleTitleOptions
+                  .map((r) => DropdownMenuItem(value: r, child: Text(candidateRoleTitleLabels[r]!)))
+                  .toList(),
+              onChanged: (value) => setState(() => _roleTitle = value),
+            ),
+            if (_roleTitle == 'OTHER') ...[
+              const SizedBox(height: AppSpacing.space3),
+              TextFormField(
+                controller: _roleTitleOtherController,
+                maxLength: 160,
+                decoration: const InputDecoration(labelText: 'Your role title', counterText: ''),
+              ),
+            ],
             const SizedBox(height: AppSpacing.space3),
             TextFormField(
               controller: _locationController,
