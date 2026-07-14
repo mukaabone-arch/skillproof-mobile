@@ -71,6 +71,18 @@ class TopMatchesSection extends ConsumerWidget {
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => JobDetailScreen(jobId: matchedJob.job.id)),
               ),
+              // Surfaces the single most relevant gap directly to the
+              // candidate — this data already existed server-side (missing
+              // skills) but used to be shown only to employers reviewing
+              // applicants. Just the first entry, not the whole list: one
+              // concrete "what would move this needle" beats an exhaustive
+              // requirements dump on a compact card.
+              child: matchedJob.missing.isEmpty
+                  ? null
+                  : Text(
+                      'Add: ${matchedJob.missing.first.skillName}',
+                      style: AppTypography.mono(size: 12, weight: FontWeight.w400, color: AppColors.textTertiary),
+                    ),
             ),
           ),
       ],

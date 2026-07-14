@@ -16,10 +16,22 @@ class JourneyStep {
   final JourneyStepState state;
 }
 
+/// Mirrors web's journeySubLabel in Dashboard.tsx — keep the two in sync.
+String journeySubLabel(JourneyStepState state) {
+  switch (state) {
+    case JourneyStepState.done:
+      return 'Complete';
+    case JourneyStepState.active:
+      return 'In progress';
+    case JourneyStepState.upcoming:
+      return 'Not started';
+  }
+}
+
 /// Compact, phone-native version of the web's SegmentedProgress — a bar per
-/// stage plus a short label, no sub-label row (the web version's
-/// "Complete / In progress / Not started" caption is dropped to keep this
-/// tight). Indigo only, at every stage — progress is never a verified-skill
+/// stage, a short label, and a status sub-label ("Complete" / "In progress"
+/// / "Not started"), matching web's SegmentedProgress caption for parity.
+/// Indigo only, at every stage — progress is never a verified-skill
 /// signal, so it must never reach for [AppColors.verified]/[verifiedBright].
 class JourneyProgress extends StatelessWidget {
   const JourneyProgress({required this.steps, super.key});
@@ -53,6 +65,8 @@ class _Segment extends StatelessWidget {
     };
     final labelColor =
         step.state == JourneyStepState.upcoming ? AppColors.textTertiary : AppColors.textPrimary;
+    final subLabelColor =
+        step.state == JourneyStepState.upcoming ? AppColors.textTertiary : AppColors.textSecondary;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,6 +81,13 @@ class _Segment extends StatelessWidget {
           step.label,
           style: AppTypography.labelSmall.copyWith(color: labelColor),
           maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 2),
+        Text(
+          journeySubLabel(step.state),
+          style: AppTypography.mono(size: 9.5, weight: FontWeight.w500, color: subLabelColor),
+          maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
       ],

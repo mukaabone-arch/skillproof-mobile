@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../models/matched_job.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_button.dart';
@@ -10,19 +11,22 @@ import '../../badges/badges_state.dart';
 import '../../external_credentials/external_credentials_controller.dart';
 import '../../external_credentials/external_credentials_state.dart';
 import '../../jobs/applications_controller.dart';
+import '../../jobs/job_detail_screen.dart';
 import '../../jobs/jobs_state.dart';
+import '../../jobs/matched_controller.dart';
 import '../../profile/profile_controller.dart';
 import '../../profile/profile_state.dart';
 import '../../root/root_tab_provider.dart';
+import 'copilot_panel.dart';
 import 'journey_progress.dart';
-import 'next_step_card.dart';
 
-/// Greeting + journey stepper + next-step prompt — one cohesive unit
-/// because all three are derived from the exact same four signals
-/// (profile, badges, external credentials, applications), so they can
-/// never disagree about where the candidate is in their journey. Shown as
-/// a single loading/error unit rather than three independently-flickering
-/// pieces, since none of the three means anything without the others.
+/// Greeting + journey stepper + AI co-pilot panel — one cohesive unit
+/// because all five signals (profile, badges, external credentials,
+/// matched jobs, applications) are derived together, so they can never
+/// disagree about where the candidate is in their journey or what the
+/// co-pilot suggests next. Shown as a single loading/error unit rather than
+/// independently-flickering pieces, since none of them means anything
+/// without the others.
 class HeroSection extends ConsumerWidget {
   const HeroSection({super.key});
 
@@ -32,11 +36,13 @@ class HeroSection extends ConsumerWidget {
     final badgesState = ref.watch(badgesControllerProvider);
     final credentialsState = ref.watch(externalCredentialsControllerProvider);
     final applicationsState = ref.watch(applicationsControllerProvider);
+    final matchedState = ref.watch(matchedControllerProvider);
 
     final loading = profileState is ProfileLoading ||
         badgesState is BadgesLoading ||
         credentialsState is ExternalCredentialsLoading ||
-        applicationsState is ApplicationsLoading;
+        applicationsState is ApplicationsLoading ||
+        matchedState is MatchedLoading;
     if (loading) return const _HeroSkeleton();
 
     String? errorMessage;
@@ -48,6 +54,8 @@ class HeroSection extends ConsumerWidget {
       errorMessage = credentialsState.message;
     } else if (applicationsState is ApplicationsError) {
       errorMessage = applicationsState.message;
+    } else if (matchedState is MatchedError) {
+      errorMessage = matchedState.message;
     }
     if (errorMessage != null) {
       return _HeroError(
@@ -57,6 +65,7 @@ class HeroSection extends ConsumerWidget {
           ref.read(badgesControllerProvider.notifier).load();
           ref.read(externalCredentialsControllerProvider.notifier).load();
           ref.read(applicationsControllerProvider.notifier).load();
+          ref.read(matchedControllerProvider.notifier).load();
         },
       );
     }
@@ -66,6 +75,7 @@ class HeroSection extends ConsumerWidget {
     final verifiedCredentialCount =
         (credentialsState as ExternalCredentialsLoaded).credentials.where((c) => c.isVerified).length;
     final applicationCount = (applicationsState as ApplicationsLoaded).applications.length;
+    final matchedJobs = (matchedState as MatchedLoaded).jobs;
 
     final hasProfile = profile.completeness > 0;
     // "Verified skill" for journey purposes is either proof tier — a
@@ -87,6 +97,15 @@ class HeroSection extends ConsumerWidget {
         ? JourneyStepState.done
         : (hasVerifiedSkill ? JourneyStepState.active : JourneyStepState.upcoming);
 
+    final copilot = buildCopilotMessage(
+      hasProfile: hasProfile,
+      hasVerifiedSkill: hasVerifiedSkill,
+      bestUnapplied: _bestUnapplied(matchedJobs),
+      recurringGap: _recurringGap(matchedJobs),
+      hasApplied: hasApplied,
+      applicationCount: applicationCount,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -101,7 +120,7 @@ class HeroSection extends ConsumerWidget {
           JourneyStep(label: 'Jobs explored', state: stage3),
         ]),
         const SizedBox(height: AppSpacing.space4),
-        NextStepCard(step: _nextStep(ref: ref, hasProfile: hasProfile, hasVerifiedSkill: hasVerifiedSkill)),
+        CopilotPanel(message: copilot, onTap: () => _handleCopilotAction(context, ref, copilot)),
       ],
     );
   }
@@ -117,33 +136,51 @@ class HeroSection extends ConsumerWidget {
     return 'Welcome back';
   }
 
-  NextStep _nextStep({
-    required WidgetRef ref,
-    required bool hasProfile,
-    required bool hasVerifiedSkill,
-  }) {
-    if (!hasProfile) {
-      return NextStep(
-        kicker: 'Your next step',
-        title: "Complete your profile so employers know who they're looking at.",
-        ctaLabel: 'Complete your profile',
-        onTap: () => ref.read(rootTabIndexProvider.notifier).state = 3, // Profile tab
-      );
+  /// Highest-scoring match the candidate hasn't already applied to —
+  /// sorted rather than just taking the API's own order, since /jobs/matched
+  /// doesn't guarantee it's sorted by score.
+  MatchedJob? _bestUnapplied(List<MatchedJob> jobs) {
+    final sorted = [...jobs]..sort((a, b) => b.score.compareTo(a.score));
+    for (final j in sorted) {
+      if (!j.job.alreadyApplied) return j;
     }
-    if (!hasVerifiedSkill) {
-      return NextStep(
-        kicker: 'Your next step',
-        title: 'Earn a badge or add a credential to prove your skills.',
-        ctaLabel: 'Earn a badge or add a credential',
-        onTap: () => ref.read(rootTabIndexProvider.notifier).state = 2, // Badges tab
-      );
+    return null;
+  }
+
+  /// How often each missing skill blocks one of the candidate's top 5
+  /// matches — surfaced only once it recurs (kRecurringGapMinCount), so the
+  /// co-pilot points at an actual bottleneck rather than one job's
+  /// idiosyncratic requirement.
+  RecurringGap? _recurringGap(List<MatchedJob> jobs) {
+    final sorted = [...jobs]..sort((a, b) => b.score.compareTo(a.score));
+    final gapCounts = <String, int>{};
+    for (final j in sorted.take(5)) {
+      for (final m in j.missing) {
+        gapCounts[m.skillName] = (gapCounts[m.skillName] ?? 0) + 1;
+      }
     }
-    return NextStep(
-      kicker: "You're verified",
-      title: 'See jobs that match your verified skills.',
-      ctaLabel: 'Explore matched jobs',
-      onTap: () => ref.read(rootTabIndexProvider.notifier).state = 1, // Jobs tab
-    );
+    RecurringGap? result;
+    gapCounts.forEach((name, count) {
+      if (count >= kRecurringGapMinCount && (result == null || count > result!.count)) {
+        result = RecurringGap(skillName: name, count: count);
+      }
+    });
+    return result;
+  }
+
+  void _handleCopilotAction(BuildContext context, WidgetRef ref, CopilotMessage message) {
+    switch (message.action) {
+      case CopilotAction.profileTab:
+        ref.read(rootTabIndexProvider.notifier).state = 3;
+      case CopilotAction.badgesTab:
+        ref.read(rootTabIndexProvider.notifier).state = 2;
+      case CopilotAction.jobsTab:
+        ref.read(rootTabIndexProvider.notifier).state = 1;
+      case CopilotAction.jobDetail:
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => JobDetailScreen(jobId: message.jobId!)),
+        );
+    }
   }
 }
 

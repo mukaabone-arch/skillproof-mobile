@@ -96,9 +96,9 @@ class _ProfileStatusCard extends ConsumerWidget {
         style: AppTypography.mono(size: 22, weight: FontWeight.w700, color: AppColors.indigoLight),
       );
       meta = Text(
-        completeness >= 100 ? 'Complete' : 'Add more details',
+        completeness >= 100 ? 'Complete' : 'Add details',
         style: AppTypography.bodySmall,
-        maxLines: 1,
+        maxLines: 2,
         overflow: TextOverflow.ellipsis,
       );
     } else if (state is ProfileError) {
@@ -176,7 +176,7 @@ class _VerifiedSkillsStatusCard extends ConsumerWidget {
     }
 
     return _StatusCardShell(
-      label: 'Verified skills',
+      label: 'Verified',
       stat: stat,
       meta: meta,
       onTap: () => ref.read(rootTabIndexProvider.notifier).state = 2,
@@ -219,9 +219,9 @@ class _ApplicationsStatusCard extends ConsumerWidget {
         style: AppTypography.mono(size: 22, weight: FontWeight.w700, color: AppColors.indigoLight),
       );
       meta = Text(
-        count == 0 ? 'Browse jobs to get started' : _statusSummary(state.applications),
+        count == 0 ? 'Browse jobs' : _statusSummary(state.applications),
         style: AppTypography.bodySmall,
-        maxLines: 1,
+        maxLines: 2,
         overflow: TextOverflow.ellipsis,
       );
     } else if (state is ApplicationsError) {
@@ -233,7 +233,7 @@ class _ApplicationsStatusCard extends ConsumerWidget {
     }
 
     return _StatusCardShell(
-      label: 'Applications',
+      label: 'Applied',
       stat: stat,
       meta: meta,
       onTap: () => ref.read(rootTabIndexProvider.notifier).state = 1,
