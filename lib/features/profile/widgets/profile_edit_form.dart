@@ -198,7 +198,7 @@ class _ProfileEditFormState extends ConsumerState<ProfileEditForm> {
             // address is already in use by another account.", not a raw
             // 500) — shown directly, no extra parsing needed here.
             if (saveError != null) ...[
-              Text(saveError, style: AppTypography.bodySmall.copyWith(color: AppColors.dangerBright)),
+              Text(saveError, style: AppTypography.bodySmall.copyWith(color: AppColors.errorBright)),
               const SizedBox(height: AppSpacing.space3),
             ],
             Row(

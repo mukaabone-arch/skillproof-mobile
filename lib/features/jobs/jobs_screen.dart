@@ -53,9 +53,9 @@ class JobsScreen extends StatelessWidget {
           bottom: TabBar(
             isScrollable: false,
             labelPadding: _tabLabelPadding,
-            labelColor: AppColors.indigoLight,
+            labelColor: AppColors.primary,
             unselectedLabelColor: AppColors.textTertiary,
-            indicatorColor: AppColors.indigoLight,
+            indicatorColor: AppColors.primary,
             labelStyle: tabLabelStyle,
             unselectedLabelStyle: tabLabelStyle,
             tabs: [for (final label in _tabLabels) Tab(text: label)],
@@ -93,12 +93,12 @@ class JobsScreen extends StatelessWidget {
 
 /// Application status pill color. APPLIED/REVIEWED/SHORTLISTED are all
 /// "still in progress, moving forward" states, so they share the same
-/// indigo treatment as every other primary-action/progress color in the
+/// brand treatment as every other primary-action/progress color in the
 /// app — this is intentional, not an oversight, and mirrors the design
-/// system rule that verified-green is reserved exclusively for verified
+/// system rule that success-green is reserved exclusively for verified
 /// skills/badges/certificates (see AppColors' class doc), never for
 /// application/progress states. REJECTED and WITHDRAWN are given their own
-/// treatment rather than also defaulting to indigo, since lumping a
+/// treatment rather than also defaulting to brand, since lumping a
 /// rejection in with "still moving forward" would be actively misleading;
 /// the web app has no equivalent per-status coloring to mirror (it renders
 /// application status as plain meta text), so these were chosen to match
@@ -106,11 +106,11 @@ class JobsScreen extends StatelessWidget {
 ({Color background, Color foreground}) _statusPillStyle(String status) {
   switch (status) {
     case 'REJECTED':
-      return (background: AppColors.dangerSoft, foreground: AppColors.dangerBright);
+      return (background: AppColors.errorSoft, foreground: AppColors.errorBright);
     case 'WITHDRAWN':
       return (background: AppColors.surfaceElevated, foreground: AppColors.textSecondary);
     default: // APPLIED, REVIEWED, SHORTLISTED
-      return (background: AppColors.indigoSoft, foreground: AppColors.indigoLight);
+      return (background: AppColors.primarySoft, foreground: AppColors.primary);
   }
 }
 
@@ -219,7 +219,7 @@ class _BrowseTabState extends ConsumerState<_BrowseTab> {
                 CheckboxListTile(
                   value: _remoteOnly,
                   onChanged: (value) => setState(() => _remoteOnly = value ?? false),
-                  activeColor: AppColors.indigoLight,
+                  activeColor: AppColors.primary,
                   title: Text('Remote only', style: AppTypography.bodyLarge),
                   contentPadding: EdgeInsets.zero,
                   controlAffinity: ListTileControlAffinity.leading,
@@ -354,7 +354,7 @@ class _ErrorRetry extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: AppTypography.bodyMedium.copyWith(color: AppColors.dangerBright),
+              style: AppTypography.bodyMedium.copyWith(color: AppColors.errorBright),
             ),
             const SizedBox(height: AppSpacing.space3),
             AppButton(label: 'Retry', variant: AppButtonVariant.secondary, onPressed: onRetry),

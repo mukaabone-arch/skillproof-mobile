@@ -4,10 +4,10 @@ import '../../../theme/app_colors.dart';
 import '../../../theme/app_typography.dart';
 
 /// Status pill for an [ExternalCredential] — deliberately never touches
-/// [AppColors.verified]/[AppColors.verifiedBright]/[AppColors.verifiedSoft].
+/// [AppColors.success]/[AppColors.success]/[AppColors.successSoft].
 /// Those are reserved exclusively for SkillProof-assessed badges
 /// ([SkillBadge], the Badges screen); an external credential's VERIFIED
-/// state instead gets the app's indigo — the same "distinct, non-green"
+/// state instead gets the app's brand — the same "distinct, non-green"
 /// rule the web app's `Badge variant="default"` follows for the identical
 /// case. An employer (or candidate) must be able to tell the two tiers
 /// apart at a glance from color alone.
@@ -20,8 +20,8 @@ class CredentialStatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, fg, bg) = switch (verificationState) {
-      'VERIFIED' => ('Verified via Credly', AppColors.indigoLight, AppColors.indigoSoft),
-      'FAILED' => ("Couldn't verify", AppColors.dangerBright, AppColors.dangerSoft),
+      'VERIFIED' => ('Verified via Credly', AppColors.primary, AppColors.primarySoft),
+      'FAILED' => ("Couldn't verify", AppColors.errorBright, AppColors.errorSoft),
       _ => ('Pending', AppColors.textTertiary, AppColors.surfaceElevated),
     };
 

@@ -41,7 +41,7 @@ class ExternalCredentialsSection extends ConsumerWidget {
             ),
           ExternalCredentialsError(:final message) => Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.space3),
-              child: Text(message, style: AppTypography.bodySmall.copyWith(color: AppColors.dangerBright)),
+              child: Text(message, style: AppTypography.bodySmall.copyWith(color: AppColors.errorBright)),
             ),
           ExternalCredentialsLoaded(:final credentials) when credentials.isEmpty => const EmptyState(
               message: 'No external credentials yet — paste a Credly badge URL above to add one.',

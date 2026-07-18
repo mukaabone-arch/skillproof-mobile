@@ -149,10 +149,10 @@ class CopilotPanel extends StatelessWidget {
               Container(
                 width: 7,
                 height: 7,
-                decoration: const BoxDecoration(color: AppColors.indigoLight, shape: BoxShape.circle),
+                decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
               ),
               const SizedBox(width: 8),
-              Text(message.eyebrow.toUpperCase(), style: AppTypography.monoLabel(color: AppColors.indigoLight)),
+              Text(message.eyebrow.toUpperCase(), style: AppTypography.monoLabel(color: AppColors.primary)),
             ],
           ),
           const SizedBox(height: AppSpacing.space3),

@@ -12,9 +12,9 @@ import 'app_typography.dart';
 /// Component themes intentionally set explicit colors rather than relying
 /// on ColorScheme-derived defaults wherever the web app's button/badge
 /// colors don't follow Material's "primary fills, onPrimary text" pattern
-/// (e.g. verified badges use verified-green fills, which must never leak
-/// into ColorScheme.secondary or any other role Material applies broadly —
-/// see the "never use green for anything else" rule in app_colors.dart).
+/// (e.g. the earned-badge coral fill, which must never leak into
+/// ColorScheme.secondary or any other role Material applies broadly — see
+/// the "coral is rationed to one element" rule in app_colors.dart).
 class AppTheme {
   AppTheme._();
 
@@ -24,11 +24,11 @@ class AppTheme {
       // Used for whatever unthemed M3 defaults still read primary directly
       // (text selection handles, default Switch/Radio, CircularProgressIndicator).
       // Explicit component themes below override this for buttons/badges/nav.
-      primary: AppColors.indigoLight,
+      primary: AppColors.primary,
       onPrimary: AppColors.background,
-      secondary: AppColors.purpleLight,
+      secondary: AppColors.primaryMuted,
       onSecondary: AppColors.background,
-      error: AppColors.dangerBright,
+      error: AppColors.errorBright,
       onError: AppColors.background,
       surface: AppColors.surface,
       onSurface: AppColors.textPrimary,
@@ -83,15 +83,15 @@ class AppTheme {
         ),
       ),
 
-      // Primary action — mirrors web's solid `--indigo` button with white
-      // text (8.2:1 contrast; see app_colors.dart). Deliberately not
-      // derived from colorScheme.primary (which is the *light* indigo
-      // meant for text-on-dark, not a button fill).
+      // Primary action — mirrors web's solid `--brand-600` button with white
+      // text (5.77:1 contrast; see app_colors.dart). Deliberately not
+      // derived from colorScheme.primary (which is brand-400, meant for
+      // text-on-dark, not a button fill).
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.indigo,
+          backgroundColor: AppColors.primaryFill,
           foregroundColor: Colors.white,
-          disabledBackgroundColor: AppColors.indigo.withValues(alpha: 0.4),
+          disabledBackgroundColor: AppColors.primaryFill.withValues(alpha: 0.4),
           disabledForegroundColor: Colors.white.withValues(alpha: 0.6),
           textStyle: AppTypography.labelLarge,
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space5, vertical: AppSpacing.space4),
@@ -100,9 +100,9 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.indigo,
+          backgroundColor: AppColors.primaryFill,
           foregroundColor: Colors.white,
-          disabledBackgroundColor: AppColors.indigo.withValues(alpha: 0.4),
+          disabledBackgroundColor: AppColors.primaryFill.withValues(alpha: 0.4),
           disabledForegroundColor: Colors.white.withValues(alpha: 0.6),
           elevation: 0,
           textStyle: AppTypography.labelLarge,
@@ -124,7 +124,7 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.indigoLight,
+          foregroundColor: AppColors.primary,
           textStyle: AppTypography.labelLarge,
         ),
       ),
@@ -145,34 +145,34 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
-          borderSide: const BorderSide(color: AppColors.indigoLight, width: 1.5),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
-          borderSide: const BorderSide(color: AppColors.dangerBright, width: 1.5),
+          borderSide: const BorderSide(color: AppColors.errorBright, width: 1.5),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
-          borderSide: const BorderSide(color: AppColors.dangerBright, width: 2),
+          borderSide: const BorderSide(color: AppColors.errorBright, width: 2),
         ),
-        errorStyle: AppTypography.bodySmall.copyWith(color: AppColors.dangerBright),
+        errorStyle: AppTypography.bodySmall.copyWith(color: AppColors.errorBright),
       ),
 
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.surfaceElevated,
         surfaceTintColor: Colors.transparent,
-        indicatorColor: AppColors.indigoSoft,
+        indicatorColor: AppColors.primarySoft,
         elevation: 0,
         height: 64,
         labelTextStyle: WidgetStateProperty.resolveWith<TextStyle?>((states) {
           final selected = states.contains(WidgetState.selected);
           return AppTypography.labelSmall.copyWith(
-            color: selected ? AppColors.indigoLight : AppColors.textTertiary,
+            color: selected ? AppColors.primary : AppColors.textTertiary,
           );
         }),
         iconTheme: WidgetStateProperty.resolveWith<IconThemeData?>((states) {
           final selected = states.contains(WidgetState.selected);
-          return IconThemeData(color: selected ? AppColors.indigoLight : AppColors.textTertiary);
+          return IconThemeData(color: selected ? AppColors.primary : AppColors.textTertiary);
         }),
       ),
 
@@ -187,7 +187,7 @@ class AppTheme {
       dividerTheme: const DividerThemeData(color: AppColors.border, thickness: 1, space: 1),
 
       progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppColors.indigoLight,
+        color: AppColors.primary,
         linearTrackColor: AppColors.border,
         circularTrackColor: AppColors.border,
       ),
@@ -195,7 +195,7 @@ class AppTheme {
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.surfaceElevated,
         contentTextStyle: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimary),
-        actionTextColor: AppColors.indigoLight,
+        actionTextColor: AppColors.primary,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
         behavior: SnackBarBehavior.floating,
       ),

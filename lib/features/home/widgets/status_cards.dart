@@ -73,12 +73,12 @@ class _StatusCardShell extends StatelessWidget {
 Widget _loadingStat() =>
     const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2));
 
-Widget _errorStat() => const Icon(Icons.error_outline, color: AppColors.dangerBright, size: 22);
+Widget _errorStat() => const Icon(Icons.error_outline, color: AppColors.errorBright, size: 22);
 
 Widget _loadingMeta() => Text('Loading…', style: AppTypography.bodySmall);
 
 Widget _errorMeta() =>
-    Text("Couldn't load", style: AppTypography.bodySmall.copyWith(color: AppColors.dangerBright));
+    Text("Couldn't load", style: AppTypography.bodySmall.copyWith(color: AppColors.errorBright));
 
 class _ProfileStatusCard extends ConsumerWidget {
   const _ProfileStatusCard();
@@ -93,7 +93,7 @@ class _ProfileStatusCard extends ConsumerWidget {
       final completeness = state.profile.completeness.clamp(0, 100);
       stat = Text(
         '$completeness%',
-        style: AppTypography.mono(size: 22, weight: FontWeight.w700, color: AppColors.indigoLight),
+        style: AppTypography.mono(size: 22, weight: FontWeight.w700, color: AppColors.primary),
       );
       meta = Text(
         completeness >= 100 ? 'Complete' : 'Add details',
@@ -123,7 +123,7 @@ class _ProfileStatusCard extends ConsumerWidget {
 /// number itself is deliberately neutral (textPrimary), not green — it's a
 /// mixed metric, not literally "a verified SkillProof skill" — and the
 /// breakdown line underneath is the only place color appears, with green
-/// reserved strictly for the actual badge sub-count and indigo for the
+/// reserved strictly for the actual badge sub-count and brand for the
 /// external-credential sub-count. This keeps the two-tier rule intact even
 /// in a rolled-up summary tile: green never touches anything that isn't a
 /// SkillProof-assessed badge.
@@ -169,8 +169,8 @@ class _VerifiedSkillsStatusCard extends ConsumerWidget {
               runSpacing: 2,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                if (badgeCount > 0) _TierDot(label: '$badgeCount SkillProof', color: AppColors.verifiedBright),
-                if (credentialCount > 0) _TierDot(label: '$credentialCount external', color: AppColors.indigoLight),
+                if (badgeCount > 0) _TierDot(label: '$badgeCount SkillProof', color: AppColors.success),
+                if (credentialCount > 0) _TierDot(label: '$credentialCount external', color: AppColors.primary),
               ],
             );
     }
@@ -216,7 +216,7 @@ class _ApplicationsStatusCard extends ConsumerWidget {
       final count = state.applications.length;
       stat = Text(
         '$count',
-        style: AppTypography.mono(size: 22, weight: FontWeight.w700, color: AppColors.indigoLight),
+        style: AppTypography.mono(size: 22, weight: FontWeight.w700, color: AppColors.primary),
       );
       meta = Text(
         count == 0 ? 'Browse jobs' : _statusSummary(state.applications),

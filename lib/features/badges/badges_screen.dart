@@ -98,7 +98,7 @@ class _ErrorRetry extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: AppTypography.bodyMedium.copyWith(color: AppColors.dangerBright),
+              style: AppTypography.bodyMedium.copyWith(color: AppColors.errorBright),
             ),
             const SizedBox(height: AppSpacing.space3),
             AppButton(label: 'Retry', variant: AppButtonVariant.secondary, onPressed: onRetry),

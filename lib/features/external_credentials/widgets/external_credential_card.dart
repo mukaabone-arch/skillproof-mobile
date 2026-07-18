@@ -9,7 +9,7 @@ import 'credential_status_chip.dart';
 
 /// One external credential row. Structurally similar to BadgeCard (status
 /// indicator + title + meta + link-out) but never reaches for
-/// verified-green — see [CredentialStatusChip]'s doc for why. VERIFIED
+/// success-green — see [CredentialStatusChip]'s doc for why. VERIFIED
 /// credentials link out to the Credly badge itself (not an in-app page —
 /// there is nothing to render here beyond what Credly already shows);
 /// FAILED/PENDING show the pasted URL instead so the candidate can
@@ -87,10 +87,10 @@ class _VerifiedBody extends StatelessWidget {
             children: [
               Text(
                 'View badge on Credly',
-                style: AppTypography.bodyMedium.copyWith(color: AppColors.indigoLight, fontWeight: FontWeight.w600),
+                style: AppTypography.bodyMedium.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600),
               ),
               const SizedBox(width: 4),
-              const Icon(Icons.open_in_new_rounded, size: 14, color: AppColors.indigoLight),
+              const Icon(Icons.open_in_new_rounded, size: 14, color: AppColors.primary),
             ],
           ),
         ),

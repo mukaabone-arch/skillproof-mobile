@@ -97,7 +97,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 }
 
-/// Indigo, not verified-green — profile completeness is progress, not a
+/// Indigo, not success-green — profile completeness is progress, not a
 /// verified-skill signal (see AppColors' class doc: green is exclusive to
 /// verified skills/badges/certificates).
 class _CompletenessCard extends StatelessWidget {
@@ -118,7 +118,7 @@ class _CompletenessCard extends StatelessWidget {
               Text('Profile completeness', style: AppTypography.titleSmall),
               Text(
                 '$completeness%',
-                style: AppTypography.mono(size: 15, weight: FontWeight.w700, color: AppColors.indigoLight),
+                style: AppTypography.mono(size: 15, weight: FontWeight.w700, color: AppColors.primary),
               ),
             ],
           ),
@@ -129,7 +129,7 @@ class _CompletenessCard extends StatelessWidget {
               value: completeness / 100,
               minHeight: 8,
               backgroundColor: AppColors.border,
-              valueColor: const AlwaysStoppedAnimation(AppColors.indigoLight),
+              valueColor: const AlwaysStoppedAnimation(AppColors.primary),
             ),
           ),
         ],
@@ -153,12 +153,12 @@ class _IncompleteProfileHint extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.warningSoft,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.warningBright.withValues(alpha: 0.4)),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.4)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline, color: AppColors.warningBright, size: 20),
+          const Icon(Icons.info_outline, color: AppColors.warning, size: 20),
           const SizedBox(width: AppSpacing.space3),
           Expanded(
             child: Text(
@@ -173,7 +173,7 @@ class _IncompleteProfileHint extends StatelessWidget {
   }
 }
 
-/// Links to the Badges tab — the only verified-green usage on this screen,
+/// Links to the Badges tab — the only success-green usage on this screen,
 /// since this specifically counts *verified* badges.
 class _BadgeCountLink extends ConsumerWidget {
   const _BadgeCountLink();
@@ -188,7 +188,7 @@ class _BadgeCountLink extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space5, vertical: AppSpacing.space4),
       child: Row(
         children: [
-          const Icon(Icons.verified_rounded, color: AppColors.verifiedBright, size: 22),
+          const Icon(Icons.verified_rounded, color: AppColors.success, size: 22),
           const SizedBox(width: AppSpacing.space3),
           Expanded(
             child: Text(
@@ -222,7 +222,7 @@ class _ErrorRetry extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: AppTypography.bodyMedium.copyWith(color: AppColors.dangerBright),
+              style: AppTypography.bodyMedium.copyWith(color: AppColors.errorBright),
             ),
             const SizedBox(height: AppSpacing.space3),
             AppButton(label: 'Retry', variant: AppButtonVariant.secondary, onPressed: onRetry),

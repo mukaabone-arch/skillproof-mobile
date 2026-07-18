@@ -214,7 +214,7 @@ class _HeroError extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(message, style: AppTypography.bodyMedium.copyWith(color: AppColors.dangerBright)),
+          Text(message, style: AppTypography.bodyMedium.copyWith(color: AppColors.errorBright)),
           const SizedBox(height: AppSpacing.space3),
           AppButton(label: 'Retry', variant: AppButtonVariant.secondary, onPressed: onRetry),
         ],

@@ -3,16 +3,16 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 
-/// A match at/above this score reads as "strong" (bold indigo); below it,
+/// A match at/above this score reads as "strong" (bold brand); below it,
 /// "developing" (muted neutral). Mirrors MATCH_STRONG_THRESHOLD in
 /// apps/web/components/Dashboard.tsx — keep the two in sync.
 const int kMatchStrongThreshold = 65;
 
 /// Match-score readout (0-100) for the "Matched to you" tab and Home's top
-/// matches — indigo family only, never green. A match score isn't a
-/// verified-skill signal, so it stays out of [AppColors.verified] per the
+/// matches — brand family only, never green. A match score isn't a
+/// verified-skill signal, so it stays out of [AppColors.success] per the
 /// rule on [AppColors]; confidence is instead color-coded *within* that one
-/// accent — a strong match gets the bold/bright indigo fill and label, a
+/// accent — a strong match gets the bold/bright brand fill and label, a
 /// weaker one falls back to a muted neutral rather than reaching for a
 /// second hue.
 class ScoreBar extends StatelessWidget {
@@ -26,8 +26,8 @@ class ScoreBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final clamped = score.clamp(0, 100);
     final strong = clamped >= kMatchStrongThreshold;
-    final fillColor = strong ? AppColors.indigoLight : AppColors.textTertiary;
-    final numeralColor = strong ? AppColors.indigoLight : AppColors.textSecondary;
+    final fillColor = strong ? AppColors.primary : AppColors.textTertiary;
+    final numeralColor = strong ? AppColors.primary : AppColors.textSecondary;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,

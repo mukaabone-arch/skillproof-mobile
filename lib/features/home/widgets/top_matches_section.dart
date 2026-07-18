@@ -102,7 +102,7 @@ class _SectionError extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(message, style: AppTypography.bodySmall.copyWith(color: AppColors.dangerBright)),
+            child: Text(message, style: AppTypography.bodySmall.copyWith(color: AppColors.errorBright)),
           ),
           const SizedBox(width: AppSpacing.space2),
           AppButton(label: 'Retry', variant: AppButtonVariant.secondary, onPressed: onRetry),

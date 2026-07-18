@@ -70,12 +70,12 @@ class _AddCredentialFormState extends ConsumerState<AddCredentialForm> {
                       children: [
                         Text(
                           'How do I find this?',
-                          style: AppTypography.labelMedium.copyWith(color: AppColors.indigoLight),
+                          style: AppTypography.labelMedium.copyWith(color: AppColors.primary),
                         ),
                         Icon(
                           _hintExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
                           size: 18,
-                          color: AppColors.indigoLight,
+                          color: AppColors.primary,
                         ),
                       ],
                     ),
@@ -104,7 +104,7 @@ class _AddCredentialFormState extends ConsumerState<AddCredentialForm> {
             ),
             if (error != null) ...[
               const SizedBox(height: AppSpacing.space2),
-              Text(error, style: AppTypography.bodySmall.copyWith(color: AppColors.dangerBright)),
+              Text(error, style: AppTypography.bodySmall.copyWith(color: AppColors.errorBright)),
             ],
           ],
         ),
@@ -124,7 +124,7 @@ class _CredlyHint extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.space3),
       decoration: BoxDecoration(
-        color: AppColors.indigoSoft,
+        color: AppColors.primarySoft,
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Text(

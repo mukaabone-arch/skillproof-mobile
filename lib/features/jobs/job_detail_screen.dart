@@ -32,7 +32,7 @@ class JobDetailScreen extends ConsumerWidget {
                   Text(
                     message,
                     textAlign: TextAlign.center,
-                    style: AppTypography.bodyMedium.copyWith(color: AppColors.dangerBright),
+                    style: AppTypography.bodyMedium.copyWith(color: AppColors.errorBright),
                   ),
                   const SizedBox(height: AppSpacing.space3),
                   AppButton(
@@ -72,7 +72,7 @@ class _JobDetailBody extends ConsumerWidget {
         ],
         // Required skills are job *requirements*, not the candidate's own
         // verified skills — deliberately a neutral chip (via the app-wide
-        // ChipThemeData), not SkillBadge/verified-green. Green is reserved
+        // ChipThemeData), not SkillBadge/success-green. Green is reserved
         // exclusively for skills the candidate has actually verified.
         if (job.requiredSkills.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.space6),
@@ -105,7 +105,7 @@ class _JobDetailBody extends ConsumerWidget {
               Expanded(
                 child: Text(
                   "✓ You've applied to this job",
-                  style: AppTypography.labelMedium.copyWith(color: AppColors.indigoLight),
+                  style: AppTypography.labelMedium.copyWith(color: AppColors.primary),
                 ),
               ),
             ],
@@ -138,7 +138,7 @@ class _JobDetailBody extends ConsumerWidget {
         ],
         if (state.applyError != null) ...[
           const SizedBox(height: AppSpacing.space4),
-          Text(state.applyError!, style: AppTypography.bodyMedium.copyWith(color: AppColors.dangerBright)),
+          Text(state.applyError!, style: AppTypography.bodyMedium.copyWith(color: AppColors.errorBright)),
         ],
       ],
     );
@@ -161,7 +161,7 @@ class _JobDetailBody extends ConsumerWidget {
 /// themselves (PROFILE_INCOMPLETE / BADGE_REQUIRED) — styled distinctly
 /// from [state.applyError] so it doesn't read as a raw failure. Indigo, not
 /// green: this is guidance text about *earning* a badge, not a verified
-/// skill/badge/certificate itself, so it stays out of the verified-green
+/// skill/badge/certificate itself, so it stays out of the success-green
 /// color family per the rule on AppColors.
 class _ActionableNotice extends StatelessWidget {
   const _ActionableNotice({required this.message, this.actionLabel, this.onAction});
@@ -175,9 +175,9 @@ class _ActionableNotice extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.space4),
       decoration: BoxDecoration(
-        color: AppColors.indigoSoft,
+        color: AppColors.primarySoft,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.indigoLight.withValues(alpha: 0.4)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

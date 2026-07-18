@@ -32,7 +32,7 @@ String journeySubLabel(JourneyStepState state) {
 /// stage, a short label, and a status sub-label ("Complete" / "In progress"
 /// / "Not started"), matching web's SegmentedProgress caption for parity.
 /// Indigo only, at every stage — progress is never a verified-skill
-/// signal, so it must never reach for [AppColors.verified]/[verifiedBright].
+/// signal, so it must never reach for [AppColors.success]/[AppColors.success].
 class JourneyProgress extends StatelessWidget {
   const JourneyProgress({required this.steps, super.key});
 
@@ -59,8 +59,8 @@ class _Segment extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final barColor = switch (step.state) {
-      JourneyStepState.done => AppColors.indigoLight,
-      JourneyStepState.active => AppColors.indigo,
+      JourneyStepState.done => AppColors.primary,
+      JourneyStepState.active => AppColors.primaryFill,
       JourneyStepState.upcoming => AppColors.border,
     };
     final labelColor =

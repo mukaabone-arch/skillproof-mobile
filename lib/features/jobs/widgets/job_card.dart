@@ -8,7 +8,7 @@ import '../../../widgets/app_card.dart';
 /// Summary card shared by the Browse and Matched tabs. [trailing] carries
 /// the tab-specific bit ([ScoreBar] for Matched, nothing for Browse);
 /// "Applied" is shown consistently across both since it's true regardless
-/// of tab. Deliberately indigo, not green — an application's status isn't
+/// of tab. Deliberately brand, not green — an application's status isn't
 /// a verified-skill signal (see the color rule on AppColors).
 class JobCard extends StatelessWidget {
   const JobCard({required this.job, this.trailing, this.onTap, this.child, super.key});
@@ -50,7 +50,7 @@ class JobCard extends StatelessWidget {
           ],
           if (job.alreadyApplied) ...[
             const SizedBox(height: AppSpacing.space2),
-            Text('✓ Applied', style: AppTypography.labelMedium.copyWith(color: AppColors.indigoLight)),
+            Text('✓ Applied', style: AppTypography.labelMedium.copyWith(color: AppColors.primary)),
           ],
           if (child != null) ...[
             const SizedBox(height: AppSpacing.space2),

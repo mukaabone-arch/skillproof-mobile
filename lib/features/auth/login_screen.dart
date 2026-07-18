@@ -185,7 +185,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           const SizedBox(height: AppSpacing.space3),
                           Text(
                             _error!,
-                            style: AppTypography.bodySmall.copyWith(color: AppColors.dangerBright),
+                            style: AppTypography.bodySmall.copyWith(color: AppColors.errorBright),
                           ),
                         ],
                       ],
@@ -217,7 +217,7 @@ class _GoogleGlyph extends StatelessWidget {
       child: const Text(
         'G',
         style: TextStyle(
-          color: Color(0xFF4285F4),
+          color: AppColors.googleBrandBlue,
           fontWeight: FontWeight.w800,
           fontSize: 13,
           height: 1,
