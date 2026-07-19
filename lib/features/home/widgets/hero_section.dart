@@ -174,14 +174,14 @@ class HeroSection extends ConsumerWidget {
   void _handleCopilotAction(BuildContext context, WidgetRef ref, CopilotMessage message) {
     switch (message.action) {
       case CopilotAction.profileTab:
-        ref.read(rootTabIndexProvider.notifier).state = 3;
+        ref.read(rootTabIndexProvider.notifier).state = RootTab.profile;
       case CopilotAction.badgesTab:
         if (message.skillId != null) {
           ref.read(badgesHighlightSkillIdProvider.notifier).state = message.skillId;
         }
-        ref.read(rootTabIndexProvider.notifier).state = 2;
+        ref.read(rootTabIndexProvider.notifier).state = RootTab.badges;
       case CopilotAction.jobsTab:
-        ref.read(rootTabIndexProvider.notifier).state = 1;
+        ref.read(rootTabIndexProvider.notifier).state = RootTab.jobs;
       case CopilotAction.jobDetail:
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => JobDetailScreen(jobId: message.jobId!)),

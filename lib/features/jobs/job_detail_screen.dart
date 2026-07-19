@@ -123,7 +123,7 @@ class _JobDetailBody extends ConsumerWidget {
               // was pushed with Navigator.push, on top of the IndexedStack
               // the bottom nav controls, so switching the tab alone
               // wouldn't be visible until this route is also dismissed.
-              ref.read(rootTabIndexProvider.notifier).state = 3;
+              ref.read(rootTabIndexProvider.notifier).state = RootTab.profile;
               Navigator.of(context).popUntil((route) => route.isFirst);
             },
           ),

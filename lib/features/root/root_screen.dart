@@ -15,12 +15,12 @@ import '../profile/profile_controller.dart';
 import '../profile/profile_screen.dart';
 import 'root_tab_provider.dart';
 
-/// Post-login shell: bottom nav across Home / Jobs / Badges / Profile /
-/// Interviews. Each tab is its own Scaffold (with its own AppBar), kept
-/// alive in an [IndexedStack] so switching tabs doesn't lose in-flight
-/// state like the Jobs filters. The active index lives in
-/// [rootTabIndexProvider] rather than local State so other screens can
-/// switch tabs programmatically.
+/// Post-login shell: bottom nav across Home / Jobs / Badges / Interviews /
+/// Profile — see [RootTab] for the index each position maps to. Each tab
+/// is its own Scaffold (with its own AppBar), kept alive in an
+/// [IndexedStack] so switching tabs doesn't lose in-flight state like the
+/// Jobs filters. The active index lives in [rootTabIndexProvider] rather
+/// than local State so other screens can switch tabs programmatically.
 ///
 /// Also owns the app-resume refetch: assessments run on the web app (see
 /// core/external_link.dart), so the candidate leaves and comes back mid- or
@@ -36,12 +36,13 @@ class RootScreen extends ConsumerStatefulWidget {
 }
 
 class _RootScreenState extends ConsumerState<RootScreen> with WidgetsBindingObserver {
+  // Order must match [RootTab]'s indices exactly.
   static const _tabs = [
     HomeScreen(),
     JobsScreen(),
     BadgesScreen(),
-    ProfileScreen(),
     InterviewsScreen(),
+    ProfileScreen(),
   ];
 
   @override
@@ -80,16 +81,17 @@ class _RootScreenState extends ConsumerState<RootScreen> with WidgetsBindingObse
       bottomNavigationBar: NavigationBar(
         selectedIndex: index,
         onDestinationSelected: (i) => ref.read(rootTabIndexProvider.notifier).state = i,
+        // Order must match [RootTab]'s indices exactly.
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
           NavigationDestination(icon: Icon(Icons.work_outline), selectedIcon: Icon(Icons.work), label: 'Jobs'),
           NavigationDestination(icon: Icon(Icons.verified_outlined), selectedIcon: Icon(Icons.verified), label: 'Badges'),
-          NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Profile'),
           NavigationDestination(
             icon: Icon(Icons.event_note_outlined),
             selectedIcon: Icon(Icons.event_note),
             label: 'Interviews',
           ),
+          NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
     );

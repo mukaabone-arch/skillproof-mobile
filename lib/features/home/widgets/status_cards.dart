@@ -113,7 +113,7 @@ class _ProfileStatusCard extends ConsumerWidget {
       label: 'Profile',
       stat: stat,
       meta: meta,
-      onTap: () => ref.read(rootTabIndexProvider.notifier).state = 3,
+      onTap: () => ref.read(rootTabIndexProvider.notifier).state = RootTab.profile,
     );
   }
 }
@@ -179,7 +179,7 @@ class _VerifiedSkillsStatusCard extends ConsumerWidget {
       label: 'Verified',
       stat: stat,
       meta: meta,
-      onTap: () => ref.read(rootTabIndexProvider.notifier).state = 2,
+      onTap: () => ref.read(rootTabIndexProvider.notifier).state = RootTab.badges,
     );
   }
 }
@@ -236,7 +236,7 @@ class _ApplicationsStatusCard extends ConsumerWidget {
       label: 'Applied',
       stat: stat,
       meta: meta,
-      onTap: () => ref.read(rootTabIndexProvider.notifier).state = 1,
+      onTap: () => ref.read(rootTabIndexProvider.notifier).state = RootTab.jobs,
     );
   }
 

@@ -184,7 +184,7 @@ class _BadgeCountLink extends ConsumerWidget {
     final count = badgesState is BadgesLoaded ? badgesState.badges.length : null;
 
     return AppCard(
-      onTap: () => ref.read(rootTabIndexProvider.notifier).state = 2, // Badges tab
+      onTap: () => ref.read(rootTabIndexProvider.notifier).state = RootTab.badges,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space5, vertical: AppSpacing.space4),
       child: Row(
         children: [
