@@ -1,0 +1,56 @@
+name: Build and Release APK
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Trigger on version tags like v1.0.0
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+      
+      - name: Get dependencies
+        run: flutter pub get
+      
+      - name: Build APK (Production)
+        run: |
+          flutter build apk \
+            --dart-define=API_BASE_URL=https://api.skillproof.flairfuture.com \
+            --dart-define=WEB_BASE_URL=https://skillproof.flairfuture.com \
+            --dart-define=GOOGLE_ANDROID_CLIENT_ID=637578179718-vf95oh1otj1s62ji1hes1lpeqg0564q6.apps.googleusercontent.com \
+            --dart-define=GOOGLE_SERVER_CLIENT_ID=637578179718-4du7jp8kee08gltqbkouae1bbts1keck.apps.googleusercontent.com \
+            --release
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/app/outputs/flutter-apk/app-release.apk
+          body: |
+            ## SkillProof Mobile v${{ github.ref_name }}
+            
+            ### Connected to Render Backend
+            - API: https://api.skillproof.flairfuture.com
+            - Web: https://skillproof.flairfuture.com
+            
+            ### Installation
+            Download the APK and install on your Android device.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
