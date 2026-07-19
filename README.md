@@ -49,6 +49,53 @@ flutter run --dart-define=API_BASE_URL=http://192.168.1.50:4000
 Dev OTP is always `123456` (the API mints that fixed code whenever
 `NODE_ENV != production`).
 
+## Skill verification (assessments)
+
+Assessments run on the web app, not natively — `ApiConfig.webBaseUrl` in
+`lib/config/api_config.dart` (default `http://192.168.0.101:3000`, override
+with `--dart-define=WEB_BASE_URL=http://<your-lan-ip>:3000`) is where
+"Take assessment" and badge-certificate links open, via the device's
+default browser (`core/external_link.dart`'s `openInBrowser`) — deliberately
+not an in-app WebView/Custom Tab, since the web assessment's integrity
+monitoring assumes a real browser context.
+
+### Running everything locally
+
+1. `docker compose up -d db` from the `skillproof` repo root (Postgres).
+2. `apps/api`: `cp .env.example .env && npm install && npx prisma migrate dev && npm run start:dev` — API on `:4000`.
+3. `apps/web`: `cp .env.example .env.local && npm install && npm run dev` — web on `:3000`.
+4. This repo: `flutter run --dart-define=API_BASE_URL=http://<lan-ip>:4000 --dart-define=WEB_BASE_URL=http://<lan-ip>:3000` (from PowerShell — see below; the emulator-only `10.0.2.2` alias for `API_BASE_URL` doesn't help `WEB_BASE_URL`, since the *device's own browser*, not the app, has to reach it).
+
+### Manual test script
+
+The Badges screen has two sections: **Earned** and **Available to verify**
+(`GET /assessments/catalog/summary` — one card per skill not yet fully
+earned, at its next unearned level). Home's co-pilot card links into a
+specific card via `badgesHighlightSkillIdProvider` when it's naming a
+gap skill ("Close the gap" branch of `buildCopilotMessage`).
+
+1. **Pass**: on an "available" card, tap "Take assessment" → finish the
+   MCQ (or discussion) on web with a passing score → background the app,
+   then foreground it again (or pull-to-refresh on Badges/Home). Expect:
+   the skill's badge appears under Earned; if it had no further unearned
+   levels, it also disappears from "Available to verify"; Home's co-pilot
+   card either clears or advances to the next recurring-gap skill.
+2. **Fail**: fail an assessment on web, then resume the app. MCQ
+   assessments have no cooldown today — the card is immediately
+   "available" again. The one DISCUSSION-format skill (RAG Systems L2)
+   enforces a 14-day cooldown — expect "Retake available from {date}"
+   (rendered in device-local time) with the button disabled.
+3. **Abandon**: start an MCQ assessment on web, then leave without
+   submitting and let the attempt's time limit pass (the server
+   auto-submits expired attempts — see `enforceDeadline` in
+   `assessments.service.ts`). Resume the app: once the deadline has
+   passed the card reflects the auto-submitted outcome (available again,
+   or cooldown, per the same fail rules above).
+4. **Home → Badges deep link**: with a recurring gap skill showing on
+   Home's co-pilot card, tap "Explore ways to verify". Expect: lands on
+   the Badges tab, auto-scrolled to and briefly highlighted on the same
+   skill's card in "Available to verify".
+
 ## State management: Riverpod
 
 Chose Riverpod over Bloc for this foundation:

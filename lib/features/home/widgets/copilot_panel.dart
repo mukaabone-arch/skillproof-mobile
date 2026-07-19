@@ -19,6 +19,7 @@ class CopilotMessage {
     required this.ctaLabel,
     required this.action,
     this.jobId,
+    this.skillId,
   });
 
   final String eyebrow;
@@ -27,13 +28,19 @@ class CopilotMessage {
   final CopilotAction action;
   /// Set only when [action] is [CopilotAction.jobDetail].
   final String? jobId;
+  /// Set only on the "Close the gap" message (the [RecurringGap] branch of
+  /// [buildCopilotMessage]) — the specific skill the CTA should land on in
+  /// Badges, so the message and the card it opens always agree. See
+  /// HeroSection._handleCopilotAction.
+  final String? skillId;
 }
 
 /// A missing skill that recurs across enough of the candidate's top matches
 /// to be worth calling out as a bottleneck, rather than one job's
 /// idiosyncratic requirement.
 class RecurringGap {
-  const RecurringGap({required this.skillName, required this.count});
+  const RecurringGap({required this.skillId, required this.skillName, required this.count});
+  final String skillId;
   final String skillName;
   final int count;
 }
@@ -92,6 +99,7 @@ CopilotMessage buildCopilotMessage({
           "as a requirement on ${recurringGap.count} roles you're close to.",
       ctaLabel: 'Explore ways to verify',
       action: CopilotAction.badgesTab,
+      skillId: recurringGap.skillId,
     );
   }
 
@@ -126,8 +134,8 @@ CopilotMessage buildCopilotMessage({
 /// The dashboard's hero panel — one AI co-pilot message with a single CTA.
 /// Visually the most prominent element on Home, but a confident insight
 /// rather than a banner: heading-sized type (not [AppTypography.headlineSmall]
-/// at full size), elevated card, indigo eyebrow dot. Mirrors web's
-/// `.copilot-panel` — same one-accent (indigo) treatment, just phone-native.
+/// at full size), elevated card, brand eyebrow dot. Mirrors web's
+/// `.copilot-panel` — same one-accent (brand) treatment, just phone-native.
 class CopilotPanel extends StatelessWidget {
   const CopilotPanel({required this.message, required this.onTap, super.key});
 

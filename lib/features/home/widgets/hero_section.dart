@@ -7,6 +7,7 @@ import '../../../theme/app_typography.dart';
 import '../../../widgets/app_button.dart';
 import '../../../widgets/app_card.dart';
 import '../../badges/badges_controller.dart';
+import '../../badges/badges_highlight_provider.dart';
 import '../../badges/badges_state.dart';
 import '../../external_credentials/external_credentials_controller.dart';
 import '../../external_credentials/external_credentials_state.dart';
@@ -154,15 +155,17 @@ class HeroSection extends ConsumerWidget {
   RecurringGap? _recurringGap(List<MatchedJob> jobs) {
     final sorted = [...jobs]..sort((a, b) => b.score.compareTo(a.score));
     final gapCounts = <String, int>{};
+    final gapSkillIds = <String, String>{};
     for (final j in sorted.take(5)) {
       for (final m in j.missing) {
         gapCounts[m.skillName] = (gapCounts[m.skillName] ?? 0) + 1;
+        gapSkillIds[m.skillName] = m.skillId;
       }
     }
     RecurringGap? result;
     gapCounts.forEach((name, count) {
       if (count >= kRecurringGapMinCount && (result == null || count > result!.count)) {
-        result = RecurringGap(skillName: name, count: count);
+        result = RecurringGap(skillId: gapSkillIds[name]!, skillName: name, count: count);
       }
     });
     return result;
@@ -173,6 +176,9 @@ class HeroSection extends ConsumerWidget {
       case CopilotAction.profileTab:
         ref.read(rootTabIndexProvider.notifier).state = 3;
       case CopilotAction.badgesTab:
+        if (message.skillId != null) {
+          ref.read(badgesHighlightSkillIdProvider.notifier).state = message.skillId;
+        }
         ref.read(rootTabIndexProvider.notifier).state = 2;
       case CopilotAction.jobsTab:
         ref.read(rootTabIndexProvider.notifier).state = 1;
