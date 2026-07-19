@@ -16,7 +16,7 @@ const Map<String, String> credentialIssuerLabels = {
 /// from [VerifiedBadge]/skill claims: never mapped to the skill taxonomy,
 /// never feeds match scoring. See the two-tier UI rule in
 /// ExternalCredentialCard / CredentialStatusChip — this must never render
-/// with the app's verified-green.
+/// with the app's success-green.
 class ExternalCredential {
   ExternalCredential({
     required this.id,

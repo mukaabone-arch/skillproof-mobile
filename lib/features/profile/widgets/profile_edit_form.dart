@@ -140,7 +140,7 @@ class _ProfileEditFormState extends ConsumerState<ProfileEditForm> {
             // employers and used in candidate search. NEVER wired into match
             // scoring; see candidateRoleTitleLabels' own doc comment.
             DropdownButtonFormField<String>(
-              value: _roleTitle,
+              initialValue: _roleTitle,
               decoration: const InputDecoration(labelText: 'Role'),
               items: candidateRoleTitleOptions
                   .map((r) => DropdownMenuItem(value: r, child: Text(candidateRoleTitleLabels[r]!)))

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 
-/// primary → filled indigo (web's `.btn-primary`); secondary → outlined,
+/// primary → filled brand (web's `.btn-primary`); secondary → outlined,
 /// ink-colored (web's `.btn-secondary`). Both ride on the FilledButton/
 /// OutlinedButton styles set in AppTheme, so this is mainly a convenience
 /// wrapper for the busy-spinner and full-width states every screen needs.
