@@ -36,18 +36,18 @@ class BadgeCard extends StatelessWidget {
               children: [
                 Text(badge.skillName, style: AppTypography.titleMedium),
                 const SizedBox(height: AppSpacing.space2),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
+                Wrap(
+                  spacing: AppSpacing.space2,
+                  runSpacing: AppSpacing.space1,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     _LevelPill(label: badge.level),
-                    const SizedBox(width: AppSpacing.space2),
-                    Flexible(
-                      child: Text(
-                        'Earned ${_formatDate(badge.issuedAt)}',
-                        style: AppTypography.bodySmall,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                    Text(
+                      'Earned ${_formatDate(badge.issuedAt)}',
+                      style: AppTypography.bodySmall,
+                      overflow: TextOverflow.ellipsis,
                     ),
+                    _ProvenanceChip(method: badge.verifiedBy),
                   ],
                 ),
               ],
@@ -108,6 +108,45 @@ class _LevelPill extends StatelessWidget {
           const SizedBox(width: 5),
           Text(label, style: AppTypography.monoLabel(color: AppColors.coral)),
         ],
+      ),
+    );
+  }
+}
+
+/// How this badge was earned — mirrors web's Dashboard.tsx chip treatment
+/// (💬/✓ + a "Verified by discussion"/"Verified by test" tooltip) with the
+/// same semantics: discussion is the stronger evidence (a reviewer watching
+/// a candidate reason live, vs. a multiple-choice score), so it gets the
+/// brand-colored, slightly more prominent pill; test gets a quiet neutral
+/// one. Neither reaches for coral — that's rationed to the medallion and
+/// [_LevelPill] only (see [BadgeCard] doc).
+class _ProvenanceChip extends StatelessWidget {
+  const _ProvenanceChip({required this.method});
+
+  final BadgeVerificationMethod method;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDiscussion = method == BadgeVerificationMethod.discussion;
+    final color = isDiscussion ? AppColors.primary : AppColors.textSecondary;
+
+    return Tooltip(
+      message: isDiscussion ? 'Verified by discussion' : 'Verified by test',
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space2, vertical: 2),
+        decoration: BoxDecoration(
+          color: isDiscussion ? AppColors.primarySoft : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.full),
+          border: isDiscussion ? null : Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(isDiscussion ? Icons.forum_rounded : Icons.fact_check_rounded, size: 12, color: color),
+            const SizedBox(width: 4),
+            Text(isDiscussion ? 'Discussion' : 'Test', style: AppTypography.monoLabel(color: color)),
+          ],
+        ),
       ),
     );
   }
