@@ -6,6 +6,8 @@ import '../badges/badges_controller.dart';
 import '../badges/badges_screen.dart';
 import '../external_credentials/external_credentials_controller.dart';
 import '../home/home_screen.dart';
+import '../interviews/interviews_controller.dart';
+import '../interviews/interviews_screen.dart';
 import '../jobs/applications_controller.dart';
 import '../jobs/jobs_screen.dart';
 import '../jobs/matched_controller.dart';
@@ -13,11 +15,12 @@ import '../profile/profile_controller.dart';
 import '../profile/profile_screen.dart';
 import 'root_tab_provider.dart';
 
-/// Post-login shell: bottom nav across Home / Jobs / Badges / Profile. Each
-/// tab is its own Scaffold (with its own AppBar), kept alive in an
-/// [IndexedStack] so switching tabs doesn't lose in-flight state like the
-/// Jobs filters. The active index lives in [rootTabIndexProvider] rather
-/// than local State so other screens can switch tabs programmatically.
+/// Post-login shell: bottom nav across Home / Jobs / Badges / Profile /
+/// Interviews. Each tab is its own Scaffold (with its own AppBar), kept
+/// alive in an [IndexedStack] so switching tabs doesn't lose in-flight
+/// state like the Jobs filters. The active index lives in
+/// [rootTabIndexProvider] rather than local State so other screens can
+/// switch tabs programmatically.
 ///
 /// Also owns the app-resume refetch: assessments run on the web app (see
 /// core/external_link.dart), so the candidate leaves and comes back mid- or
@@ -38,6 +41,7 @@ class _RootScreenState extends ConsumerState<RootScreen> with WidgetsBindingObse
     JobsScreen(),
     BadgesScreen(),
     ProfileScreen(),
+    InterviewsScreen(),
   ];
 
   @override
@@ -64,6 +68,7 @@ class _RootScreenState extends ConsumerState<RootScreen> with WidgetsBindingObse
     ref.read(matchedControllerProvider.notifier).load();
     ref.read(applicationsControllerProvider.notifier).load();
     ref.read(assessmentsControllerProvider.notifier).load();
+    ref.read(interviewsControllerProvider.notifier).load();
   }
 
   @override
@@ -80,6 +85,11 @@ class _RootScreenState extends ConsumerState<RootScreen> with WidgetsBindingObse
           NavigationDestination(icon: Icon(Icons.work_outline), selectedIcon: Icon(Icons.work), label: 'Jobs'),
           NavigationDestination(icon: Icon(Icons.verified_outlined), selectedIcon: Icon(Icons.verified), label: 'Badges'),
           NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Profile'),
+          NavigationDestination(
+            icon: Icon(Icons.event_note_outlined),
+            selectedIcon: Icon(Icons.event_note),
+            label: 'Interviews',
+          ),
         ],
       ),
     );
