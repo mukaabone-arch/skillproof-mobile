@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,10 +38,14 @@ class ProfileController extends StateNotifier<ProfileState> {
     state = current.copyWith(loadingPhoto: true);
     try {
       final bytes = await _repository.getPhoto(profileId);
+      // TEMP debug logging — remove once the profile-photo blank-avatar
+      // issue is root-caused.
+      developer.log('_loadPhoto $profileId -> ${bytes?.length} bytes', name: 'ProfileController');
       final latest = state;
       if (latest is! ProfileLoaded) return;
       state = latest.copyWith(photoBytes: bytes, clearPhotoBytes: bytes == null, loadingPhoto: false);
-    } catch (_) {
+    } catch (e) {
+      developer.log('_loadPhoto $profileId failed: $e', name: 'ProfileController');
       final latest = state;
       if (latest is! ProfileLoaded) return;
       state = latest.copyWith(loadingPhoto: false, clearPhotoBytes: true);

@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -127,7 +128,19 @@ class _Avatar extends StatelessWidget {
   Widget build(BuildContext context) {
     if (bytes != null) {
       return ClipOval(
-        child: Image.memory(bytes!, width: _size, height: _size, fit: BoxFit.cover),
+        child: Image.memory(
+          bytes!,
+          width: _size,
+          height: _size,
+          fit: BoxFit.cover,
+          // TEMP debug logging — remove once the profile-photo blank-avatar
+          // issue is root-caused. Image.memory swallows decode failures
+          // (renders nothing) unless this is provided.
+          errorBuilder: (context, error, stackTrace) {
+            developer.log('Image.memory decode failed (${bytes!.length} bytes): $error', name: 'ProfilePhotoSection');
+            return const SizedBox.shrink();
+          },
+        ),
       );
     }
     return Container(
