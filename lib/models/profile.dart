@@ -23,6 +23,7 @@ final List<String> candidateRoleTitleOptions = candidateRoleTitleLabels.keys.toL
 /// in) and `completeness`, a server-computed 0-100 percentage.
 class CandidateProfile {
   CandidateProfile({
+    required this.id,
     required this.fullName,
     required this.email,
     required this.headline,
@@ -34,9 +35,11 @@ class CandidateProfile {
     required this.linkedinUrl,
     required this.completeness,
     required this.hasResume,
+    required this.hasPhoto,
   });
 
   factory CandidateProfile.fromJson(Map<String, dynamic> json) => CandidateProfile(
+        id: json['id'] as String,
         fullName: json['fullName'] as String?,
         email: json['email'] as String?,
         headline: json['headline'] as String?,
@@ -48,8 +51,16 @@ class CandidateProfile {
         linkedinUrl: json['linkedinUrl'] as String?,
         completeness: json['completeness'] as int? ?? 0,
         hasResume: json['resumeS3Key'] != null,
+        // Never a raw storage key — the API only ever sends this boolean
+        // (see ProfilesService.withHasPhoto on the API side). The actual
+        // bytes are fetched separately via ProfileRepository.getPhoto,
+        // which hits the authenticated GET /profiles/:id/photo proxy.
+        hasPhoto: json['hasPhoto'] as bool? ?? false,
       );
 
+  /// CandidateProfile's own id — needed to build the GET /profiles/:id/photo
+  /// request; distinct from the candidate's userId.
+  final String id;
   final String? fullName;
   final String? email;
   final String? headline;
@@ -67,6 +78,7 @@ class CandidateProfile {
   final String? linkedinUrl;
   final int completeness;
   final bool hasResume;
+  final bool hasPhoto;
 
   String? get roleTitleLabel {
     if (roleTitle == null) return null;

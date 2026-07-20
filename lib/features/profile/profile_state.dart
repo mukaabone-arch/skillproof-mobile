@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../../models/profile.dart';
 import '../../models/resume_extraction.dart';
 
@@ -33,6 +35,12 @@ class ProfileLoaded extends ProfileState {
     this.extraction,
     this.applyingExtraction = false,
     this.extractionApplied = false,
+    this.photoBytes,
+    this.loadingPhoto = false,
+    this.uploadingPhoto = false,
+    this.uploadPhotoError,
+    this.removingPhoto = false,
+    this.removePhotoError,
   });
 
   final CandidateProfile profile;
@@ -59,6 +67,17 @@ class ProfileLoaded extends ProfileState {
   final bool applyingExtraction;
   final bool extractionApplied;
 
+  /// The fetched photo bytes, once loaded — null means "no photo set" or
+  /// "not fetched yet"; either way the UI falls back to the initials
+  /// placeholder. Fetched separately from the profile itself (see
+  /// ProfileController._loadPhoto) since it's binary, not JSON.
+  final Uint8List? photoBytes;
+  final bool loadingPhoto;
+  final bool uploadingPhoto;
+  final String? uploadPhotoError;
+  final bool removingPhoto;
+  final String? removePhotoError;
+
   ProfileLoaded copyWith({
     CandidateProfile? profile,
     bool? saving,
@@ -76,6 +95,15 @@ class ProfileLoaded extends ProfileState {
     bool clearExtraction = false,
     bool? applyingExtraction,
     bool? extractionApplied,
+    Uint8List? photoBytes,
+    bool clearPhotoBytes = false,
+    bool? loadingPhoto,
+    bool? uploadingPhoto,
+    String? uploadPhotoError,
+    bool clearUploadPhotoError = false,
+    bool? removingPhoto,
+    String? removePhotoError,
+    bool clearRemovePhotoError = false,
   }) {
     return ProfileLoaded(
       profile: profile ?? this.profile,
@@ -90,6 +118,12 @@ class ProfileLoaded extends ProfileState {
       extraction: clearExtraction ? null : (extraction ?? this.extraction),
       applyingExtraction: applyingExtraction ?? this.applyingExtraction,
       extractionApplied: extractionApplied ?? this.extractionApplied,
+      photoBytes: clearPhotoBytes ? null : (photoBytes ?? this.photoBytes),
+      loadingPhoto: loadingPhoto ?? this.loadingPhoto,
+      uploadingPhoto: uploadingPhoto ?? this.uploadingPhoto,
+      uploadPhotoError: clearUploadPhotoError ? null : (uploadPhotoError ?? this.uploadPhotoError),
+      removingPhoto: removingPhoto ?? this.removingPhoto,
+      removePhotoError: clearRemovePhotoError ? null : (removePhotoError ?? this.removePhotoError),
     );
   }
 }

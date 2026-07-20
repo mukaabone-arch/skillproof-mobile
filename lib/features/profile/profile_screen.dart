@@ -14,6 +14,7 @@ import '../root/root_tab_provider.dart';
 import 'profile_controller.dart';
 import 'profile_state.dart';
 import 'widgets/profile_edit_form.dart';
+import 'widgets/profile_photo_section.dart';
 import 'widgets/profile_view.dart';
 // TODO: resume upload — blocked on file_picker / compileSdk 36 conflict.
 // Resume upload works on web; revisit when updating the Android toolchain
@@ -65,6 +66,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             child: ListView(
               padding: const EdgeInsets.all(AppSpacing.space4),
               children: [
+                ProfilePhotoSection(profile: state.profile),
+                const SizedBox(height: AppSpacing.space3),
                 _CompletenessCard(profile: state.profile),
                 if (!state.profile.readyToApply) ...[
                   const SizedBox(height: AppSpacing.space3),

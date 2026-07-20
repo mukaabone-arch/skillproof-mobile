@@ -1,6 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 import '../config/api_config.dart';
 import 'token_storage.dart';
@@ -49,28 +52,42 @@ class ApiClient {
 
   Future<dynamic> delete(String path) => _send('DELETE', path);
 
-  // TODO: resume upload — blocked on file_picker / compileSdk 36 conflict.
-  // Resume upload works on web; revisit when updating the Android toolchain
-  // for release builds.
-  //
-  // /// Multipart file upload (used for the resume PDF) — separate from
-  // /// [_send] since a multipart body can't be built by the same
-  // /// jsonEncode-a-Map path, but shares the same 401→refresh→retry contract.
-  // /// [file] is re-read from disk on a retry, not just replayed from a
-  // /// consumed stream, since a fresh [http.MultipartFile] has to be built
-  // /// per attempt anyway.
-  // Future<dynamic> postMultipart(
-  //   String path, {
-  //   required File file,
-  //   required String fieldName,
-  //   MediaType? contentType,
-  // }) async {
-  //   var response = await _rawMultipartRequest(path, file: file, fieldName: fieldName, contentType: contentType);
-  //   if (response.statusCode == 401 && await _tryRefresh()) {
-  //     response = await _rawMultipartRequest(path, file: file, fieldName: fieldName, contentType: contentType);
-  //   }
-  //   return _decode(response);
-  // }
+  /// Multipart file upload (used for the profile photo; the resume path
+  /// this was originally written for is still commented out below it —
+  /// see profile_repository.dart) — separate from [_send] since a
+  /// multipart body can't be built by the same jsonEncode-a-Map path, but
+  /// shares the same 401→refresh→retry contract. [file] is re-read from
+  /// disk on a retry, not just replayed from a consumed stream, since a
+  /// fresh [http.MultipartFile] has to be built per attempt anyway.
+  Future<dynamic> postMultipart(
+    String path, {
+    required File file,
+    required String fieldName,
+    MediaType? contentType,
+  }) async {
+    var response = await _rawMultipartRequest(path, file: file, fieldName: fieldName, contentType: contentType);
+    if (response.statusCode == 401 && await _tryRefresh()) {
+      response = await _rawMultipartRequest(path, file: file, fieldName: fieldName, contentType: contentType);
+    }
+    return _decode(response);
+  }
+
+  /// Fetches raw bytes from an authenticated endpoint whose response isn't
+  /// JSON (the profile photo proxy) — same auth/refresh contract as
+  /// [_send], but skips [_decode] since there's no JSON body to parse.
+  /// Returns null on a 404 (no photo set) rather than throwing, since
+  /// that's an expected, common outcome here, not a request failure.
+  Future<Uint8List?> getBytes(String path) async {
+    var response = await _rawRequest('GET', path, null);
+    if (response.statusCode == 401 && await _tryRefresh()) {
+      response = await _rawRequest('GET', path, null);
+    }
+    if (response.statusCode == 404) return null;
+    if (response.statusCode >= 400) {
+      throw ApiException('Request failed (${response.statusCode})', response.statusCode);
+    }
+    return response.bodyBytes;
+  }
 
   void close() => _http.close();
 
@@ -114,22 +131,22 @@ class ApiClient {
     }
   }
 
-  // Future<http.Response> _rawMultipartRequest(
-  //   String path, {
-  //   required File file,
-  //   required String fieldName,
-  //   MediaType? contentType,
-  // }) async {
-  //   final token = await _tokens.readAccessToken();
-  //   final uri = Uri.parse('${ApiConfig.baseUrl}$path');
-  //   final request = http.MultipartRequest('POST', uri);
-  //   if (token != null) request.headers['Authorization'] = 'Bearer $token';
-  //   request.files.add(
-  //     await http.MultipartFile.fromPath(fieldName, file.path, contentType: contentType),
-  //   );
-  //   final streamedResponse = await _http.send(request);
-  //   return http.Response.fromStream(streamedResponse);
-  // }
+  Future<http.Response> _rawMultipartRequest(
+    String path, {
+    required File file,
+    required String fieldName,
+    MediaType? contentType,
+  }) async {
+    final token = await _tokens.readAccessToken();
+    final uri = Uri.parse('${ApiConfig.baseUrl}$path');
+    final request = http.MultipartRequest('POST', uri);
+    if (token != null) request.headers['Authorization'] = 'Bearer $token';
+    request.files.add(
+      await http.MultipartFile.fromPath(fieldName, file.path, contentType: contentType),
+    );
+    final streamedResponse = await _http.send(request);
+    return http.Response.fromStream(streamedResponse);
+  }
 
   Future<bool> _tryRefresh() async {
     final refreshToken = await _tokens.readRefreshToken();

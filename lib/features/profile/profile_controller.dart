@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api_client.dart';
@@ -17,9 +19,59 @@ class ProfileController extends StateNotifier<ProfileState> {
   Future<void> load() async {
     state = const ProfileLoading();
     try {
-      state = ProfileLoaded(profile: await _repository.getMe());
+      final profile = await _repository.getMe();
+      state = ProfileLoaded(profile: profile);
+      if (profile.hasPhoto) _loadPhoto(profile.id);
     } catch (e) {
       state = ProfileError(_messageOf(e));
+    }
+  }
+
+  /// Fires-and-forgets from [load]/after a successful upload — a failed
+  /// photo fetch just leaves [ProfileLoaded.photoBytes] null, which the
+  /// screen already renders as the initials placeholder, so there's
+  /// nothing here worth surfacing as its own error banner.
+  Future<void> _loadPhoto(String profileId) async {
+    final current = state;
+    if (current is! ProfileLoaded) return;
+    state = current.copyWith(loadingPhoto: true);
+    try {
+      final bytes = await _repository.getPhoto(profileId);
+      final latest = state;
+      if (latest is! ProfileLoaded) return;
+      state = latest.copyWith(photoBytes: bytes, clearPhotoBytes: bytes == null, loadingPhoto: false);
+    } catch (_) {
+      final latest = state;
+      if (latest is! ProfileLoaded) return;
+      state = latest.copyWith(loadingPhoto: false, clearPhotoBytes: true);
+    }
+  }
+
+  Future<void> uploadPhoto(File file) async {
+    final current = state;
+    if (current is! ProfileLoaded || current.uploadingPhoto) return;
+    state = current.copyWith(uploadingPhoto: true, clearUploadPhotoError: true);
+    try {
+      final updated = await _repository.uploadPhoto(file);
+      // Fresh, not a copyWith merge — same idiom as JobDetailController.apply,
+      // so a stale uploadPhotoError from a previous failed attempt can't leak
+      // into this success.
+      state = ProfileLoaded(profile: updated);
+      if (updated.hasPhoto) await _loadPhoto(updated.id);
+    } catch (e) {
+      state = current.copyWith(uploadingPhoto: false, uploadPhotoError: _messageOf(e));
+    }
+  }
+
+  Future<void> removePhoto() async {
+    final current = state;
+    if (current is! ProfileLoaded || current.removingPhoto) return;
+    state = current.copyWith(removingPhoto: true, clearRemovePhotoError: true);
+    try {
+      final updated = await _repository.deletePhoto();
+      state = ProfileLoaded(profile: updated);
+    } catch (e) {
+      state = current.copyWith(removingPhoto: false, removePhotoError: _messageOf(e));
     }
   }
 

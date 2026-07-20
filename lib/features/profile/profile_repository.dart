@@ -1,4 +1,8 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http_parser/http_parser.dart';
 
 import '../../core/api_client.dart';
 import '../../core/providers.dart';
@@ -53,6 +57,50 @@ class ProfileRepository {
     };
     final response = await apiClient.patch('/profiles/me', body) as Map<String, dynamic>;
     return CandidateProfile.fromJson(response);
+  }
+
+  /// Fetches the candidate's own photo bytes via the authenticated proxy
+  /// (GET /profiles/:id/photo) — never a public URL, matching the API's
+  /// private-storage design. [profileId] is CandidateProfile.id (see
+  /// CandidateProfile.id's doc comment). Returns null when no photo is
+  /// set (a 404), same as the API's own null-vs-error distinction.
+  Future<Uint8List?> getPhoto(String profileId) => apiClient.getBytes('/profiles/$profileId/photo');
+
+  /// Uploads an image picked via image_picker (JPEG/PNG/WebP only — the
+  /// API's fileFilter rejects anything else with a 400). Returns the
+  /// updated profile, same response shape as [update].
+  Future<CandidateProfile> uploadPhoto(File file) async {
+    final response = await apiClient.postMultipart(
+      '/profiles/me/photo',
+      file: file,
+      fieldName: 'file',
+      contentType: _mediaTypeForImage(file.path),
+    ) as Map<String, dynamic>;
+    return CandidateProfile.fromJson(response);
+  }
+
+  Future<CandidateProfile> deletePhoto() async {
+    final response = await apiClient.delete('/profiles/me/photo') as Map<String, dynamic>;
+    return CandidateProfile.fromJson(response);
+  }
+
+  /// image_picker doesn't expose a mimetype directly, only a file path —
+  /// inferred from the extension, same 3 types the API's fileFilter
+  /// accepts. Defaults to JPEG (the most common gallery/camera format)
+  /// for anything unrecognized, since the API will reject it clearly if
+  /// that guess is wrong rather than silently accepting bad data.
+  MediaType _mediaTypeForImage(String path) {
+    final ext = path.split('.').last.toLowerCase();
+    switch (ext) {
+      case 'png':
+        return MediaType('image', 'png');
+      case 'webp':
+        return MediaType('image', 'webp');
+      case 'jpg':
+      case 'jpeg':
+      default:
+        return MediaType('image', 'jpeg');
+    }
   }
 
   // TODO: resume upload — blocked on file_picker / compileSdk 36 conflict.
