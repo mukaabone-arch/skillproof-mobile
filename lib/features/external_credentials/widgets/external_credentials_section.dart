@@ -11,7 +11,9 @@ import 'external_credential_card.dart';
 
 /// Profile-screen section for external (non-SkillProof) credentials — see
 /// ExternalCredentialCard / CredentialStatusChip for the two-tier visual
-/// rule this whole feature exists to enforce.
+/// rule this whole feature exists to enforce. No title of its own — the
+/// caller (ProfileScreen) wraps this in a CollapsibleSection, which
+/// supplies the "External credentials" heading and card surface.
 class ExternalCredentialsSection extends ConsumerWidget {
   const ExternalCredentialsSection({super.key});
 
@@ -22,8 +24,6 @@ class ExternalCredentialsSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('External credentials', style: AppTypography.titleMedium),
-        const SizedBox(height: AppSpacing.space1),
         Text(
           'Certifications from other platforms. Credly badge URLs are verified '
           'automatically by checking the badge is public — shown to employers as a '

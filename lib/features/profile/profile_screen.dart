@@ -6,9 +6,12 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/app_card.dart';
+import '../../widgets/collapsible_section.dart';
 import '../auth/auth_controller.dart';
 import '../badges/badges_controller.dart';
 import '../badges/badges_state.dart';
+import '../external_credentials/external_credentials_controller.dart';
+import '../external_credentials/external_credentials_state.dart';
 import '../external_credentials/widgets/external_credentials_section.dart';
 import '../root/root_tab_provider.dart';
 import 'profile_controller.dart';
@@ -37,6 +40,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(profileControllerProvider);
+    final credentialsState = ref.watch(externalCredentialsControllerProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -81,9 +85,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         profile: state.profile,
                         onDone: () => setState(() => _editing = false),
                       )
-                    : ProfileView(
-                        profile: state.profile,
-                        onEdit: () => setState(() => _editing = true),
+                    : CollapsibleSection(
+                        title: 'Profile details',
+                        summary: _profileSummary(state.profile),
+                        child: ProfileView(
+                          profile: state.profile,
+                          onEdit: () => setState(() => _editing = true),
+                        ),
                       ),
                 // TODO: resume upload — blocked on file_picker / compileSdk 36
                 // conflict. Resume upload works on web; revisit when updating
@@ -91,13 +99,36 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 // const SizedBox(height: AppSpacing.space3),
                 // ResumeSection(state: state),
                 const SizedBox(height: AppSpacing.space6),
-                const ExternalCredentialsSection(),
+                CollapsibleSection(
+                  title: 'External credentials',
+                  summary: _credentialsSummary(credentialsState),
+                  child: const ExternalCredentialsSection(),
+                ),
               ],
             ),
           ),
       },
     );
   }
+}
+
+/// Collapsed-state summary for the "Profile details" card — the same three
+/// fields the web app's own compact profile chip leads with.
+String _profileSummary(CandidateProfile profile) {
+  final parts = [profile.headline, profile.roleTitleLabel, profile.location]
+      .whereType<String>()
+      .where((p) => p.trim().isNotEmpty)
+      .toList();
+  return parts.isEmpty ? 'Tap to add your details' : parts.join(' · ');
+}
+
+/// Collapsed-state summary for the "External credentials" card. Null while
+/// still loading/errored, matching CollapsibleSection's "no summary line
+/// yet" contract for that case.
+String? _credentialsSummary(ExternalCredentialsState state) {
+  if (state is! ExternalCredentialsLoaded) return null;
+  final count = state.credentials.length;
+  return count == 0 ? 'No external credentials yet' : '$count credential${count == 1 ? '' : 's'}';
 }
 
 /// Indigo, not success-green — profile completeness is progress, not a

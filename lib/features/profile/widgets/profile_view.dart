@@ -4,10 +4,11 @@ import '../../../models/profile.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_button.dart';
-import '../../../widgets/app_card.dart';
 
 /// Read-only display of the candidate's profile fields, plus an "Edit
-/// profile" action into [ProfileEditForm].
+/// profile" action into [ProfileEditForm]. No [AppCard] of its own — the
+/// caller (ProfileScreen) wraps this in a CollapsibleSection, which
+/// supplies the card surface.
 class ProfileView extends StatelessWidget {
   const ProfileView({required this.profile, required this.onEdit, super.key});
 
@@ -16,27 +17,25 @@ class ProfileView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _field('Full name', profile.fullName),
-          _field('Email', profile.email),
-          _field('Headline', profile.headline),
-          _field('Role', profile.roleTitleLabel),
-          _field('Location', profile.location),
-          _field('Years of experience', profile.yearsOfExp != null ? _formatYears(profile.yearsOfExp!) : null),
-          _field('GitHub', profile.githubUrl),
-          _field('LinkedIn', profile.linkedinUrl),
-          const SizedBox(height: AppSpacing.space2),
-          AppButton(
-            label: 'Edit profile',
-            variant: AppButtonVariant.secondary,
-            expand: true,
-            onPressed: onEdit,
-          ),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _field('Full name', profile.fullName),
+        _field('Email', profile.email),
+        _field('Headline', profile.headline),
+        _field('Role', profile.roleTitleLabel),
+        _field('Location', profile.location),
+        _field('Years of experience', profile.yearsOfExp != null ? _formatYears(profile.yearsOfExp!) : null),
+        _field('GitHub', profile.githubUrl),
+        _field('LinkedIn', profile.linkedinUrl),
+        const SizedBox(height: AppSpacing.space2),
+        AppButton(
+          label: 'Edit profile',
+          variant: AppButtonVariant.secondary,
+          expand: true,
+          onPressed: onEdit,
+        ),
+      ],
     );
   }
 
