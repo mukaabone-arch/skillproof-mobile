@@ -36,7 +36,11 @@ class ProfilePhotoSection extends ConsumerWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _Avatar(bytes: loaded?.photoBytes, fullName: profile.fullName),
+          _Avatar(
+            bytes: loaded?.photoBytes,
+            fullName: profile.fullName,
+            loading: loaded?.loadingPhoto ?? false,
+          ),
           const SizedBox(width: AppSpacing.space4),
           Expanded(
             child: Column(
@@ -106,10 +110,16 @@ class ProfilePhotoSection extends ConsumerWidget {
 }
 
 class _Avatar extends StatelessWidget {
-  const _Avatar({required this.bytes, required this.fullName});
+  const _Avatar({required this.bytes, required this.fullName, required this.loading});
 
   final Uint8List? bytes;
   final String? fullName;
+
+  /// True while ProfileController._loadPhoto's authenticated fetch is in
+  /// flight (initial load, or right after a successful upload) — shown as
+  /// a spinner in place of the initials placeholder so a photo that's on
+  /// its way in doesn't briefly read as "no photo set".
+  final bool loading;
 
   static const double _size = 64;
 
@@ -125,10 +135,16 @@ class _Avatar extends StatelessWidget {
       height: _size,
       decoration: const BoxDecoration(color: AppColors.primarySoft, shape: BoxShape.circle),
       alignment: Alignment.center,
-      child: Text(
-        _initials(fullName),
-        style: AppTypography.mono(size: 20, weight: FontWeight.w700, color: AppColors.primary),
-      ),
+      child: loading
+          ? const SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+            )
+          : Text(
+              _initials(fullName),
+              style: AppTypography.mono(size: 20, weight: FontWeight.w700, color: AppColors.primary),
+            ),
     );
   }
 
