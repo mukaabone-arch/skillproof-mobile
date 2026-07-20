@@ -14,7 +14,7 @@ import '../assessments/widgets/assessment_catalog_card.dart';
 import 'badges_controller.dart';
 import 'badges_highlight_provider.dart';
 import 'badges_state.dart';
-import 'widgets/badge_card.dart';
+import 'widgets/earned_badges_section.dart';
 
 /// The candidate's badges: what's earned (GET /users/me) and what's
 /// available to verify (GET /assessments/catalog/summary). Each section
@@ -79,7 +79,11 @@ class _BadgesScreenState extends ConsumerState<BadgesScreen> {
                 children: [
                   Text('Earned', style: AppTypography.titleMedium),
                   const SizedBox(height: AppSpacing.space3),
-                  _EarnedSection(state: badgesState, onOpenCertificate: (b) => _openCertificate(context, b)),
+                  EarnedBadgesSection(
+                    state: badgesState,
+                    onOpenCertificate: (b) => _openCertificate(context, b),
+                    emptyMessage: 'No verified badges yet — earn one below.',
+                  ),
                   const SizedBox(height: AppSpacing.space6),
                   Text('Available to verify', style: AppTypography.titleMedium),
                   const SizedBox(height: AppSpacing.space3),
@@ -130,35 +134,6 @@ class _BadgesScreenState extends ConsumerState<BadgesScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Could not open $what. Please try again.')),
     );
-  }
-}
-
-class _EarnedSection extends StatelessWidget {
-  const _EarnedSection({required this.state, required this.onOpenCertificate});
-
-  final BadgesState state;
-  final void Function(VerifiedBadge) onOpenCertificate;
-
-  @override
-  Widget build(BuildContext context) {
-    return switch (state) {
-      BadgesLoading() => const Padding(
-          padding: EdgeInsets.symmetric(vertical: AppSpacing.space4),
-          child: Center(child: CircularProgressIndicator()),
-        ),
-      BadgesError(:final message) => Text(message, style: AppTypography.bodySmall.copyWith(color: AppColors.errorBright)),
-      BadgesLoaded(:final badges) when badges.isEmpty =>
-        Text("No verified badges yet — earn one below.", style: AppTypography.bodySmall),
-      BadgesLoaded(:final badges) => Column(
-          children: [
-            for (final badge in badges)
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.space3),
-                child: BadgeCard(badge: badge, onTap: () => onOpenCertificate(badge)),
-              ),
-          ],
-        ),
-    };
   }
 }
 

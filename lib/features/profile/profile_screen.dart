@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../config/api_config.dart';
+import '../../core/external_link.dart';
+import '../../models/badge.dart';
 import '../../models/profile.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
@@ -10,10 +13,10 @@ import '../../widgets/collapsible_section.dart';
 import '../auth/auth_controller.dart';
 import '../badges/badges_controller.dart';
 import '../badges/badges_state.dart';
+import '../badges/widgets/earned_badges_section.dart';
 import '../external_credentials/external_credentials_controller.dart';
 import '../external_credentials/external_credentials_state.dart';
 import '../external_credentials/widgets/external_credentials_section.dart';
-import '../root/root_tab_provider.dart';
 import 'profile_controller.dart';
 import 'profile_state.dart';
 import 'widgets/profile_edit_form.dart';
@@ -41,6 +44,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(profileControllerProvider);
     final credentialsState = ref.watch(externalCredentialsControllerProvider);
+    final badgesState = ref.watch(badgesControllerProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -78,7 +82,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   const _IncompleteProfileHint(),
                 ],
                 const SizedBox(height: AppSpacing.space3),
-                const _BadgeCountLink(),
+                CollapsibleSection(
+                  title: 'Verified badges',
+                  summary: _badgesSummary(badgesState),
+                  child: EarnedBadgesSection(
+                    state: badgesState,
+                    onOpenCertificate: (b) => _openCertificate(context, b),
+                  ),
+                ),
                 const SizedBox(height: AppSpacing.space3),
                 _editing
                     ? ProfileEditForm(
@@ -110,6 +121,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       },
     );
   }
+
+  /// Opens a badge's public certificate page in the device browser — same
+  /// behavior as BadgesScreen's own certificate tap.
+  Future<void> _openCertificate(BuildContext context, VerifiedBadge badge) async {
+    try {
+      await openInBrowser('${ApiConfig.webBaseUrl}/badges/${badge.verifyHash}');
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open certificate. Please try again.')),
+        );
+      }
+    }
+  }
 }
 
 /// Collapsed-state summary for the "Profile details" card — the same three
@@ -129,6 +154,15 @@ String? _credentialsSummary(ExternalCredentialsState state) {
   if (state is! ExternalCredentialsLoaded) return null;
   final count = state.credentials.length;
   return count == 0 ? 'No external credentials yet' : '$count credential${count == 1 ? '' : 's'}';
+}
+
+/// Collapsed-state summary for the "Verified badges" card — same count
+/// format as the standalone badge-count card this replaced. Null while
+/// still loading/errored, matching the other two sections' contract.
+String? _badgesSummary(BadgesState state) {
+  if (state is! BadgesLoaded) return null;
+  final count = state.badges.length;
+  return '$count verified badge${count == 1 ? '' : 's'}';
 }
 
 /// Indigo, not success-green — profile completeness is progress, not a
@@ -201,38 +235,6 @@ class _IncompleteProfileHint extends StatelessWidget {
               style: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimary),
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Links to the Badges tab — the only success-green usage on this screen,
-/// since this specifically counts *verified* badges.
-class _BadgeCountLink extends ConsumerWidget {
-  const _BadgeCountLink();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final badgesState = ref.watch(badgesControllerProvider);
-    final count = badgesState is BadgesLoaded ? badgesState.badges.length : null;
-
-    return AppCard(
-      onTap: () => ref.read(rootTabIndexProvider.notifier).state = RootTab.badges,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space5, vertical: AppSpacing.space4),
-      child: Row(
-        children: [
-          const Icon(Icons.verified_rounded, color: AppColors.success, size: 22),
-          const SizedBox(width: AppSpacing.space3),
-          Expanded(
-            child: Text(
-              count == null
-                  ? 'Verified badges'
-                  : '$count verified badge${count == 1 ? '' : 's'}',
-              style: AppTypography.bodyLarge,
-            ),
-          ),
-          const Icon(Icons.chevron_right_rounded, color: AppColors.textTertiary),
         ],
       ),
     );
