@@ -87,6 +87,7 @@ class ProfilePhotoSection extends ConsumerWidget {
   }
 
   Future<void> _pickAndUpload(BuildContext context, WidgetRef ref) async {
+    final notifier = ref.read(profileControllerProvider.notifier);
     final ImagePicker picker = ImagePicker();
     XFile? picked;
     try {
@@ -100,7 +101,7 @@ class ProfilePhotoSection extends ConsumerWidget {
       return;
     }
     if (picked == null) return; // candidate cancelled the picker
-    await ref.read(profileControllerProvider.notifier).uploadPhoto(File(picked.path));
+    await notifier.uploadPhoto(File(picked.path));
   }
 }
 
