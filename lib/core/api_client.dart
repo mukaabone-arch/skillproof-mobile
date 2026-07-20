@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:developer' as developer;
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -83,14 +82,6 @@ class ApiClient {
     if (response.statusCode == 401 && await _tryRefresh()) {
       response = await _rawRequest('GET', path, null);
     }
-    // TEMP debug logging — remove once the profile-photo blank-avatar issue
-    // is root-caused. Shows whether a failure is a 401/404/other status vs.
-    // a 200 with an unexpected body.
-    developer.log(
-      'GET $path -> ${response.statusCode} '
-      '(${response.bodyBytes.length} bytes, content-type=${response.headers['content-type']})',
-      name: 'ApiClient.getBytes',
-    );
     if (response.statusCode == 404) return null;
     if (response.statusCode >= 400) {
       throw ApiException('Request failed (${response.statusCode})', response.statusCode);

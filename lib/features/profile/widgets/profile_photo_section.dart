@@ -1,4 +1,3 @@
-import 'dart:developer' as developer;
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -48,7 +47,13 @@ class ProfilePhotoSection extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
+                // Wrap, not Row: on narrow widths "Change photo" + "Remove"
+                // don't both fit next to the avatar (overflowed by a few px
+                // on a ~360dp-wide phone) — Wrap drops "Remove" to its own
+                // line instead of clipping it.
+                Wrap(
+                  spacing: AppSpacing.space2,
+                  runSpacing: AppSpacing.space2,
                   children: [
                     AppButton(
                       label: profile.hasPhoto ? 'Change photo' : 'Add photo',
@@ -56,8 +61,7 @@ class ProfilePhotoSection extends ConsumerWidget {
                       busy: uploadingPhoto,
                       onPressed: (uploadingPhoto || removingPhoto) ? null : () => _pickAndUpload(context, ref),
                     ),
-                    if (profile.hasPhoto) ...[
-                      const SizedBox(width: AppSpacing.space2),
+                    if (profile.hasPhoto)
                       AppButton(
                         label: 'Remove',
                         variant: AppButtonVariant.secondary,
@@ -66,7 +70,6 @@ class ProfilePhotoSection extends ConsumerWidget {
                             ? null
                             : () => ref.read(profileControllerProvider.notifier).removePhoto(),
                       ),
-                    ],
                   ],
                 ),
                 if (loaded?.uploadPhotoError != null) ...[
@@ -133,13 +136,10 @@ class _Avatar extends StatelessWidget {
           width: _size,
           height: _size,
           fit: BoxFit.cover,
-          // TEMP debug logging — remove once the profile-photo blank-avatar
-          // issue is root-caused. Image.memory swallows decode failures
-          // (renders nothing) unless this is provided.
-          errorBuilder: (context, error, stackTrace) {
-            developer.log('Image.memory decode failed (${bytes!.length} bytes): $error', name: 'ProfilePhotoSection');
-            return const SizedBox.shrink();
-          },
+          // Image.memory otherwise fails silently on a decode error (renders
+          // nothing) — fall back to an empty box rather than a broken-image
+          // icon, same "no photo" look the initials placeholder gives.
+          errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
         ),
       );
     }
