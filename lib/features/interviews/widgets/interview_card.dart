@@ -49,7 +49,7 @@ class InterviewCard extends StatelessWidget {
                   color: stagePill.background,
                   borderRadius: BorderRadius.circular(AppRadius.full),
                 ),
-                child: Text(_stageLabel(interview.stage), style: AppTypography.monoLabel(color: stagePill.foreground)),
+                child: Text(_stageLabel(interview.stage), style: AppTypography.metaLabel(color: stagePill.foreground)),
               ),
             ],
           ),

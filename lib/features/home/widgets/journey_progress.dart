@@ -86,7 +86,7 @@ class _Segment extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           journeySubLabel(step.state),
-          style: AppTypography.mono(size: 9.5, weight: FontWeight.w500, color: subLabelColor),
+          style: AppTypography.meta(size: 9.5, weight: FontWeight.w500, color: subLabelColor),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),

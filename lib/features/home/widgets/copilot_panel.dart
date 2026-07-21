@@ -160,7 +160,7 @@ class CopilotPanel extends StatelessWidget {
                 decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
               ),
               const SizedBox(width: 8),
-              Text(message.eyebrow.toUpperCase(), style: AppTypography.monoLabel(color: AppColors.primary)),
+              Text(message.eyebrow.toUpperCase(), style: AppTypography.metaLabel(color: AppColors.primary)),
             ],
           ),
           const SizedBox(height: AppSpacing.space3),

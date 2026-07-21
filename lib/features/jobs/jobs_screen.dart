@@ -315,7 +315,7 @@ class _ApplicationsTab extends ConsumerWidget {
                           ),
                           child: Text(
                             application.status,
-                            style: AppTypography.monoLabel(color: statusStyle.foreground),
+                            style: AppTypography.metaLabel(color: statusStyle.foreground),
                           ),
                         ),
                       ],

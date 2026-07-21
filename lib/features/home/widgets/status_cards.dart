@@ -56,7 +56,7 @@ class _StatusCardShell extends StatelessWidget {
         children: [
           Text(
             label.toUpperCase(),
-            style: AppTypography.monoLabel(),
+            style: AppTypography.metaLabel(),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -93,7 +93,7 @@ class _ProfileStatusCard extends ConsumerWidget {
       final completeness = state.profile.completeness.clamp(0, 100);
       stat = Text(
         '$completeness%',
-        style: AppTypography.mono(size: 22, weight: FontWeight.w700, color: AppColors.primary),
+        style: AppTypography.meta(size: 22, weight: FontWeight.w700, color: AppColors.primary),
       );
       meta = Text(
         completeness >= 100 ? 'Complete' : 'Add details',
@@ -155,7 +155,7 @@ class _VerifiedSkillsStatusCard extends ConsumerWidget {
 
       stat = Text(
         '$total',
-        style: AppTypography.mono(size: 22, weight: FontWeight.w700, color: AppColors.textPrimary),
+        style: AppTypography.meta(size: 22, weight: FontWeight.w700, color: AppColors.textPrimary),
       );
       meta = total == 0
           ? Text(
@@ -216,7 +216,7 @@ class _ApplicationsStatusCard extends ConsumerWidget {
       final count = state.applications.length;
       stat = Text(
         '$count',
-        style: AppTypography.mono(size: 22, weight: FontWeight.w700, color: AppColors.primary),
+        style: AppTypography.meta(size: 22, weight: FontWeight.w700, color: AppColors.primary),
       );
       meta = Text(
         count == 0 ? 'Browse jobs' : _statusSummary(state.applications),

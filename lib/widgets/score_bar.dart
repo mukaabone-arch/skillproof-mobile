@@ -33,12 +33,12 @@ class ScoreBar extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text('$clamped%', style: AppTypography.mono(size: 15, weight: FontWeight.w700, color: numeralColor)),
+        Text('$clamped%', style: AppTypography.meta(size: 15, weight: FontWeight.w700, color: numeralColor)),
         if (showLabel) ...[
           const SizedBox(height: 2),
           Text(
             strong ? 'Strong match' : 'Developing',
-            style: AppTypography.mono(size: 10, weight: FontWeight.w600, color: numeralColor),
+            style: AppTypography.meta(size: 10, weight: FontWeight.w600, color: numeralColor),
           ),
         ],
         const SizedBox(height: 4),

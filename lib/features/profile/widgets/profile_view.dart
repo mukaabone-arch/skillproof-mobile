@@ -46,7 +46,7 @@ class ProfileView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: AppTypography.monoLabel()),
+          Text(label, style: AppTypography.metaLabel()),
           const SizedBox(height: 3),
           Text(
             hasValue ? value! : 'Not set',

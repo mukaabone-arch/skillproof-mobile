@@ -32,7 +32,7 @@ class CredentialStatusChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.full),
         border: Border.all(color: fg.withValues(alpha: 0.5)),
       ),
-      child: Text(label, style: AppTypography.monoLabel(color: fg)),
+      child: Text(label, style: AppTypography.metaLabel(color: fg)),
     );
   }
 }

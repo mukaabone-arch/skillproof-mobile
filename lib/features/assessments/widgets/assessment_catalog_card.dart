@@ -57,7 +57,7 @@ class AssessmentCatalogCard extends StatelessWidget {
               ),
             ],
             const SizedBox(height: AppSpacing.space2),
-            Text('${entry.estMinutes} min', style: AppTypography.mono()),
+            Text('${entry.estMinutes} min', style: AppTypography.meta()),
             if (display.metaText != null) ...[
               const SizedBox(height: AppSpacing.space2),
               Text(
@@ -92,7 +92,7 @@ class _LevelChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.full),
         border: Border.all(color: AppColors.primary),
       ),
-      child: Text(label, style: AppTypography.monoLabel(color: AppColors.primary)),
+      child: Text(label, style: AppTypography.metaLabel(color: AppColors.primary)),
     );
   }
 }

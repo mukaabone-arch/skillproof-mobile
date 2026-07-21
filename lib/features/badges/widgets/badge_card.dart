@@ -106,7 +106,7 @@ class _LevelPill extends StatelessWidget {
         children: [
           const Icon(Icons.verified_rounded, size: 13, color: AppColors.coral),
           const SizedBox(width: 5),
-          Text(label, style: AppTypography.monoLabel(color: AppColors.coral)),
+          Text(label, style: AppTypography.metaLabel(color: AppColors.coral)),
         ],
       ),
     );
@@ -144,7 +144,7 @@ class _ProvenanceChip extends StatelessWidget {
           children: [
             Icon(isDiscussion ? Icons.forum_rounded : Icons.fact_check_rounded, size: 12, color: color),
             const SizedBox(width: 4),
-            Text(isDiscussion ? 'Discussion' : 'Test', style: AppTypography.monoLabel(color: color)),
+            Text(isDiscussion ? 'Discussion' : 'Test', style: AppTypography.metaLabel(color: color)),
           ],
         ),
       ),

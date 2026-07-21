@@ -186,7 +186,7 @@ class _CompletenessCard extends StatelessWidget {
               Text('Profile completeness', style: AppTypography.titleSmall),
               Text(
                 '$completeness%',
-                style: AppTypography.mono(size: 15, weight: FontWeight.w700, color: AppColors.primary),
+                style: AppTypography.meta(size: 15, weight: FontWeight.w700, color: AppColors.primary),
               ),
             ],
           ),

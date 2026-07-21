@@ -31,7 +31,7 @@ class SkillBadge extends StatelessWidget {
         children: [
           const Icon(Icons.verified_rounded, size: 13, color: AppColors.success),
           const SizedBox(width: 5),
-          Text(text, style: AppTypography.monoLabel(color: AppColors.success)),
+          Text(text, style: AppTypography.metaLabel(color: AppColors.success)),
         ],
       ),
     );

@@ -81,7 +81,7 @@ class TopMatchesSection extends ConsumerWidget {
                   ? null
                   : Text(
                       'Add: ${matchedJob.missing.first.skillName}',
-                      style: AppTypography.mono(size: 12, weight: FontWeight.w400, color: AppColors.textTertiary),
+                      style: AppTypography.meta(size: 12, weight: FontWeight.w400, color: AppColors.textTertiary),
                     ),
             ),
           ),

@@ -13,7 +13,6 @@ dependencies:
   http: ^1.2.0
   http_parser: ^4.0.2
   flutter_secure_storage: ^9.2.4
-  google_fonts: ^6.3.3
   url_launcher: ^6.3.1
   google_sign_in: ^6.3.0
   image_picker: ^1.1.2
@@ -25,3 +24,31 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # Bundled font assets — deliberately NOT the google_fonts package, whose
+  # runtime fetch from fonts.gstatic.com crashed the app offline. Static
+  # per-weight instances (not variable TTFs: Flutter's fontWeight matching
+  # uses the declared weights below, it does not drive a variable wght axis).
+  # Same 2-font system as web (apps/web globals.css): Space Grotesk for
+  # display/headings, Inter for everything else.
+  fonts:
+    - family: SpaceGrotesk
+      fonts:
+        - asset: assets/fonts/SpaceGrotesk-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/SpaceGrotesk-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/SpaceGrotesk-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/SpaceGrotesk-Bold.ttf
+          weight: 700
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Inter-Bold.ttf
+          weight: 700

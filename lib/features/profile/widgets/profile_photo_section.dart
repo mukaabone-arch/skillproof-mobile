@@ -156,7 +156,7 @@ class _Avatar extends StatelessWidget {
             )
           : Text(
               _initials(fullName),
-              style: AppTypography.mono(size: 20, weight: FontWeight.w700, color: AppColors.primary),
+              style: AppTypography.meta(size: 20, weight: FontWeight.w700, color: AppColors.primary),
             ),
     );
   }
