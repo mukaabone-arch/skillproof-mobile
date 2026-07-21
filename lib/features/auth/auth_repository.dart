@@ -62,6 +62,7 @@ class AuthRepository {
       throw const GoogleSignInCancelled();
     }
 
+
     final serverAuthCode = account.serverAuthCode;
     if (serverAuthCode == null) {
       throw Exception(
@@ -70,20 +71,25 @@ class AuthRepository {
       );
     }
 
-    final response = await apiClient.post('/auth/google', {
-      'code': serverAuthCode,
-      // Empty on purpose, not omitted: a server auth code obtained via the
-      // native SDK (through serverClientId) was never tied to a browser
-      // redirect, and Google's documented pattern for this exact "mobile
-      // app requests a code for a server client" flow is to exchange it
-      // with an empty redirect_uri — see
-      // https://developers.google.com/identity/sign-in/android/offline-access.
-      // codeVerifier is omitted entirely: this is Google Play Services'
-      // own secure channel, not a manual PKCE flow, so there's no
-      // verifier to send (the API's OAuthCodeDto already treats it as
-      // optional for exactly this reason).
-      'redirectUri': '',
-    }) as Map<String, dynamic>;
+    final Map<String, dynamic> response;
+    try {
+      response = await apiClient.post('/auth/google', {
+        'code': serverAuthCode,
+        // Empty on purpose, not omitted: a server auth code obtained via the
+        // native SDK (through serverClientId) was never tied to a browser
+        // redirect, and Google's documented pattern for this exact "mobile
+        // app requests a code for a server client" flow is to exchange it
+        // with an empty redirect_uri — see
+        // https://developers.google.com/identity/sign-in/android/offline-access.
+        // codeVerifier is omitted entirely: this is Google Play Services'
+        // own secure channel, not a manual PKCE flow, so there's no
+        // verifier to send (the API's OAuthCodeDto already treats it as
+        // optional for exactly this reason).
+        'redirectUri': '',
+      }) as Map<String, dynamic>;
+    } catch (e) {
+      rethrow;
+    }
 
     await tokenStorage.saveTokens(
       accessToken: response['accessToken'] as String,

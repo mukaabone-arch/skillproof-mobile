@@ -49,17 +49,49 @@ class ProfileController extends StateNotifier<ProfileState> {
 
   Future<void> uploadPhoto(File file) async {
     final current = state;
-    if (current is! ProfileLoaded || current.uploadingPhoto) return;
-    state = current.copyWith(uploadingPhoto: true, clearUploadPhotoError: true);
+    // POST /profiles/me/photo is derived entirely from the auth token — it
+    // never needs the client's already-loaded profile object, so this must
+    // not gate on `current is ProfileLoaded`. It used to, and that lost a
+    // real race: opening the image picker backgrounds the app, and
+    // RootScreen's app-resume refetch can land the profile back in
+    // ProfileLoading in the exact window between picking a photo and this
+    // call running — silently bailing the upload every time. uploadingPhoto
+    // (the in-flight dedupe) only exists on ProfileLoaded, so it's
+    // best-effort here — safe, because the "Change photo"/"Remove" buttons
+    // that call this only render while state is already ProfileLoaded (see
+    // ProfileScreen's body switch), so a genuine double-tap always has one
+    // to check against; it's only the *transient* non-Loaded states this
+    // relaxation is for.
+    if (current is ProfileLoaded) {
+      if (current.uploadingPhoto) return;
+      state = current.copyWith(uploadingPhoto: true, clearUploadPhotoError: true);
+    }
     try {
       final updated = await _repository.uploadPhoto(file);
       // Fresh, not a copyWith merge — same idiom as JobDetailController.apply,
       // so a stale uploadPhotoError from a previous failed attempt can't leak
-      // into this success.
+      // into this success, and so this doesn't depend on `current` having
+      // been ProfileLoaded. This is also what makes the new photo display:
+      // profile.hasPhoto flips true here, then _loadPhoto below fetches the
+      // bytes the Profile screen actually renders.
       state = ProfileLoaded(profile: updated);
       if (updated.hasPhoto) await _loadPhoto(updated.id);
     } catch (e) {
-      state = current.copyWith(uploadingPhoto: false, uploadPhotoError: _messageOf(e));
+      // Uses the latest state, not the stale `current` from before the
+      // await — `current` itself may not even be ProfileLoaded now.
+      final latest = state;
+      state = latest is ProfileLoaded
+          ? latest.copyWith(uploadingPhoto: false, uploadPhotoError: _messageOf(e))
+          : ProfileError(_messageOf(e));
+    } finally {
+      // Defensive backstop, not the primary reset path (both the success and
+      // failure branches above already clear this): guarantees a retry is
+      // never blocked by a stuck flag, even if some future path through this
+      // method fails to reset it explicitly.
+      final latest = state;
+      if (latest is ProfileLoaded && latest.uploadingPhoto) {
+        state = latest.copyWith(uploadingPhoto: false);
+      }
     }
   }
 
