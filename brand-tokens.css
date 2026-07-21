@@ -1,0 +1,25 @@
+PS C:\WINDOWS\system32> copy \\wsl$\Ubuntu\home\flairfuture\projects\skillproof\apps\web\design-refs\brand-tokens.css C:\projects\skillproof-mobile\design_refs\brand-tokens.css
+copy : Could not find a part of the path 'C:\projects\skillproof-mobile\design_refs\brand-tokens.css'.
+At line:1 char:1
++ copy \\wsl$\Ubuntu\home\flairfuture\projects\skillproof\apps\web\desi ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [Copy-Item], DirectoryNotFoundException
+    + FullyQualifiedErrorId : System.IO.DirectoryNotFoundException,Microsoft.PowerShell.Commands.CopyItemCommand
+
+PS C:\WINDOWS\system32> cd \projects\skillproof-mobile\design_refs\
+cd : Cannot find path 'C:\projects\skillproof-mobile\design_refs\' because it does not exist.
+At line:1 char:1
++ cd \projects\skillproof-mobile\design_refs\
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (C:\projects\ski...le\design_refs\:String) [Set-Location], ItemNotFoundE
+   xception
+    + FullyQualifiedErrorId : PathNotFound,Microsoft.PowerShell.Commands.SetLocationCommand
+
+PS C:\WINDOWS\system32> cd projects\skillproof-mobile\design_ref\
+cd : Cannot find path 'C:\WINDOWS\system32\projects\skillproof-mobile\design_ref\' because it does not exist.
+At line:1 char:1
++ cd projects\skillproof-mobile\design_ref\
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (C:\WINDOWS\syst...ile\design_ref\:String) [Set-Location], ItemNotFoundE
+   xception
+    + FullyQualifiedErrorId : PathNotFound,Microsoft.PowerShell.Commands.SetLocationCommand
