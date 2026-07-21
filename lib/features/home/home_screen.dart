@@ -10,15 +10,18 @@ import '../jobs/matched_controller.dart';
 import '../profile/profile_controller.dart';
 import 'widgets/hero_section.dart';
 import 'widgets/status_cards.dart';
-import 'widgets/top_matches_section.dart';
 
 /// Candidate dashboard hub — orient, show status, prompt the next action.
 /// Mirrors apps/web/components/Dashboard.tsx's purpose, phone-native:
 /// every section loads and fails independently (see HeroSection /
-/// StatusCardsRow / TopMatchesSection) rather than blocking the whole
-/// screen behind the slowest of five endpoints, which is what the web
-/// version does. Reuses the existing profile/badges/external-credentials/
-/// jobs controllers throughout — this screen has no repository of its own.
+/// StatusCardsRow) rather than blocking the whole screen behind the
+/// slowest of five endpoints, which is what the web version does. Reuses
+/// the existing profile/badges/external-credentials/jobs controllers
+/// throughout — this screen has no repository of its own. The matched-jobs
+/// load below is NOT dead despite no match list rendering here anymore:
+/// HeroSection's co-pilot reads matchedControllerProvider for its
+/// best-match/recurring-gap suggestions (the list itself lives on the
+/// Jobs tab's Matched view).
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -51,8 +54,6 @@ class HomeScreen extends ConsumerWidget {
             HeroSection(),
             SizedBox(height: AppSpacing.space5),
             StatusCardsRow(),
-            SizedBox(height: AppSpacing.space6),
-            TopMatchesSection(),
           ],
         ),
       ),
