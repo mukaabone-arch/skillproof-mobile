@@ -2,15 +2,17 @@
 class ApiConfig {
   ApiConfig._();
 
-  /// Override at build/run time, e.g.:
-  ///   flutter run --dart-define=API_BASE_URL=http://192.168.1.50:4000
+  /// Defaults to the deployed production API — a plain `flutter run` with
+  /// no override talks to the real backend. For local development against
+  /// an API running on your own machine, override at build/run time, e.g.:
+  ///   flutter run --dart-define=API_BASE_URL=http://10.0.2.2:4000
   ///
-  /// Default is the Android emulator's alias for the host machine's
-  /// localhost. iOS simulator should use http://localhost:4000; a
-  /// physical device needs your machine's LAN IP.
+  /// (10.0.2.2 is the Android emulator's alias for the host machine's
+  /// localhost; iOS simulator should use http://localhost:4000; a physical
+  /// device needs your machine's LAN IP.)
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:4000',
+    defaultValue: 'https://api.skillproof.flairfuture.com',
   );
 
   /// Base URL of the web app — for links that only make sense in a full
@@ -18,12 +20,15 @@ class ApiConfig {
   /// integrity monitoring is browser-based, so assessments are
   /// deliberately not part of this native app at all). Opened via
   /// url_launcher, not fetched, so unlike [baseUrl] this needs to be
-  /// reachable by the device's own browser — the 10.0.2.2 emulator-only
-  /// loopback alias would not work here even on an emulator. Override at
-  /// build/run time, e.g.:
+  /// reachable by the device's own browser.
+  ///
+  /// Defaults to the deployed production web app. For local development,
+  /// override at build/run time, e.g.:
   ///   flutter run --dart-define=WEB_BASE_URL=http://192.168.1.50:3000
+  /// (your machine's LAN IP — a device's own browser can't resolve
+  /// localhost or the 10.0.2.2 emulator-only loopback alias).
   static const String webBaseUrl = String.fromEnvironment(
     'WEB_BASE_URL',
-    defaultValue: 'http://192.168.0.101:3000',
+    defaultValue: 'https://skillproof.flairfuture.com',
   );
 }
