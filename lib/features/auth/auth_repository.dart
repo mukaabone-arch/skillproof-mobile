@@ -45,7 +45,16 @@ class AuthRepository {
       refreshToken: response['refreshToken'] as String,
     );
 
-    return SkillProofUser.fromJson(response['user'] as Map<String, dynamic>);
+    try {
+      return SkillProofUser.fromJson(response['user'] as Map<String, dynamic>);
+    } catch (_) {
+      // Tokens are already saved above, so the handshake itself genuinely
+      // succeeded — a malformed embedded user object shouldn't be reported
+      // as a failed sign-in (AuthController would otherwise set
+      // AuthUnauthenticated and rethrow despite a valid session now sitting
+      // in storage). Recover the user the same way session restoration does.
+      return fetchMe();
+    }
   }
 
   /// Native Google sign-in → server auth code → POST /auth/google, which
@@ -96,7 +105,14 @@ class AuthRepository {
       refreshToken: response['refreshToken'] as String,
     );
 
-    return SkillProofUser.fromJson(response['user'] as Map<String, dynamic>);
+    try {
+      return SkillProofUser.fromJson(response['user'] as Map<String, dynamic>);
+    } catch (_) {
+      // Same reasoning as verifyOtp above: the code-for-token exchange
+      // already succeeded and tokens are saved, so a malformed embedded
+      // user object shouldn't discard a valid session.
+      return fetchMe();
+    }
   }
 
   Future<SkillProofUser> fetchMe() async {
