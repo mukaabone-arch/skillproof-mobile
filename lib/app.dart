@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'features/auth/auth_controller.dart';
 import 'features/auth/auth_state.dart';
 import 'features/auth/login_screen.dart';
+import 'features/entitlements/widgets/limit_reached_listener.dart';
 import 'features/root/root_screen.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
@@ -26,7 +27,7 @@ class SkillProofApp extends ConsumerWidget {
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.dark,
       home: switch (authState) {
-        AuthAuthenticated() => const RootScreen(),
+        AuthAuthenticated() => const LimitReachedListener(child: RootScreen()),
         AuthInitial() || AuthLoading() => const _SplashScreen(),
         AuthUnauthenticated() => const LoginScreen(),
       },

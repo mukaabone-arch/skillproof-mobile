@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme/app_colors.dart';
 import '../auth/auth_controller.dart';
 import '../badges/badges_controller.dart';
+import '../entitlements/entitlements_controller.dart';
 import '../external_credentials/external_credentials_controller.dart';
 import '../jobs/applications_controller.dart';
 import '../jobs/matched_controller.dart';
@@ -28,6 +29,11 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Not rendered from directly on this screen — watched here purely so
+    // entitlements are fetched immediately at app start, since Home is
+    // always the first tab RootScreen's IndexedStack builds.
+    ref.watch(entitlementsControllerProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('SkillProof'),
@@ -47,6 +53,7 @@ class HomeScreen extends ConsumerWidget {
             ref.read(externalCredentialsControllerProvider.notifier).load(),
             ref.read(matchedControllerProvider.notifier).load(),
             ref.read(applicationsControllerProvider.notifier).load(),
+            ref.read(entitlementsControllerProvider.notifier).load(),
           ]);
         },
         child: ListView(

@@ -17,6 +17,7 @@ class VerifiedBadge {
     required this.verifyHash,
     required this.issuedAt,
     required this.verifiedBy,
+    required this.attemptNumber,
   });
 
   /// Expects one already-filtered skillClaim JSON object (with its nested
@@ -31,6 +32,7 @@ class VerifiedBadge {
       verifyHash: badge['verifyHash'] as String,
       issuedAt: DateTime.parse(badge['issuedAt'] as String),
       verifiedBy: _verifiedByFromJson(badge['verifiedBy'] as String?),
+      attemptNumber: badge['attemptNumber'] as int?,
     );
   }
 
@@ -40,6 +42,12 @@ class VerifiedBadge {
   final String verifyHash;
   final DateTime issuedAt;
   final BadgeVerificationMethod verifiedBy;
+
+  /// Null for badges issued before this field existed — never hidden when
+  /// present: employers see the same number on the public certificate
+  /// (see apps/web's assessment result page), so there's nothing to gain
+  /// by withholding it here.
+  final int? attemptNumber;
 
   // Missing/unrecognized values (older cached data, a future method this
   // build doesn't know about yet) fall back to `test` — the pre-provenance

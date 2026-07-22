@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/job.dart';
+import '../../models/matched_job.dart' show SkillMatch;
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/job_description.dart';
+import '../../widgets/usage_meter.dart';
+import '../entitlements/entitlements_controller.dart';
+import '../entitlements/entitlements_state.dart';
 import '../root/root_tab_provider.dart';
 import 'job_detail_controller.dart';
 import 'jobs_state.dart';
@@ -59,6 +63,8 @@ class _JobDetailBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final job = state.job;
+    final entitlementsState = ref.watch(entitlementsControllerProvider);
+    final entitlements = entitlementsState is EntitlementsLoaded ? entitlementsState.entitlements : null;
 
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.space4),
@@ -92,7 +98,20 @@ class _JobDetailBody extends ConsumerWidget {
           const SizedBox(height: AppSpacing.space3),
           JobDescription(description: job.description!),
         ],
+        if (entitlements != null && state.missing.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.space6),
+          _GapAnalysis(missing: state.missing, job: job, detailed: entitlements.limits.detailedGapAnalysis),
+        ],
         const SizedBox(height: AppSpacing.space7),
+        if (entitlements != null && !job.alreadyApplied) ...[
+          UsageMeter(
+            label: 'applications',
+            used: entitlements.applicationsUsage.used,
+            limit: entitlements.applicationsUsage.limit,
+            resetsAt: entitlements.applicationsUsage.resetsAt,
+          ),
+          const SizedBox(height: AppSpacing.space4),
+        ],
         Row(
           children: [
             AppButton(
@@ -154,6 +173,51 @@ class _JobDetailBody extends ConsumerWidget {
       parts.add('${job.experienceMin ?? 0}–${job.experienceMax ?? '∞'} yrs experience');
     }
     return parts.join(' · ');
+  }
+}
+
+/// Gap analysis: basic (all tiers) is just the missing-skill list, already
+/// available from GET /jobs/matched. Detailed (Premium, gapAnalysis:
+/// 'detailed') additionally ties those gaps to this job's own real salary
+/// range — no per-skill figures are invented; the only number shown is this
+/// job's actual salaryMin/salaryMax, already public above on this same
+/// screen. Mirrors apps/web/app/jobs/[id]/page.tsx's GapAnalysis exactly.
+class _GapAnalysis extends StatelessWidget {
+  const _GapAnalysis({required this.missing, required this.job, required this.detailed});
+
+  final List<SkillMatch> missing;
+  final Job job;
+  final bool detailed;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasSalary = job.salaryMin != null || job.salaryMax != null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Skill gap for this role', style: AppTypography.titleMedium),
+        const SizedBox(height: AppSpacing.space2),
+        Text(
+          'Missing: ${missing.map((m) => '${m.skillName} (${m.requiredLevel})').join(', ')}',
+          style: AppTypography.bodyMedium,
+        ),
+        if (detailed && hasSalary) ...[
+          const SizedBox(height: AppSpacing.space2),
+          Text(
+            'Closing these gaps puts you in range for roles paying '
+            '${job.salaryMin ?? '?'}–${job.salaryMax ?? '?'} — like this one.',
+            style: AppTypography.bodySmall,
+          ),
+        ],
+        if (!detailed) ...[
+          const SizedBox(height: AppSpacing.space2),
+          Text(
+            'Upgrade to see which salary bands closing these gaps unlocks.',
+            style: AppTypography.bodySmall.copyWith(color: AppColors.primary),
+          ),
+        ],
+      ],
+    );
   }
 }
 

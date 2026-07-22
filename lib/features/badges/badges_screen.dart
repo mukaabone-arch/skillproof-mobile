@@ -8,9 +8,12 @@ import '../../models/badge.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../../widgets/empty_state.dart';
+import '../../widgets/usage_meter.dart';
 import '../assessments/assessments_controller.dart';
 import '../assessments/assessments_state.dart';
 import '../assessments/widgets/assessment_catalog_card.dart';
+import '../entitlements/entitlements_controller.dart';
+import '../entitlements/entitlements_state.dart';
 import 'badges_controller.dart';
 import 'badges_highlight_provider.dart';
 import 'badges_state.dart';
@@ -146,6 +149,9 @@ class _AvailableSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final entitlementsState = ref.watch(entitlementsControllerProvider);
+    final entitlements = entitlementsState is EntitlementsLoaded ? entitlementsState.entitlements : null;
+
     return switch (state) {
       AssessmentsLoading() => const Padding(
           padding: EdgeInsets.symmetric(vertical: AppSpacing.space4),
@@ -156,7 +162,19 @@ class _AvailableSection extends ConsumerWidget {
       AssessmentsLoaded(:final entries) when entries.isEmpty =>
         Text('Nothing new to verify right now — check back later.', style: AppTypography.bodySmall),
       AssessmentsLoaded(:final entries) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Shown before the wall is hit, not after — see UsageMeter's own
+            // doc comment. Renders nothing on an unlimited plan.
+            if (entitlements != null) ...[
+              UsageMeter(
+                label: 'assessment starts',
+                used: entitlements.assessmentsUsage.used,
+                limit: entitlements.assessmentsUsage.limit,
+                resetsAt: entitlements.assessmentsUsage.resetsAt,
+              ),
+              const SizedBox(height: AppSpacing.space4),
+            ],
             for (final entry in entries)
               Padding(
                 key: keyFor(entry.skillId),
@@ -164,6 +182,7 @@ class _AvailableSection extends ConsumerWidget {
                 child: AssessmentCatalogCard(
                   entry: entry,
                   highlighted: entry.skillId == highlightedSkillId,
+                  premium: entitlements?.isPremium ?? false,
                   onTakeAssessment: () => _takeAssessment(context, ref, entry),
                 ),
               ),

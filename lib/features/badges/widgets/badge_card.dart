@@ -43,7 +43,8 @@ class BadgeCard extends StatelessWidget {
                   children: [
                     _LevelPill(label: badge.level),
                     Text(
-                      'Earned ${_formatDate(badge.issuedAt)}',
+                      'Earned ${_formatDate(badge.issuedAt)}'
+                      '${badge.attemptNumber != null ? ' · attempt #${badge.attemptNumber}' : ''}',
                       style: AppTypography.bodySmall,
                       overflow: TextOverflow.ellipsis,
                     ),

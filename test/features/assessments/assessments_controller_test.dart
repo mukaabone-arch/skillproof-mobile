@@ -11,6 +11,7 @@ AssessmentCatalogEntry _entry(String skillId) => AssessmentCatalogEntry(
       skillName: 'Skill $skillId',
       relevanceCount: 1,
       badgeLevel: 'L1',
+      levelState: 'AVAILABLE',
       estMinutes: 10,
       state: AssessmentCatalogState.available,
       webPath: '/assessments/$skillId',

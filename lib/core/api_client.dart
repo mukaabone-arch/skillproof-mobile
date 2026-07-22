@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
 import '../config/api_config.dart';
+import 'limit_reached.dart';
 import 'token_storage.dart';
 
 class ApiException implements Exception {
@@ -189,6 +190,18 @@ class ApiClient {
       final message = decoded is Map && decoded['message'] != null
           ? decoded['message'].toString()
           : 'Request failed (${response.statusCode})';
+      // Central 402 handling (per apps/api's entitlements README): every
+      // call site throws through this one path, so nothing has to
+      // special-case { code: 'LIMIT_REACHED' } itself — it just publishes
+      // to LimitReachedBus, which LimitReachedListener (mounted once,
+      // wrapping RootScreen) is the sole subscriber of.
+      if (response.statusCode == 402 && decoded is Map && decoded['code'] == 'LIMIT_REACHED') {
+        LimitReachedBus.instance.emit(LimitReachedPayload(
+          metric: decoded['metric'] as String,
+          limit: decoded['limit'] as int?,
+          resetsAt: decoded['resetsAt'] == null ? null : DateTime.parse(decoded['resetsAt'] as String),
+        ));
+      }
       throw ApiException(message, response.statusCode, decoded);
     }
     return decoded;

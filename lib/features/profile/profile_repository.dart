@@ -7,6 +7,7 @@ import 'package:http_parser/http_parser.dart';
 import '../../core/api_client.dart';
 import '../../core/providers.dart';
 import '../../models/profile.dart';
+import '../../models/profile_viewers.dart';
 // TODO: resume upload — blocked on file_picker / compileSdk 36 conflict.
 // Resume upload works on web; revisit when updating the Android toolchain
 // for release builds.
@@ -27,6 +28,13 @@ class ProfileRepository {
   Future<CandidateProfile> getMe() async {
     final response = await apiClient.get('/profiles/me') as Map<String, dynamic>;
     return CandidateProfile.fromJson(response);
+  }
+
+  /// count_only for Free, full detail for Premium (limits.profileViewers) —
+  /// the server decides the shape, not this client.
+  Future<ProfileViewersResult> getViewers() async {
+    final response = await apiClient.get('/profiles/me/viewers') as Map<String, dynamic>;
+    return profileViewersResultFromJson(response);
   }
 
   /// Only non-null arguments are sent — omitting a field leaves it

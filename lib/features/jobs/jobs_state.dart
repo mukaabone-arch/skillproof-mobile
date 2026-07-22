@@ -1,6 +1,6 @@
 import '../../models/application.dart';
 import '../../models/job.dart';
-import '../../models/matched_job.dart';
+import '../../models/matched_job.dart' show MatchedJob, SkillMatch;
 
 sealed class MatchedState {
   const MatchedState();
@@ -84,6 +84,7 @@ class JobDetailLoaded extends JobDetailState {
     this.applyIssueCode,
     this.applyIssueMessage,
     this.applyError,
+    this.missing = const [],
   });
 
   final Job job;
@@ -95,12 +96,20 @@ class JobDetailLoaded extends JobDetailState {
   final String? applyIssueMessage;
   final String? applyError;
 
+  /// This job's skill gap against the candidate's own verified skills —
+  /// best-effort, from GET /jobs/matched (see JobDetailController.load).
+  /// Empty when the candidate has no verified skills yet, or when the
+  /// matched fetch itself fails; either way there's nothing to show, not
+  /// an error worth surfacing on top of the job detail itself.
+  final List<SkillMatch> missing;
+
   JobDetailLoaded copyWith({
     Job? job,
     bool? applying,
     String? applyIssueCode,
     String? applyIssueMessage,
     String? applyError,
+    List<SkillMatch>? missing,
   }) {
     return JobDetailLoaded(
       job: job ?? this.job,
@@ -108,6 +117,7 @@ class JobDetailLoaded extends JobDetailState {
       applyIssueCode: applyIssueCode ?? this.applyIssueCode,
       applyIssueMessage: applyIssueMessage ?? this.applyIssueMessage,
       applyError: applyError ?? this.applyError,
+      missing: missing ?? this.missing,
     );
   }
 }
