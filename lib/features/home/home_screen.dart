@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme/app_colors.dart';
 import '../auth/auth_controller.dart';
 import '../badges/badges_controller.dart';
-import '../external_credentials/external_credentials_controller.dart';
+import '../certifications/certifications_controller.dart';
 import '../jobs/applications_controller.dart';
 import '../jobs/matched_controller.dart';
 import '../profile/profile_controller.dart';
@@ -17,7 +17,7 @@ import 'widgets/status_cards.dart';
 /// every section loads and fails independently (see HeroSection /
 /// StatusCardsRow) rather than blocking the whole screen behind the
 /// slowest of five endpoints, which is what the web version does. Reuses
-/// the existing profile/badges/external-credentials/jobs controllers
+/// the existing profile/badges/certifications/jobs controllers
 /// throughout — this screen has no repository of its own. The matched-jobs
 /// load below is NOT dead despite no match list rendering here anymore:
 /// HeroSection's co-pilot reads matchedControllerProvider for its
@@ -44,7 +44,7 @@ class HomeScreen extends ConsumerWidget {
           await Future.wait([
             ref.read(profileControllerProvider.notifier).load(),
             ref.read(badgesControllerProvider.notifier).load(),
-            ref.read(externalCredentialsControllerProvider.notifier).load(),
+            ref.read(certificationsControllerProvider.notifier).load(),
             ref.read(matchedControllerProvider.notifier).load(),
             ref.read(applicationsControllerProvider.notifier).load(),
           ]);

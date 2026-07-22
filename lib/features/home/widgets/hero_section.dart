@@ -9,8 +9,8 @@ import '../../../widgets/app_card.dart';
 import '../../badges/badges_controller.dart';
 import '../../badges/badges_highlight_provider.dart';
 import '../../badges/badges_state.dart';
-import '../../external_credentials/external_credentials_controller.dart';
-import '../../external_credentials/external_credentials_state.dart';
+import '../../certifications/certifications_controller.dart';
+import '../../certifications/certifications_state.dart';
 import '../../jobs/applications_controller.dart';
 import '../../jobs/job_detail_screen.dart';
 import '../../jobs/jobs_state.dart';
@@ -22,7 +22,7 @@ import 'copilot_panel.dart';
 import 'journey_progress.dart';
 
 /// Greeting + journey stepper + AI co-pilot panel — one cohesive unit
-/// because all five signals (profile, badges, external credentials,
+/// because all five signals (profile, badges, certifications,
 /// matched jobs, applications) are derived together, so they can never
 /// disagree about where the candidate is in their journey or what the
 /// co-pilot suggests next. Shown as a single loading/error unit rather than
@@ -35,13 +35,13 @@ class HeroSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profileState = ref.watch(profileControllerProvider);
     final badgesState = ref.watch(badgesControllerProvider);
-    final credentialsState = ref.watch(externalCredentialsControllerProvider);
+    final certificationsState = ref.watch(certificationsControllerProvider);
     final applicationsState = ref.watch(applicationsControllerProvider);
     final matchedState = ref.watch(matchedControllerProvider);
 
     final loading = profileState is ProfileLoading ||
         badgesState is BadgesLoading ||
-        credentialsState is ExternalCredentialsLoading ||
+        certificationsState is CertificationsLoading ||
         applicationsState is ApplicationsLoading ||
         matchedState is MatchedLoading;
     if (loading) return const _HeroSkeleton();
@@ -51,8 +51,8 @@ class HeroSection extends ConsumerWidget {
       errorMessage = profileState.message;
     } else if (badgesState is BadgesError) {
       errorMessage = badgesState.message;
-    } else if (credentialsState is ExternalCredentialsError) {
-      errorMessage = credentialsState.message;
+    } else if (certificationsState is CertificationsError) {
+      errorMessage = certificationsState.message;
     } else if (applicationsState is ApplicationsError) {
       errorMessage = applicationsState.message;
     } else if (matchedState is MatchedError) {
@@ -64,7 +64,7 @@ class HeroSection extends ConsumerWidget {
         onRetry: () {
           ref.read(profileControllerProvider.notifier).load();
           ref.read(badgesControllerProvider.notifier).load();
-          ref.read(externalCredentialsControllerProvider.notifier).load();
+          ref.read(certificationsControllerProvider.notifier).load();
           ref.read(applicationsControllerProvider.notifier).load();
           ref.read(matchedControllerProvider.notifier).load();
         },
@@ -73,18 +73,18 @@ class HeroSection extends ConsumerWidget {
 
     final profile = (profileState as ProfileLoaded).profile;
     final badgeCount = (badgesState as BadgesLoaded).badges.length;
-    final verifiedCredentialCount =
-        (credentialsState as ExternalCredentialsLoaded).credentials.where((c) => c.isVerified).length;
+    final verifiedCertificationCount =
+        (certificationsState as CertificationsLoaded).certifications.where((c) => c.isVerified).length;
     final applicationCount = (applicationsState as ApplicationsLoaded).applications.length;
     final matchedJobs = (matchedState as MatchedLoaded).jobs;
 
     final hasProfile = profile.completeness > 0;
     // "Verified skill" for journey purposes is either proof tier — a
-    // SkillProof badge or a verified external credential — matching the
+    // SkillProof badge or a verified certification — matching the
     // apply-gate's own either/or rule. This never leaks into scoring or
     // into any green-colored element; see StatusCards for how the two
     // tiers stay visually distinct even while being summed here.
-    final hasVerifiedSkill = badgeCount > 0 || verifiedCredentialCount > 0;
+    final hasVerifiedSkill = badgeCount > 0 || verifiedCertificationCount > 0;
     final hasApplied = applicationCount > 0;
     // Nothing built a profile, earned proof, or applied to anything yet —
     // same derivation as the web dashboard's isFirstSession, no new field.

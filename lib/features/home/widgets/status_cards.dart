@@ -7,8 +7,8 @@ import '../../../theme/app_typography.dart';
 import '../../../widgets/app_card.dart';
 import '../../badges/badges_controller.dart';
 import '../../badges/badges_state.dart';
-import '../../external_credentials/external_credentials_controller.dart';
-import '../../external_credentials/external_credentials_state.dart';
+import '../../certifications/certifications_controller.dart';
+import '../../certifications/certifications_state.dart';
 import '../../jobs/applications_controller.dart';
 import '../../jobs/jobs_state.dart';
 import '../../profile/profile_controller.dart';
@@ -119,24 +119,24 @@ class _ProfileStatusCard extends ConsumerWidget {
 }
 
 /// The one card that blends both proof tiers into a single count (per
-/// spec: "verified skills count (badges + external creds)"). The headline
+/// spec: "verified skills count (badges + certifications)"). The headline
 /// number itself is deliberately neutral (textPrimary), not green — it's a
 /// mixed metric, not literally "a verified SkillProof skill" — and the
 /// breakdown line underneath is the only place color appears, with green
 /// reserved strictly for the actual badge sub-count and brand for the
-/// external-credential sub-count. This keeps the two-tier rule intact even
-/// in a rolled-up summary tile: green never touches anything that isn't a
-/// SkillProof-assessed badge.
+/// verified-certification sub-count. This keeps the two-tier rule intact
+/// even in a rolled-up summary tile: green never touches anything that
+/// isn't a SkillProof-assessed badge.
 class _VerifiedSkillsStatusCard extends ConsumerWidget {
   const _VerifiedSkillsStatusCard();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final badgesState = ref.watch(badgesControllerProvider);
-    final credentialsState = ref.watch(externalCredentialsControllerProvider);
+    final certificationsState = ref.watch(certificationsControllerProvider);
 
-    final loading = badgesState is BadgesLoading || credentialsState is ExternalCredentialsLoading;
-    final hasError = badgesState is BadgesError || credentialsState is ExternalCredentialsError;
+    final loading = badgesState is BadgesLoading || certificationsState is CertificationsLoading;
+    final hasError = badgesState is BadgesError || certificationsState is CertificationsError;
 
     Widget stat;
     Widget meta;
@@ -149,9 +149,9 @@ class _VerifiedSkillsStatusCard extends ConsumerWidget {
       meta = _errorMeta();
     } else {
       final badgeCount = (badgesState as BadgesLoaded).badges.length;
-      final credentialCount =
-          (credentialsState as ExternalCredentialsLoaded).credentials.where((c) => c.isVerified).length;
-      final total = badgeCount + credentialCount;
+      final certificationCount =
+          (certificationsState as CertificationsLoaded).certifications.where((c) => c.isVerified).length;
+      final total = badgeCount + certificationCount;
 
       stat = Text(
         '$total',
@@ -159,7 +159,7 @@ class _VerifiedSkillsStatusCard extends ConsumerWidget {
       );
       meta = total == 0
           ? Text(
-              'Earn a badge or add a credential',
+              'Earn a badge or add a certification',
               style: AppTypography.bodySmall,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -170,7 +170,8 @@ class _VerifiedSkillsStatusCard extends ConsumerWidget {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 if (badgeCount > 0) _TierDot(label: '$badgeCount SkillProof', color: AppColors.success),
-                if (credentialCount > 0) _TierDot(label: '$credentialCount external', color: AppColors.primary),
+                if (certificationCount > 0)
+                  _TierDot(label: '$certificationCount certified', color: AppColors.primary),
               ],
             );
     }

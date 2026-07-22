@@ -14,9 +14,9 @@ import '../auth/auth_controller.dart';
 import '../badges/badges_controller.dart';
 import '../badges/badges_state.dart';
 import '../badges/widgets/earned_badges_section.dart';
-import '../external_credentials/external_credentials_controller.dart';
-import '../external_credentials/external_credentials_state.dart';
-import '../external_credentials/widgets/external_credentials_section.dart';
+import '../certifications/certifications_controller.dart';
+import '../certifications/certifications_state.dart';
+import '../certifications/widgets/certifications_section.dart';
 import 'profile_controller.dart';
 import 'profile_state.dart';
 import 'widgets/profile_edit_form.dart';
@@ -43,7 +43,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(profileControllerProvider);
-    final credentialsState = ref.watch(externalCredentialsControllerProvider);
+    final certificationsState = ref.watch(certificationsControllerProvider);
     final badgesState = ref.watch(badgesControllerProvider);
 
     return Scaffold(
@@ -111,9 +111,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 // ResumeSection(state: state),
                 const SizedBox(height: AppSpacing.space6),
                 CollapsibleSection(
-                  title: 'External credentials',
-                  summary: _credentialsSummary(credentialsState),
-                  child: const ExternalCredentialsSection(),
+                  title: 'Certifications',
+                  summary: _certificationsSummary(certificationsState),
+                  child: const CertificationsSection(),
                 ),
               ],
             ),
@@ -147,13 +147,13 @@ String _profileSummary(CandidateProfile profile) {
   return parts.isEmpty ? 'Tap to add your details' : parts.join(' · ');
 }
 
-/// Collapsed-state summary for the "External credentials" card. Null while
-/// still loading/errored, matching CollapsibleSection's "no summary line
-/// yet" contract for that case.
-String? _credentialsSummary(ExternalCredentialsState state) {
-  if (state is! ExternalCredentialsLoaded) return null;
-  final count = state.credentials.length;
-  return count == 0 ? 'No external credentials yet' : '$count credential${count == 1 ? '' : 's'}';
+/// Collapsed-state summary for the "Certifications" card. Null while still
+/// loading/errored, matching CollapsibleSection's "no summary line yet"
+/// contract for that case.
+String? _certificationsSummary(CertificationsState state) {
+  if (state is! CertificationsLoaded) return null;
+  final count = state.certifications.length;
+  return count == 0 ? 'No certifications yet' : '$count certification${count == 1 ? '' : 's'}';
 }
 
 /// Collapsed-state summary for the "Verified badges" card — same count

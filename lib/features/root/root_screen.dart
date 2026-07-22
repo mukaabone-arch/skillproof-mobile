@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../assessments/assessments_controller.dart';
 import '../badges/badges_controller.dart';
 import '../badges/badges_screen.dart';
-import '../external_credentials/external_credentials_controller.dart';
+import '../certifications/certifications_controller.dart';
 import '../home/home_screen.dart';
 import '../interviews/interviews_controller.dart';
 import '../interviews/interviews_screen.dart';
@@ -65,7 +65,7 @@ class _RootScreenState extends ConsumerState<RootScreen> with WidgetsBindingObse
   void _refetchAll() {
     ref.read(profileControllerProvider.notifier).load();
     ref.read(badgesControllerProvider.notifier).load();
-    ref.read(externalCredentialsControllerProvider.notifier).load();
+    ref.read(certificationsControllerProvider.notifier).load();
     ref.read(matchedControllerProvider.notifier).load();
     ref.read(applicationsControllerProvider.notifier).load();
     ref.read(assessmentsControllerProvider.notifier).load();
