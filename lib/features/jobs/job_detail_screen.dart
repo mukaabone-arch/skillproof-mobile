@@ -100,7 +100,11 @@ class _JobDetailBody extends ConsumerWidget {
         ],
         if (entitlements != null && state.missing.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.space6),
-          _GapAnalysis(missing: state.missing, job: job, detailed: entitlements.limits.detailedGapAnalysis),
+          _GapAnalysis(
+            missing: state.missing,
+            skillFrequency: state.skillFrequency,
+            detailed: entitlements.limits.detailedGapAnalysis,
+          ),
         ],
         const SizedBox(height: AppSpacing.space7),
         if (entitlements != null && !job.alreadyApplied) ...[
@@ -178,44 +182,69 @@ class _JobDetailBody extends ConsumerWidget {
 
 /// Gap analysis: basic (all tiers) is just the missing-skill list, already
 /// available from GET /jobs/matched. Detailed (Premium, gapAnalysis:
-/// 'detailed') additionally ties those gaps to this job's own real salary
-/// range — no per-skill figures are invented; the only number shown is this
-/// job's actual salaryMin/salaryMax, already public above on this same
-/// screen. Mirrors apps/web/app/jobs/[id]/page.tsx's GapAnalysis exactly.
+/// 'detailed') additionally ranks those gaps by role impact — how many of
+/// the candidate's OTHER matched roles also require the same skill,
+/// computed from the same GET /jobs/matched response `missing` is drawn
+/// from (see JobDetailController._loadGapAnalysisData) — no separate
+/// request, no backend change. A gap blocking several roles is objectively
+/// higher-impact to close than one blocking only this job. Deliberately
+/// NOT salary-band mapping: most job postings don't carry salary data at
+/// all, so there's no real range to map a gap onto — see apps/api's
+/// plans.config.ts's own comment on PLANS.PREMIUM.gapAnalysis for why.
+/// Mirrors apps/web/app/jobs/[id]/page.tsx's GapAnalysis exactly.
 class _GapAnalysis extends StatelessWidget {
-  const _GapAnalysis({required this.missing, required this.job, required this.detailed});
+  const _GapAnalysis({required this.missing, required this.skillFrequency, required this.detailed});
 
   final List<SkillMatch> missing;
-  final Job job;
+  final Map<String, int> skillFrequency;
   final bool detailed;
 
   @override
   Widget build(BuildContext context) {
-    final hasSalary = job.salaryMin != null || job.salaryMax != null;
+    if (!detailed) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Skill gap for this role', style: AppTypography.titleMedium),
+          const SizedBox(height: AppSpacing.space2),
+          Text(
+            'Missing: ${missing.map((m) => '${m.skillName} (${m.requiredLevel})').join(', ')}',
+            style: AppTypography.bodyMedium,
+          ),
+          const SizedBox(height: AppSpacing.space2),
+          Text(
+            'Upgrade to see which of these gaps matter most across your matches.',
+            style: AppTypography.bodySmall.copyWith(color: AppColors.primary),
+          ),
+        ],
+      );
+    }
+
+    final ranked = [...missing]
+      ..sort((a, b) => (skillFrequency[b.skillId] ?? 1).compareTo(skillFrequency[a.skillId] ?? 1));
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Skill gap for this role', style: AppTypography.titleMedium),
         const SizedBox(height: AppSpacing.space2),
-        Text(
-          'Missing: ${missing.map((m) => '${m.skillName} (${m.requiredLevel})').join(', ')}',
-          style: AppTypography.bodyMedium,
-        ),
-        if (detailed && hasSalary) ...[
-          const SizedBox(height: AppSpacing.space2),
-          Text(
-            'Closing these gaps puts you in range for roles paying '
-            '${job.salaryMin ?? '?'}–${job.salaryMax ?? '?'} — like this one.',
-            style: AppTypography.bodySmall,
+        for (final m in ranked)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.space1),
+            child: RichText(
+              text: TextSpan(
+                style: AppTypography.bodyMedium,
+                children: [
+                  TextSpan(text: '${m.skillName} (${m.requiredLevel})'),
+                  if ((skillFrequency[m.skillId] ?? 1) > 1)
+                    TextSpan(
+                      text: ' — needed by ${skillFrequency[m.skillId]} of your matched roles',
+                      style: AppTypography.bodySmall,
+                    ),
+                ],
+              ),
+            ),
           ),
-        ],
-        if (!detailed) ...[
-          const SizedBox(height: AppSpacing.space2),
-          Text(
-            'Upgrade to see which salary bands closing these gaps unlocks.',
-            style: AppTypography.bodySmall.copyWith(color: AppColors.primary),
-          ),
-        ],
       ],
     );
   }

@@ -85,6 +85,7 @@ class JobDetailLoaded extends JobDetailState {
     this.applyIssueMessage,
     this.applyError,
     this.missing = const [],
+    this.skillFrequency = const {},
   });
 
   final Job job;
@@ -103,6 +104,12 @@ class JobDetailLoaded extends JobDetailState {
   /// an error worth surfacing on top of the job detail itself.
   final List<SkillMatch> missing;
 
+  /// skillId -> how many of the candidate's matched jobs (not just this
+  /// one) also list it as missing — the "role impact" signal
+  /// _GapAnalysis ranks by on the detailed tier. Computed across the same
+  /// GET /jobs/matched response `missing` above is drawn from.
+  final Map<String, int> skillFrequency;
+
   JobDetailLoaded copyWith({
     Job? job,
     bool? applying,
@@ -110,6 +117,7 @@ class JobDetailLoaded extends JobDetailState {
     String? applyIssueMessage,
     String? applyError,
     List<SkillMatch>? missing,
+    Map<String, int>? skillFrequency,
   }) {
     return JobDetailLoaded(
       job: job ?? this.job,
@@ -118,6 +126,7 @@ class JobDetailLoaded extends JobDetailState {
       applyIssueMessage: applyIssueMessage ?? this.applyIssueMessage,
       applyError: applyError ?? this.applyError,
       missing: missing ?? this.missing,
+      skillFrequency: skillFrequency ?? this.skillFrequency,
     );
   }
 }

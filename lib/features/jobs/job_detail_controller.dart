@@ -40,7 +40,8 @@ class JobDetailController extends StateNotifier<JobDetailState> {
     state = const JobDetailLoading();
     try {
       final job = await _repository.browseOne(_jobId);
-      state = JobDetailLoaded(job: job, missing: await _loadMissingSkills());
+      final gapData = await _loadGapAnalysisData();
+      state = JobDetailLoaded(job: job, missing: gapData.missing, skillFrequency: gapData.skillFrequency);
     } catch (e) {
       state = JobDetailError(e.toString());
     }
@@ -49,16 +50,24 @@ class JobDetailController extends StateNotifier<JobDetailState> {
   /// Best-effort — mirrors apps/web/app/jobs/[id]/page.tsx's own
   /// `.catch(() => undefined)`: no verified skills yet (an empty /jobs/matched)
   /// or a failed fetch just means no gap section renders, not an error on
-  /// top of the job detail itself.
-  Future<List<SkillMatch>> _loadMissingSkills() async {
+  /// top of the job detail itself. skillFrequency is computed across every
+  /// one of the candidate's matched jobs (not just this one) in the same
+  /// pass — see JobDetailLoaded.skillFrequency.
+  Future<({List<SkillMatch> missing, Map<String, int> skillFrequency})> _loadGapAnalysisData() async {
     try {
       final matched = await _repository.matched();
+      final skillFrequency = <String, int>{};
       for (final m in matched) {
-        if (m.job.id == _jobId) return m.missing;
+        for (final gap in m.missing) {
+          skillFrequency[gap.skillId] = (skillFrequency[gap.skillId] ?? 0) + 1;
+        }
       }
-      return const [];
+      for (final m in matched) {
+        if (m.job.id == _jobId) return (missing: m.missing, skillFrequency: skillFrequency);
+      }
+      return (missing: const <SkillMatch>[], skillFrequency: skillFrequency);
     } catch (_) {
-      return const [];
+      return (missing: const <SkillMatch>[], skillFrequency: const <String, int>{});
     }
   }
 
@@ -72,9 +81,14 @@ class JobDetailController extends StateNotifier<JobDetailState> {
 
     // Base every outcome off this cleared snapshot, not `current` — otherwise
     // a stale issue/error from a previous failed attempt would leak into the
-    // next one. `missing` carries forward unchanged (applying doesn't affect
-    // the candidate's skill gap for this job).
-    final cleared = JobDetailLoaded(job: current.job, applying: true, missing: current.missing);
+    // next one. `missing`/`skillFrequency` carry forward unchanged (applying
+    // doesn't affect the candidate's skill gap for this job).
+    final cleared = JobDetailLoaded(
+      job: current.job,
+      applying: true,
+      missing: current.missing,
+      skillFrequency: current.skillFrequency,
+    );
     state = cleared;
 
     try {
@@ -82,7 +96,7 @@ class JobDetailController extends StateNotifier<JobDetailState> {
       // Re-fetch rather than locally flipping `alreadyApplied`, so the
       // screen reflects exactly what the server now has.
       final refreshed = await _repository.browseOne(_jobId);
-      state = JobDetailLoaded(job: refreshed, missing: current.missing);
+      state = JobDetailLoaded(job: refreshed, missing: current.missing, skillFrequency: current.skillFrequency);
     } on ApiException catch (e) {
       final code = e.body is Map ? (e.body as Map)['code'] as String? : null;
       if (code == 'PROFILE_INCOMPLETE' || code == 'BADGE_REQUIRED') {
