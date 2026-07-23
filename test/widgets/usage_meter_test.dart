@@ -28,6 +28,27 @@ void main() {
 
     expect(find.textContaining('6 of 10 job applications left this month'), findsOneWidget);
     expect(find.textContaining('Resets Aug 1'), findsOneWidget);
+    // Fill represents what's REMAINING (6 of 10 → 60%), not what's been
+    // consumed (which would render as 40%) — matching the apps/web fix.
+    final indicator = tester.widget<LinearProgressIndicator>(find.byType(LinearProgressIndicator));
+    expect(indicator.value, closeTo(0.6, 0.0001));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a full allowance renders a full bar, not an empty one', (tester) async {
+    tester.view.physicalSize = const Size(375, 667);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(_host(UsageMeter(
+      label: 'assessment starts',
+      used: 0,
+      limit: 5,
+      resetsAt: DateTime.utc(2026, 8, 1),
+    )));
+
+    final indicator = tester.widget<LinearProgressIndicator>(find.byType(LinearProgressIndicator));
+    expect(indicator.value, closeTo(1.0, 0.0001));
     expect(tester.takeException(), isNull);
   });
 
@@ -60,6 +81,8 @@ void main() {
     )));
 
     expect(find.textContaining('0 of 2 assessment starts left this month'), findsOneWidget);
+    final indicator = tester.widget<LinearProgressIndicator>(find.byType(LinearProgressIndicator));
+    expect(indicator.value, closeTo(0.0, 0.0001));
     expect(tester.takeException(), isNull);
   });
 }

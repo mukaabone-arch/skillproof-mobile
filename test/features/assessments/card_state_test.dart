@@ -37,14 +37,14 @@ void main() {
       expect(display.metaText, isNotNull);
     });
 
-    test('cooldown: disabled, shows the local-time retake date, nudges Free to upgrade', () {
+    test('cooldown: disabled, explains why before the local-time retake date, nudges Free to upgrade', () {
       final retakeAt = DateTime.utc(2026, 7, 24, 10);
       final display = resolveCardDisplay(
         _entry(state: AssessmentCatalogState.cooldown, retakeAvailableAt: retakeAt),
       );
 
       expect(display.buttonEnabled, isFalse);
-      expect(display.metaText, contains('Retake available from'));
+      expect(display.metaText, contains('Retakes are limited so badges stay credible to employers'));
       expect(display.metaText, contains('Premium removes retake cooldowns entirely'));
       // The API's ISO-8601 UTC timestamp is rendered in device-local time,
       // not echoed back verbatim.
@@ -54,14 +54,14 @@ void main() {
       expect(display.metaText, contains(expectedDate));
     });
 
-    test('cooldown: Premium gets the date with no upgrade nudge', () {
+    test('cooldown: Premium gets the same reason and date with no upgrade nudge', () {
       final retakeAt = DateTime.utc(2026, 7, 24, 10);
       final display = resolveCardDisplay(
         _entry(state: AssessmentCatalogState.cooldown, retakeAvailableAt: retakeAt),
         premium: true,
       );
 
-      expect(display.metaText, contains('Retake available from'));
+      expect(display.metaText, contains('Retakes are limited so badges stay credible to employers'));
       expect(display.metaText, isNot(contains('Premium')));
     });
 

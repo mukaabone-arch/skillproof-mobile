@@ -4,6 +4,7 @@ import '../../../models/badge.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_card.dart';
+import '../../assessments/level_info.dart';
 
 /// A single verified badge — the payoff card of the whole app. The big
 /// coral medallion is the "prominent verified indicator" this screen calls
@@ -13,6 +14,10 @@ import '../../../widgets/app_card.dart';
 /// success-green, for "verified" elsewhere) because these two spots are the
 /// one deliberate exception to that rule. Tapping opens the public
 /// certificate page in the device browser — see [BadgesScreen].
+///
+/// The level name/description and the "verified by X, employers can
+/// independently confirm it" line mirror apps/web/app/assessments/page.tsx's
+/// earned-level LevelRow branch — keep the two in sync when either changes.
 class BadgeCard extends StatelessWidget {
   const BadgeCard({required this.badge, required this.onTap, super.key});
 
@@ -35,13 +40,18 @@ class BadgeCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(badge.skillName, style: AppTypography.titleMedium),
+                const SizedBox(height: AppSpacing.space1),
+                Text(
+                  'Level ${badge.level} · ${levelDescription(badge.level)}',
+                  style: AppTypography.bodySmall,
+                ),
                 const SizedBox(height: AppSpacing.space2),
                 Wrap(
                   spacing: AppSpacing.space2,
                   runSpacing: AppSpacing.space1,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    _LevelPill(label: badge.level),
+                    _LevelPill(label: levelName(badge.level)),
                     Text(
                       'Earned ${_formatDate(badge.issuedAt)}'
                       '${badge.attemptNumber != null ? ' · attempt #${badge.attemptNumber}' : ''}',
@@ -50,6 +60,13 @@ class BadgeCard extends StatelessWidget {
                     ),
                     _ProvenanceChip(method: badge.verifiedBy),
                   ],
+                ),
+                const SizedBox(height: AppSpacing.space2),
+                Text(
+                  badge.verifiedBy == BadgeVerificationMethod.discussion
+                      ? 'Verified by a live discussion review — employers can independently confirm it.'
+                      : 'Verified by an automated test — employers can independently confirm it.',
+                  style: AppTypography.bodySmall,
                 ),
               ],
             ),

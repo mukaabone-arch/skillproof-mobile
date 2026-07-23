@@ -6,11 +6,17 @@ import '../../../theme/app_typography.dart';
 import '../../../widgets/app_button.dart';
 import '../../../widgets/app_card.dart';
 import '../card_state.dart';
+import '../level_info.dart';
 
 /// One "available to verify" skill on the Badges screen. Deliberately
 /// brand, not [SkillBadge]'s success-green — this is an *offered* level,
 /// not a verified one; see the color rule on AppColors and SkillBadge's own
 /// doc comment ("must never be reused for a plain required-skill chip").
+///
+/// Copy mirrors apps/web/app/assessments/page.tsx's LevelRow/AvailabilityMeta
+/// where the same concept applies to this app's simplified one-card-per-skill
+/// projection — see [AssessmentCatalogEntry]'s own doc comment for how it
+/// diverges (no LOCKED/SUBSUMED/EARNED rows, no test/discussion choice).
 class AssessmentCatalogCard extends StatelessWidget {
   const AssessmentCatalogCard({
     required this.entry,
@@ -53,8 +59,13 @@ class AssessmentCatalogCard extends StatelessWidget {
               children: [
                 Expanded(child: Text(entry.skillName, style: AppTypography.titleMedium)),
                 const SizedBox(width: AppSpacing.space2),
-                _LevelChip(label: entry.badgeLevel),
+                _LevelChip(label: levelName(entry.badgeLevel)),
               ],
+            ),
+            const SizedBox(height: AppSpacing.space1),
+            Text(
+              'Level ${entry.badgeLevel} · ${levelDescription(entry.badgeLevel)}',
+              style: AppTypography.bodySmall,
             ),
             if (entry.relevanceCount > 0) ...[
               const SizedBox(height: AppSpacing.space1),
@@ -64,7 +75,18 @@ class AssessmentCatalogCard extends StatelessWidget {
               ),
             ],
             const SizedBox(height: AppSpacing.space2),
-            Text('${entry.estMinutes} min', style: AppTypography.meta()),
+            Text(
+              entry.isDiscussion ? 'Live discussion · ${entry.estMinutes} min' : 'Timed test · ${entry.estMinutes} min',
+              style: AppTypography.meta(),
+            ),
+            if (entry.isDiscussion) ...[
+              const SizedBox(height: AppSpacing.space2),
+              Text(
+                "A reviewer talks through your reasoning live, not just your final answer — it's the same "
+                'verified badge as a timed test, just a different way to prove it.',
+                style: AppTypography.bodySmall,
+              ),
+            ],
             if (display.metaText != null) ...[
               const SizedBox(height: AppSpacing.space2),
               Text(

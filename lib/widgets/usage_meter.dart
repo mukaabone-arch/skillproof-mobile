@@ -36,7 +36,12 @@ class UsageMeter extends StatelessWidget {
 
     final cap = limit!;
     final remaining = (cap - used).clamp(0, cap);
-    final pct = cap > 0 ? (used / cap).clamp(0.0, 1.0) : 1.0;
+    // Fill represents what's left, not what's been consumed, so it agrees
+    // with the "N left" label right above it: a full bar means the whole
+    // allowance is still available, and it drains toward empty (and
+    // [AppColors.warning]) as quota is used. Matches the apps/web fix to
+    // UsageMeter.tsx, which had the same used/limit-vs-remaining/limit bug.
+    final pct = cap > 0 ? (remaining / cap).clamp(0.0, 1.0) : 1.0;
     final atZero = remaining == 0;
     final tone = atZero ? AppColors.warning : AppColors.primary;
     final local = resetsAt.toLocal();
