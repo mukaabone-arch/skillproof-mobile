@@ -14,14 +14,18 @@ import '../auth/auth_controller.dart';
 import '../badges/badges_controller.dart';
 import '../badges/badges_state.dart';
 import '../badges/widgets/earned_badges_section.dart';
+import '../entitlements/entitlements_controller.dart';
 import '../external_credentials/external_credentials_controller.dart';
 import '../external_credentials/external_credentials_state.dart';
 import '../external_credentials/widgets/external_credentials_section.dart';
 import 'profile_controller.dart';
 import 'profile_state.dart';
+import 'profile_viewers_controller.dart';
 import 'widgets/profile_edit_form.dart';
 import 'widgets/profile_photo_section.dart';
 import 'widgets/profile_view.dart';
+import 'widgets/profile_viewers_section.dart';
+import 'widgets/resume_export_card.dart';
 // TODO: resume upload — blocked on file_picker / compileSdk 36 conflict.
 // Resume upload works on web; revisit when updating the Android toolchain
 // for release builds.
@@ -70,7 +74,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             onRetry: () => ref.read(profileControllerProvider.notifier).load(),
           ),
         ProfileLoaded() => RefreshIndicator(
-            onRefresh: () => ref.read(profileControllerProvider.notifier).load(),
+            onRefresh: () => Future.wait([
+              ref.read(profileControllerProvider.notifier).load(),
+              ref.read(profileViewersControllerProvider.notifier).load(),
+              ref.read(entitlementsControllerProvider.notifier).load(),
+            ]),
             child: ListView(
               padding: const EdgeInsets.all(AppSpacing.space4),
               children: [
@@ -115,6 +123,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   summary: _credentialsSummary(credentialsState),
                   child: const ExternalCredentialsSection(),
                 ),
+                const SizedBox(height: AppSpacing.space3),
+                const CollapsibleSection(
+                  title: 'Profile viewers',
+                  child: ProfileViewersSection(),
+                ),
+                const SizedBox(height: AppSpacing.space3),
+                const ResumeExportCard(),
               ],
             ),
           ),

@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/job.dart';
+import '../../models/matched_job.dart' show SkillMatch;
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/job_description.dart';
+import '../../widgets/usage_meter.dart';
+import '../entitlements/entitlements_controller.dart';
+import '../entitlements/entitlements_state.dart';
 import '../root/root_tab_provider.dart';
 import 'job_detail_controller.dart';
 import 'jobs_state.dart';
@@ -59,6 +63,8 @@ class _JobDetailBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final job = state.job;
+    final entitlementsState = ref.watch(entitlementsControllerProvider);
+    final entitlements = entitlementsState is EntitlementsLoaded ? entitlementsState.entitlements : null;
 
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.space4),
@@ -92,7 +98,24 @@ class _JobDetailBody extends ConsumerWidget {
           const SizedBox(height: AppSpacing.space3),
           JobDescription(description: job.description!),
         ],
+        if (entitlements != null && state.missing.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.space6),
+          _GapAnalysis(
+            missing: state.missing,
+            skillFrequency: state.skillFrequency,
+            detailed: entitlements.limits.detailedGapAnalysis,
+          ),
+        ],
         const SizedBox(height: AppSpacing.space7),
+        if (entitlements != null && !job.alreadyApplied) ...[
+          UsageMeter(
+            label: 'applications',
+            used: entitlements.applicationsUsage.used,
+            limit: entitlements.applicationsUsage.limit,
+            resetsAt: entitlements.applicationsUsage.resetsAt,
+          ),
+          const SizedBox(height: AppSpacing.space4),
+        ],
         Row(
           children: [
             AppButton(
@@ -154,6 +177,76 @@ class _JobDetailBody extends ConsumerWidget {
       parts.add('${job.experienceMin ?? 0}–${job.experienceMax ?? '∞'} yrs experience');
     }
     return parts.join(' · ');
+  }
+}
+
+/// Gap analysis: basic (all tiers) is just the missing-skill list, already
+/// available from GET /jobs/matched. Detailed (Premium, gapAnalysis:
+/// 'detailed') additionally ranks those gaps by role impact — how many of
+/// the candidate's OTHER matched roles also require the same skill,
+/// computed from the same GET /jobs/matched response `missing` is drawn
+/// from (see JobDetailController._loadGapAnalysisData) — no separate
+/// request, no backend change. A gap blocking several roles is objectively
+/// higher-impact to close than one blocking only this job. Deliberately
+/// NOT salary-band mapping: most job postings don't carry salary data at
+/// all, so there's no real range to map a gap onto — see apps/api's
+/// plans.config.ts's own comment on PLANS.PREMIUM.gapAnalysis for why.
+/// Mirrors apps/web/app/jobs/[id]/page.tsx's GapAnalysis exactly.
+class _GapAnalysis extends StatelessWidget {
+  const _GapAnalysis({required this.missing, required this.skillFrequency, required this.detailed});
+
+  final List<SkillMatch> missing;
+  final Map<String, int> skillFrequency;
+  final bool detailed;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!detailed) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Skill gap for this role', style: AppTypography.titleMedium),
+          const SizedBox(height: AppSpacing.space2),
+          Text(
+            'Missing: ${missing.map((m) => '${m.skillName} (${m.requiredLevel})').join(', ')}',
+            style: AppTypography.bodyMedium,
+          ),
+          const SizedBox(height: AppSpacing.space2),
+          Text(
+            'Upgrade to see which of these gaps matter most across your matches.',
+            style: AppTypography.bodySmall.copyWith(color: AppColors.primary),
+          ),
+        ],
+      );
+    }
+
+    final ranked = [...missing]
+      ..sort((a, b) => (skillFrequency[b.skillId] ?? 1).compareTo(skillFrequency[a.skillId] ?? 1));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Skill gap for this role', style: AppTypography.titleMedium),
+        const SizedBox(height: AppSpacing.space2),
+        for (final m in ranked)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.space1),
+            child: RichText(
+              text: TextSpan(
+                style: AppTypography.bodyMedium,
+                children: [
+                  TextSpan(text: '${m.skillName} (${m.requiredLevel})'),
+                  if ((skillFrequency[m.skillId] ?? 1) > 1)
+                    TextSpan(
+                      text: ' — needed by ${skillFrequency[m.skillId]} of your matched roles',
+                      style: AppTypography.bodySmall,
+                    ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
   }
 }
 

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../assessments/assessments_controller.dart';
 import '../badges/badges_controller.dart';
 import '../badges/badges_screen.dart';
+import '../entitlements/entitlements_controller.dart';
 import '../external_credentials/external_credentials_controller.dart';
 import '../home/home_screen.dart';
 import '../interviews/interviews_controller.dart';
@@ -70,6 +71,7 @@ class _RootScreenState extends ConsumerState<RootScreen> with WidgetsBindingObse
     ref.read(applicationsControllerProvider.notifier).load();
     ref.read(assessmentsControllerProvider.notifier).load();
     ref.read(interviewsControllerProvider.notifier).load();
+    ref.read(entitlementsControllerProvider.notifier).load();
   }
 
   @override

@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api_client.dart';
+import '../../models/matched_job.dart' show SkillMatch;
+import '../entitlements/entitlements_controller.dart';
 import 'jobs_repository.dart';
 import 'jobs_state.dart';
 
@@ -9,22 +13,61 @@ import 'jobs_state.dart';
 /// tapping through from both "Matched" and "Browse").
 final jobDetailControllerProvider = StateNotifierProvider.autoDispose
     .family<JobDetailController, JobDetailState, String>((ref, jobId) {
-  return JobDetailController(ref.read(jobsRepositoryProvider), jobId)..load();
+  return JobDetailController(
+    ref.read(jobsRepositoryProvider),
+    jobId,
+    // Applying consumes a unit of the 'applications' quota — refetch so
+    // usage meters elsewhere reflect reality rather than being optimistically
+    // patched. The API also refunds quota on a downstream 4xx, so this fires
+    // after every outcome (see apply() below), not just success.
+    onQuotaConsumingAction: () => ref.read(entitlementsControllerProvider.notifier).load(),
+  )..load();
 });
 
 class JobDetailController extends StateNotifier<JobDetailState> {
-  JobDetailController(this._repository, this._jobId) : super(const JobDetailLoading());
+  JobDetailController(this._repository, this._jobId, {required this.onQuotaConsumingAction})
+      : super(const JobDetailLoading());
 
   final JobsRepository _repository;
   final String _jobId;
+
+  /// Injected rather than read directly (same DI idiom as
+  /// AssessmentsController's launcher) so this stays testable without a
+  /// Riverpod container.
+  final Future<void> Function() onQuotaConsumingAction;
 
   Future<void> load() async {
     state = const JobDetailLoading();
     try {
       final job = await _repository.browseOne(_jobId);
-      state = JobDetailLoaded(job: job);
+      final gapData = await _loadGapAnalysisData();
+      state = JobDetailLoaded(job: job, missing: gapData.missing, skillFrequency: gapData.skillFrequency);
     } catch (e) {
       state = JobDetailError(e.toString());
+    }
+  }
+
+  /// Best-effort — mirrors apps/web/app/jobs/[id]/page.tsx's own
+  /// `.catch(() => undefined)`: no verified skills yet (an empty /jobs/matched)
+  /// or a failed fetch just means no gap section renders, not an error on
+  /// top of the job detail itself. skillFrequency is computed across every
+  /// one of the candidate's matched jobs (not just this one) in the same
+  /// pass — see JobDetailLoaded.skillFrequency.
+  Future<({List<SkillMatch> missing, Map<String, int> skillFrequency})> _loadGapAnalysisData() async {
+    try {
+      final matched = await _repository.matched();
+      final skillFrequency = <String, int>{};
+      for (final m in matched) {
+        for (final gap in m.missing) {
+          skillFrequency[gap.skillId] = (skillFrequency[gap.skillId] ?? 0) + 1;
+        }
+      }
+      for (final m in matched) {
+        if (m.job.id == _jobId) return (missing: m.missing, skillFrequency: skillFrequency);
+      }
+      return (missing: const <SkillMatch>[], skillFrequency: skillFrequency);
+    } catch (_) {
+      return (missing: const <SkillMatch>[], skillFrequency: const <String, int>{});
     }
   }
 
@@ -38,8 +81,14 @@ class JobDetailController extends StateNotifier<JobDetailState> {
 
     // Base every outcome off this cleared snapshot, not `current` — otherwise
     // a stale issue/error from a previous failed attempt would leak into the
-    // next one.
-    final cleared = JobDetailLoaded(job: current.job, applying: true);
+    // next one. `missing`/`skillFrequency` carry forward unchanged (applying
+    // doesn't affect the candidate's skill gap for this job).
+    final cleared = JobDetailLoaded(
+      job: current.job,
+      applying: true,
+      missing: current.missing,
+      skillFrequency: current.skillFrequency,
+    );
     state = cleared;
 
     try {
@@ -47,7 +96,7 @@ class JobDetailController extends StateNotifier<JobDetailState> {
       // Re-fetch rather than locally flipping `alreadyApplied`, so the
       // screen reflects exactly what the server now has.
       final refreshed = await _repository.browseOne(_jobId);
-      state = JobDetailLoaded(job: refreshed);
+      state = JobDetailLoaded(job: refreshed, missing: current.missing, skillFrequency: current.skillFrequency);
     } on ApiException catch (e) {
       final code = e.body is Map ? (e.body as Map)['code'] as String? : null;
       if (code == 'PROFILE_INCOMPLETE' || code == 'BADGE_REQUIRED') {
@@ -61,6 +110,11 @@ class JobDetailController extends StateNotifier<JobDetailState> {
       }
     } catch (e) {
       state = cleared.copyWith(applying: false, applyError: e.toString());
+    } finally {
+      // Any outcome here (success, a refunded 4xx like PROFILE_INCOMPLETE/
+      // BADGE_REQUIRED/LIMIT_REACHED, or a genuine failure) can change the
+      // applications quota server-side — never assume it's unaffected.
+      unawaited(onQuotaConsumingAction());
     }
   }
 }

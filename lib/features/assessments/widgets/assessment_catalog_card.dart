@@ -16,6 +16,7 @@ class AssessmentCatalogCard extends StatelessWidget {
     required this.entry,
     required this.onTakeAssessment,
     this.highlighted = false,
+    this.premium = false,
     super.key,
   });
 
@@ -23,9 +24,15 @@ class AssessmentCatalogCard extends StatelessWidget {
   final VoidCallback onTakeAssessment;
   final bool highlighted;
 
+  /// Only affects the retake-cooldown/lifetime-cap nudge wording — see
+  /// resolveCardDisplay's own doc comment. Passed down from the caller
+  /// (which reads entitlementsControllerProvider) rather than watched here,
+  /// so this card stays a plain, pure StatelessWidget.
+  final bool premium;
+
   @override
   Widget build(BuildContext context) {
-    final display = resolveCardDisplay(entry);
+    final display = resolveCardDisplay(entry, premium: premium);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),

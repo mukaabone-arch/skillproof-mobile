@@ -9,6 +9,7 @@ import '../../widgets/empty_state.dart';
 import 'interviews_controller.dart';
 import 'interviews_state.dart';
 import 'widgets/interview_card.dart';
+import 'widgets/interview_prep_section.dart';
 
 /// The candidate's own view of every pipeline they're in, across every
 /// employer — mirrors apps/web/components/CandidateInterviews.tsx. No
@@ -32,10 +33,13 @@ class InterviewsScreen extends ConsumerWidget {
         InterviewsLoaded(:final interviews) when interviews.isEmpty => RefreshIndicator(
             onRefresh: () => ref.read(interviewsControllerProvider.notifier).load(),
             child: ListView(
+              padding: const EdgeInsets.all(AppSpacing.space4),
               children: const [
                 EmptyState(
                   message: "No interviews yet — when an employer invites you, it'll show here.",
                 ),
+                SizedBox(height: AppSpacing.space4),
+                InterviewPrepSection(),
               ],
             ),
           ),
@@ -79,6 +83,8 @@ class _InterviewsList extends ConsumerWidget {
                     ref.read(interviewsControllerProvider.notifier).respondOffer(interview.id, response),
               ),
             ),
+          const SizedBox(height: AppSpacing.space3),
+          const InterviewPrepSection(),
         ],
       ),
     );

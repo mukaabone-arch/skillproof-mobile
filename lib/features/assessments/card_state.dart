@@ -19,7 +19,12 @@ class AssessmentCardDisplay {
   final String? metaText;
 }
 
-AssessmentCardDisplay resolveCardDisplay(AssessmentCatalogEntry entry) {
+/// [premium] only changes the wording of the upgrade nudge below — the
+/// button state/date logic is identical either way; retakesPerSkillLifetime
+/// still applies on Premium too, just at a higher cap (see
+/// plans.config.ts), so it's never framed as fully removed like the
+/// cooldown is.
+AssessmentCardDisplay resolveCardDisplay(AssessmentCatalogEntry entry, {bool premium = false}) {
   switch (entry.state) {
     case AssessmentCatalogState.available:
       return const AssessmentCardDisplay(
@@ -35,12 +40,29 @@ AssessmentCardDisplay resolveCardDisplay(AssessmentCatalogEntry entry) {
         metaText: "You've already started this — finish it on the assessment site.",
       );
     case AssessmentCatalogState.cooldown:
+      // Mirrors apps/api's entitlements README: a lifetime-cap breach always
+      // has resetsAt (here, retakeAvailableAt) null — there is no reset —
+      // while a cooldown always carries a real date. That's the only signal
+      // this catalog entry gives for telling the two apart, since retake
+      // attempts are never started in-app (see AssessmentsController), so
+      // this app never sees the 402 LIMIT_REACHED shape that would otherwise
+      // distinguish them by `metric`.
       final at = entry.retakeAvailableAt;
+      if (at == null) {
+        return AssessmentCardDisplay(
+          state: AssessmentCatalogState.cooldown,
+          buttonLabel: 'Take assessment',
+          buttonEnabled: false,
+          metaText: "You've used all retakes allowed for this skill — this cap doesn't reset."
+              '${premium ? '' : ' Premium allows more retakes per skill.'}',
+        );
+      }
       return AssessmentCardDisplay(
         state: AssessmentCatalogState.cooldown,
         buttonLabel: 'Take assessment',
         buttonEnabled: false,
-        metaText: at == null ? null : 'Retake available from ${_formatLocalDate(at)}',
+        metaText: 'Retake available from ${_formatLocalDate(at)}.'
+            '${premium ? '' : ' Premium removes retake cooldowns entirely.'}',
       );
   }
 }

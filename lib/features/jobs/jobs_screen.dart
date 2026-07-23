@@ -8,12 +8,30 @@ import '../../widgets/app_card.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/score_bar.dart';
 import '../../widgets/skill_badge.dart';
+import '../entitlements/entitlements_controller.dart';
+import '../entitlements/entitlements_state.dart';
 import 'applications_controller.dart';
 import 'browse_controller.dart';
 import 'job_detail_screen.dart';
 import 'jobs_state.dart';
 import 'matched_controller.dart';
 import 'widgets/job_card.dart';
+
+/// applicationStatusDetail: false collapses the 5 raw ApplicationStatus
+/// values into 3 coarser buckets — still fully honest (nothing that
+/// happened is hidden), just less granular than Premium's exact status.
+/// GET /applications/me never withholds the raw status regardless of
+/// tier; this is purely a display choice, mirroring
+/// apps/web/components/CandidateJobs.tsx's COARSE_STATUS exactly.
+const Map<String, String> _coarseStatus = {
+  'APPLIED': 'Submitted',
+  'REVIEWED': 'In review',
+  'SHORTLISTED': 'In review',
+  'REJECTED': 'Decided',
+  'WITHDRAWN': 'Decided',
+};
+
+String _displayStatus(String status, bool detailed) => detailed ? status : (_coarseStatus[status] ?? status);
 
 /// Tabs: ranked matches, browse/search, and the candidate's own
 /// applications. Each tab owns its own controller/state so switching tabs
@@ -276,6 +294,10 @@ class _ApplicationsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(applicationsControllerProvider);
+    final entitlementsState = ref.watch(entitlementsControllerProvider);
+    final detailed = entitlementsState is EntitlementsLoaded
+        ? entitlementsState.entitlements.limits.applicationStatusDetail
+        : false;
 
     return switch (state) {
       ApplicationsLoading() => const Center(child: CircularProgressIndicator()),
@@ -314,12 +336,19 @@ class _ApplicationsTab extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(AppRadius.full),
                           ),
                           child: Text(
-                            application.status,
+                            _displayStatus(application.status, detailed),
                             style: AppTypography.metaLabel(color: statusStyle.foreground),
                           ),
                         ),
                       ],
                     ),
+                    if (!detailed) ...[
+                      const SizedBox(height: AppSpacing.space1),
+                      Text(
+                        'Upgrade to see the exact status instead of a rough stage.',
+                        style: AppTypography.bodySmall.copyWith(color: AppColors.primary),
+                      ),
+                    ],
                     const SizedBox(height: AppSpacing.space1),
                     Text(application.orgName, style: AppTypography.bodySmall),
                     const SizedBox(height: AppSpacing.space1),
