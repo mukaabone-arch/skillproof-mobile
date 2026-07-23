@@ -80,6 +80,22 @@ class _BadgesScreenState extends ConsumerState<BadgesScreen> {
             : ListView(
                 padding: const EdgeInsets.all(AppSpacing.space4),
                 children: [
+                  // Framing copy mirrors apps/web/app/assessments/page.tsx's
+                  // two intro paragraphs — keep the two in sync.
+                  Text(
+                    "Pass an assessment to earn a verified skill badge for your profile. Employers can see "
+                    "every badge you've earned — it's verified badges, not self-reported skills, that drive "
+                    'your job matches.',
+                    style: AppTypography.bodyMedium,
+                  ),
+                  const SizedBox(height: AppSpacing.space3),
+                  Text(
+                    'Each skill has up to four levels — Foundational, Practitioner, Advanced, and Expert — '
+                    'each one more rigorous than the last. Employers see exactly which level you\'ve reached '
+                    'for every skill.',
+                    style: AppTypography.bodyMedium,
+                  ),
+                  const SizedBox(height: AppSpacing.space6),
                   Text('Earned', style: AppTypography.titleMedium),
                   const SizedBox(height: AppSpacing.space3),
                   EarnedBadgesSection(
@@ -175,6 +191,16 @@ class _AvailableSection extends ConsumerWidget {
               ),
               const SizedBox(height: AppSpacing.space4),
             ],
+            // Nothing is paginated or held back here — say so explicitly
+            // rather than leaving a short list looking broken. Mirrors the
+            // intent of apps/web's "showing the full assessment catalog"
+            // note, worded for this screen's filtered (next-level-only) view.
+            Text(
+              'Showing everything available to verify — ${entries.length} skill${entries.length == 1 ? '' : 's'} '
+              'right now.',
+              style: AppTypography.bodySmall,
+            ),
+            const SizedBox(height: AppSpacing.space3),
             for (final entry in entries)
               Padding(
                 key: keyFor(entry.skillId),

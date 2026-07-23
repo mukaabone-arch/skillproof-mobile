@@ -57,11 +57,14 @@ AssessmentCardDisplay resolveCardDisplay(AssessmentCatalogEntry entry, {bool pre
               '${premium ? '' : ' Premium allows more retakes per skill.'}',
         );
       }
+      // Explains *why* the retake is locked, not just the bare date —
+      // mirrors apps/web's DiscussionAction cooldown copy.
       return AssessmentCardDisplay(
         state: AssessmentCatalogState.cooldown,
         buttonLabel: 'Take assessment',
         buttonEnabled: false,
-        metaText: 'Retake available from ${_formatLocalDate(at)}.'
+        metaText: 'Retakes are limited so badges stay credible to employers — you can try again '
+            'from ${_formatLocalDate(at)}.'
             '${premium ? '' : ' Premium removes retake cooldowns entirely.'}',
       );
   }

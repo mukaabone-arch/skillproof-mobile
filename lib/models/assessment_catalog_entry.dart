@@ -52,6 +52,13 @@ class AssessmentCatalogEntry {
   final String webPath;
   final DateTime? retakeAvailableAt;
 
+  /// Display-only: the summary endpoint always resolves one representative
+  /// format per level (TEST wins when both exist — see
+  /// AssessmentsService.getCandidateSummary), never a test/discussion choice
+  /// like the full web catalog offers, so this is inferred from webPath
+  /// rather than a distinct field the API sends.
+  bool get isDiscussion => webPath.contains('/assessments/discussion/');
+
   static AssessmentCatalogState _stateFromJson(String value) {
     switch (value) {
       case 'in_progress':
