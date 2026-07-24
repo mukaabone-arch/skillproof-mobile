@@ -14,10 +14,10 @@ import '../auth/auth_controller.dart';
 import '../badges/badges_controller.dart';
 import '../badges/badges_state.dart';
 import '../badges/widgets/earned_badges_section.dart';
+import '../certifications/certifications_controller.dart';
+import '../certifications/certifications_state.dart';
+import '../certifications/widgets/certifications_section.dart';
 import '../entitlements/entitlements_controller.dart';
-import '../external_credentials/external_credentials_controller.dart';
-import '../external_credentials/external_credentials_state.dart';
-import '../external_credentials/widgets/external_credentials_section.dart';
 import 'profile_controller.dart';
 import 'profile_state.dart';
 import 'profile_viewers_controller.dart';
@@ -47,7 +47,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(profileControllerProvider);
-    final credentialsState = ref.watch(externalCredentialsControllerProvider);
+    final certificationsState = ref.watch(certificationsControllerProvider);
     final badgesState = ref.watch(badgesControllerProvider);
 
     return Scaffold(
@@ -90,6 +90,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   const _IncompleteProfileHint(),
                 ],
                 const SizedBox(height: AppSpacing.space3),
+                _editing
+                    ? ProfileEditForm(
+                        profile: state.profile,
+                        onDone: () => setState(() => _editing = false),
+                      )
+                    : CollapsibleSection(
+                        title: 'Profile details',
+                        summary: profileSummary(state.profile),
+                        child: ProfileView(
+                          profile: state.profile,
+                          onEdit: () => setState(() => _editing = true),
+                        ),
+                      ),
+                const SizedBox(height: AppSpacing.space3),
                 CollapsibleSection(
                   title: 'Verified badges',
                   summary: _badgesSummary(badgesState),
@@ -98,20 +112,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     onOpenCertificate: (b) => _openCertificate(context, b),
                   ),
                 ),
-                const SizedBox(height: AppSpacing.space3),
-                _editing
-                    ? ProfileEditForm(
-                        profile: state.profile,
-                        onDone: () => setState(() => _editing = false),
-                      )
-                    : CollapsibleSection(
-                        title: 'Profile details',
-                        summary: _profileSummary(state.profile),
-                        child: ProfileView(
-                          profile: state.profile,
-                          onEdit: () => setState(() => _editing = true),
-                        ),
-                      ),
                 // TODO: resume upload — blocked on file_picker / compileSdk 36
                 // conflict. Resume upload works on web; revisit when updating
                 // the Android toolchain for release builds.
@@ -119,9 +119,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 // ResumeSection(state: state),
                 const SizedBox(height: AppSpacing.space6),
                 CollapsibleSection(
-                  title: 'External credentials',
-                  summary: _credentialsSummary(credentialsState),
-                  child: const ExternalCredentialsSection(),
+                  title: 'Certifications',
+                  summary: _certificationsSummary(certificationsState),
+                  child: const CertificationsSection(),
                 ),
                 const SizedBox(height: AppSpacing.space3),
                 const CollapsibleSection(
@@ -153,22 +153,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 }
 
 /// Collapsed-state summary for the "Profile details" card — the same three
-/// fields the web app's own compact profile chip leads with.
-String _profileSummary(CandidateProfile profile) {
-  final parts = [profile.headline, profile.roleTitleLabel, profile.location]
-      .whereType<String>()
-      .where((p) => p.trim().isNotEmpty)
-      .toList();
+/// fields the web app's own compact profile chip leads with. Public (not
+/// underscore-prefixed) so it's unit-testable the same way
+/// card_state.dart's resolveCardDisplay is — see profile_screen_test.dart.
+String profileSummary(CandidateProfile profile) {
+  final headline = profile.headline?.trim();
+  // roleTitleLabel is dropped when it just repeats headline (e.g. a
+  // candidate whose free-text headline and role-title picklist selection
+  // are both "ML Engineer") — otherwise this one-line summary reads as a
+  // doubled-up value rather than two distinct fields.
+  final roleTitleLabel = profile.roleTitleLabel?.trim();
+  final parts = [
+    headline,
+    if (roleTitleLabel != headline) roleTitleLabel,
+    profile.location,
+  ].whereType<String>().where((p) => p.trim().isNotEmpty).toList();
   return parts.isEmpty ? 'Tap to add your details' : parts.join(' · ');
 }
 
-/// Collapsed-state summary for the "External credentials" card. Null while
-/// still loading/errored, matching CollapsibleSection's "no summary line
-/// yet" contract for that case.
-String? _credentialsSummary(ExternalCredentialsState state) {
-  if (state is! ExternalCredentialsLoaded) return null;
-  final count = state.credentials.length;
-  return count == 0 ? 'No external credentials yet' : '$count credential${count == 1 ? '' : 's'}';
+/// Collapsed-state summary for the "Certifications" card. Null while still
+/// loading/errored, matching CollapsibleSection's "no summary line yet"
+/// contract for that case.
+String? _certificationsSummary(CertificationsState state) {
+  if (state is! CertificationsLoaded) return null;
+  final count = state.certifications.length;
+  return count == 0 ? 'No certifications yet' : '$count certification${count == 1 ? '' : 's'}';
 }
 
 /// Collapsed-state summary for the "Verified badges" card — same count

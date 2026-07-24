@@ -65,10 +65,41 @@ class ApiClient {
     required File file,
     required String fieldName,
     MediaType? contentType,
+  }) {
+    return multipart('POST', path, file: file, fileField: fieldName, fileContentType: contentType);
+  }
+
+  /// General multipart request — text [fields] plus an optional [file],
+  /// over either POST or PATCH. Added for the certifications feature
+  /// (name/issuer/dates alongside an optional upload, and PATCH for edits —
+  /// neither of which [postMultipart] above supported), but written as the
+  /// general case; [postMultipart] now just delegates to this with no
+  /// [fields] and a fixed method, so existing callers are unaffected.
+  Future<dynamic> multipart(
+    String method,
+    String path, {
+    Map<String, String> fields = const {},
+    File? file,
+    String? fileField,
+    MediaType? fileContentType,
   }) async {
-    var response = await _rawMultipartRequest(path, file: file, fieldName: fieldName, contentType: contentType);
+    var response = await _rawMultipartRequest(
+      method,
+      path,
+      fields: fields,
+      file: file,
+      fileField: fileField,
+      contentType: fileContentType,
+    );
     if (response.statusCode == 401 && await _tryRefresh()) {
-      response = await _rawMultipartRequest(path, file: file, fieldName: fieldName, contentType: contentType);
+      response = await _rawMultipartRequest(
+        method,
+        path,
+        fields: fields,
+        file: file,
+        fileField: fileField,
+        contentType: fileContentType,
+      );
     }
     return _decode(response);
   }
@@ -133,18 +164,23 @@ class ApiClient {
   }
 
   Future<http.Response> _rawMultipartRequest(
+    String method,
     String path, {
-    required File file,
-    required String fieldName,
+    Map<String, String> fields = const {},
+    File? file,
+    String? fileField,
     MediaType? contentType,
   }) async {
     final token = await _tokens.readAccessToken();
     final uri = Uri.parse('${ApiConfig.baseUrl}$path');
-    final request = http.MultipartRequest('POST', uri);
+    final request = http.MultipartRequest(method, uri);
     if (token != null) request.headers['Authorization'] = 'Bearer $token';
-    request.files.add(
-      await http.MultipartFile.fromPath(fieldName, file.path, contentType: contentType),
-    );
+    request.fields.addAll(fields);
+    if (file != null) {
+      request.files.add(
+        await http.MultipartFile.fromPath(fileField!, file.path, contentType: contentType),
+      );
+    }
     final streamedResponse = await _http.send(request);
     return http.Response.fromStream(streamedResponse);
   }
