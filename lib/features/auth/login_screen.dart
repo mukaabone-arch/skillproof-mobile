@@ -40,9 +40,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await ref
           .read(authControllerProvider.notifier)
           .requestOtp(_phoneController.text.trim());
-      setState(() => _otpSent = true);
+      if (mounted) setState(() => _otpSent = true);
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = e.toString());
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -61,7 +61,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       // A successful verify flips global auth state to Authenticated;
       // SkillProofApp swaps to RootScreen on its own.
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = e.toString());
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -79,7 +79,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       // own. A cancelled native chooser resolves normally (no throw) —
       // AuthController absorbs that case, so there's nothing to show here.
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = e.toString());
     } finally {
       if (mounted) setState(() => _googleSubmitting = false);
     }
