@@ -116,9 +116,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         const SizedBox(height: AppSpacing.space2),
                         Text(
-                          'Verify your AI skills. Get hired on proof.',
+                          'Prove your AI skills, get matched to roles that want them.',
                           textAlign: TextAlign.center,
-                          style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
+                          style: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimary),
+                        ),
+                        const SizedBox(height: AppSpacing.space1),
+                        // Phone, not email — this screen is still the
+                        // phone+OTP flow (see _phoneController below), unlike
+                        // the web candidate login's email flow. Mirrors that
+                        // copy's structure/value line exactly, but the action
+                        // line names the field actually on screen rather than
+                        // claiming an email step that doesn't exist here.
+                        Text(
+                          'Sign in with your phone to get started.',
+                          textAlign: TextAlign.center,
+                          style: AppTypography.bodySmall,
                         ),
                         const SizedBox(height: AppSpacing.space5),
                         TextField(
