@@ -83,10 +83,21 @@ class AppTheme {
         ),
       ),
 
-      // Primary action — mirrors web's solid `--brand-600` button with white
-      // text (5.77:1 contrast; see app_colors.dart). Deliberately not
-      // derived from colorScheme.primary (which is brand-400, meant for
-      // text-on-dark, not a button fill).
+      // Primary action — a solid fill with white text (6.78:1 contrast; see
+      // AppColors.primaryFill's doc comment). Deliberately not derived from
+      // colorScheme.primary (AppColors.primary, meant for text-on-dark, not
+      // a button fill).
+      //
+      // NOTE on the Nocturne import: nocturne-styles.css's own `.btn-primary`
+      // is actually an outlined/text style (`color: var(--color-accent);
+      // border-color: var(--color-accent)`, transparent background) — the
+      // source design has no filled-button variant at all. This app keeps
+      // its pre-existing filled-vs-outlined button *pattern* (a strong solid
+      // CTA distinct from a bordered secondary action) rather than
+      // replicating Nocturne's borderless-outline-only primary, and just
+      // recolors the fill with a Nocturne accent tone. Flagged here since
+      // it's a deliberate divergence from the literal source CSS, not an
+      // oversight.
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.primaryFill,

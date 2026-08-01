@@ -7,6 +7,10 @@ import '../theme/app_colors.dart';
 /// treatment web reserves for `.ui-card-elevated` / `.auth-card`
 /// (onboarding/auth surfaces), which adds [AppShadows.md] on top of the
 /// same border.
+///
+/// Radius is [AppRadius.md] (8), matching nocturne-styles.css's own `.card`
+/// rule exactly (`border-radius: var(--radius-md)`) — was [AppRadius.lg]
+/// before the Nocturne import.
 class AppCard extends StatelessWidget {
   const AppCard({
     required this.child,
@@ -26,7 +30,7 @@ class AppCard extends StatelessWidget {
     final content = Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.border),
         boxShadow: elevated ? AppShadows.md : null,
       ),
@@ -36,7 +40,7 @@ class AppCard extends StatelessWidget {
               color: Colors.transparent,
               child: InkWell(
                 onTap: onTap,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 child: Padding(padding: padding, child: child),
               ),
             ),

@@ -7,7 +7,16 @@ import 'package:flutter/material.dart';
 /// where; reach for that first, and only touch [BrandColors] directly when
 /// wiring a new semantic role into [AppColors].
 ///
-/// Two token bands from the CSS aren't consumed anywhere in this class:
+/// As of the Nocturne import (see [AppColors]'s own doc comment), the
+/// `brand*` indigo-violet ramp below is entirely unconsumed — [AppColors]'
+/// primary/interactive roles moved to Nocturne's own accent tokens. Kept
+/// here rather than deleted, same reasoning as the two bands below: this
+/// class's job is being a complete, faithful mirror of brand-tokens.css,
+/// not just of whatever [AppColors] currently reaches for.
+///
+/// Three token bands from the CSS aren't consumed anywhere in this class:
+///   - `brand50/100/200/400/600/800/900`: superseded by Nocturne's accent
+///     family for every role [AppColors] used to draw these from.
 ///   - `gray50..900`: the web scale is a *light*-theme neutral ramp (page
 ///     background, borders, text on a white page). This app's dark
 ///     foundation (background/surface/text hierarchy in [AppColors]) is a
@@ -49,81 +58,99 @@ class BrandColors {
   static const Color error = Color(0xFFD9483F);
 }
 
-/// App-facing color roles, built on top of [BrandColors]. This is what
-/// every screen/widget imports.
+/// App-facing color roles. This is what every screen/widget imports.
 ///
-/// Dark adaptation notes (this app is dark-only, the web tokens are
-/// light-theme-first, so which shade "leads" a family differs):
-///  - The surface/text hierarchy below is the app's own dark foundation —
-///    unrelated to and unchanged by the brand-tokens.css rebrand. It was
-///    tuned and WCAG-checked independently (background is the exact fill
-///    of the logo's own dark chip) and this pass only re-keys accent
-///    colors on top of it.
-///  - Interactive/brand colors reach for [BrandColors.brand400] wherever
-///    they render as text/icons/fills *directly on* the dark
-///    background/surface (buttons' text-adjacent roles, links, active nav,
-///    progress fills): 5.03:1 against [background], comfortably AA. Filled
-///    button backgrounds are the one place [BrandColors.brand600] (the
-///    web's "THE primary") is used as-is — it's a solid fill with white
-///    text on top, not text-on-dark itself, and white-on-brand600 is
-///    5.77:1, AA-safe.
-///  - [BrandColors.success]/[BrandColors.warning] both clear 4.5:1 against
-///    [background] (5.58:1 / 5.08:1) unbrightened, unlike the old
-///    green/amber they replace — no dark-mode-only bright variant needed.
-///  - [BrandColors.error] is 4.45:1 against [background] — a hair under
-///    the 4.5:1 body-text floor. [errorBright] is the same hue lightened
-///    to 6.12:1 for text/icon/border use directly on dark; [error] itself
-///    stays available for the rare background-fill case.
+/// As of the Nocturne import (see the surfaces/text/brand section doc
+/// comments above): [background], [surface], [surfaceElevated], [border],
+/// [textPrimary]/[textSecondary]/[textTertiary], and [primary]/
+/// [primarySoft]/[primaryFill]/[primaryMuted] all come from
+/// nocturne-styles.css. [coral]/[success]/[warning]/[error] below are
+/// deliberately UNCHANGED, still built on [BrandColors] — Nocturne defines
+/// no warm/coral hue and no semantic success/warning/error tokens at all
+/// (it's a single indigo/blurple + neutral palette), so there is nothing
+/// in the source to import for these roles. Re-theming them would mean
+/// inventing colors with no basis in the design being implemented.
+///  - Re-checked against the new (slightly lighter) Nocturne [background]:
+///    [BrandColors.success] 5.20:1 and [BrandColors.warning] 4.74:1 both
+///    still clear 4.5:1, though warning's margin is tighter than before.
+///  - [BrandColors.error] drops to 4.15:1 against the new background — it
+///    was already documented "background-fill only, just under AA"
+///    (never used for text-on-dark), so this doesn't change its contract.
+///    [errorBright], the text/icon/border variant actually used on
+///    [background]/[surface], is still comfortably clear at 5.71:1.
 ///  - Coral ([BrandColors.accent600]) is intentionally rationed to exactly
 ///    the earned-badge treatment (see [coral] doc below) — never a second
 ///    UI element, never a generic accent.
 class AppColors {
   AppColors._();
 
-  // ---- Surfaces ----
-  /// Scaffold/page background. Same hex as the logo's own chip fill.
-  static const Color background = Color(0xFF0F1115);
+  // ---- Surfaces — Nocturne palette (design import, claude.ai/design
+  // project 8cae981e-8ca7-4a23-b995-d2ac92a4ea26, "Candidate Portal.dc.html"
+  // + nocturne-styles.css). Replaces the prior brand-tokens.css-derived
+  // dark foundation with Nocturne's own --color-bg/--color-surface. ----
+  /// Scaffold/page background. Nocturne --color-bg.
+  static const Color background = Color(0xFF161826);
   /// Card / elevated-content surface (one step up from [background]).
-  static const Color surface = Color(0xFF16181D);
+  /// Nocturne --color-surface — also what Nocturne uses for its nav bar;
+  /// see [surfaceElevated] doc for why this app keeps a third tier anyway.
+  static const Color surface = Color(0xFF232532);
   /// App bar, nav bar, dialogs, bottom sheets (one step up from [surface]).
-  static const Color surfaceElevated = Color(0xFF1C1F26);
-  /// Hairline borders/dividers — white at 12% alpha.
-  static const Color border = Color(0x1FFFFFFF);
+  /// Nocturne itself has no third surface tier (its card/nav/dialog all
+  /// share --color-surface) — this app keeps its existing 3-tier
+  /// hierarchy for the same structural reason it had one before (dialogs
+  /// and sheets need to read as "above" the cards behind them), extending
+  /// Nocturne's own bg→surface step by the same proportion one tier further.
+  static const Color surfaceElevated = Color(0xFF2B2E3D);
+  /// Hairline borders/dividers. Nocturne --color-divider: #e9e9ed at 16%
+  /// alpha (was plain white at 12%).
+  static const Color border = Color(0x29E9E9ED);
 
   // ---- Text (on [background] / [surface]) ----
-  /// Primary text/icons. Contrast vs [background]: 17.4:1.
-  static const Color textPrimary = Color(0xFFF5F6F2);
+  /// Primary text/icons. Nocturne --color-text (#e9e9ed). Contrast vs
+  /// [background]: 16.6:1.
+  static const Color textPrimary = Color(0xFFE9E9ED);
   /// Secondary text (captions, meta lines) — textPrimary at 70% alpha.
-  /// Contrast vs [background]: 7.9:1. Safe for body text.
-  static const Color textSecondary = Color(0xB3F5F6F2);
+  /// Contrast vs [background]: ~10.9:1. Safe for body text.
+  static const Color textSecondary = Color(0xB3E9E9ED);
   /// Tertiary text — disabled labels, placeholders, hint text ONLY.
-  /// textPrimary at 40% alpha. Contrast vs [background]: 3.6:1 — meets the
-  /// large-text/UI-component AA floor but NOT the 4.5:1 normal-body-text
-  /// floor, so never use this for readable paragraph copy.
-  static const Color textTertiary = Color(0x66F5F6F2);
+  /// textPrimary at 40% alpha. Meets the large-text/UI-component AA floor
+  /// but NOT the 4.5:1 normal-body-text floor, so never use this for
+  /// readable paragraph copy.
+  static const Color textTertiary = Color(0x66E9E9ED);
 
   // ---- Brand — primary interactive color: buttons, active nav item,
-  // links, progress bars, the home CTA. ----
+  // links, progress bars, the home CTA. Nocturne --color-accent family. ----
   /// Text/icon/fill color for anything interactive rendered directly on a
-  /// dark surface (5.03:1 vs [background]). This is the one to reach for
+  /// dark surface (5.45:1 vs [background]). This is the one to reach for
   /// almost everywhere — active nav, links, progress indicators, chip
-  /// borders/labels.
-  static const Color primary = BrandColors.brand400;
+  /// borders/labels. Nocturne --color-accent (#9184d9).
+  static const Color primary = Color(0xFF9184D9);
   /// [primary] at 16% alpha — selected-state/tinted backgrounds (nav
   /// indicator pill, info chip fills).
-  static const Color primarySoft = Color(0x297F77DD);
+  static const Color primarySoft = Color(0x299184D9);
   /// Filled primary button background. A *background*, not a foreground —
-  /// pair with white text (5.77:1), not with itself as text/icon color on
-  /// dark (3.28:1, fails AA body text).
-  static const Color primaryFill = BrandColors.brand600;
+  /// pair with white text (6.78:1), not with itself as text/icon color on
+  /// dark (fails AA body text). Nocturne's own .btn-primary is actually an
+  /// outlined/text style with no filled variant (see AppTheme's doc
+  /// comment on filledButtonTheme) — this app keeps its existing
+  /// filled-vs-outlined *pattern* (a solid CTA distinct from a bordered
+  /// secondary action) and recolors it with Nocturne's darker
+  /// --color-accent-700, the closest in-family tone that clears white-text
+  /// AA.
+  static const Color primaryFill = Color(0xFF5D5294);
   /// Soft/secondary emphasis — wired into ColorScheme.secondary. Nothing
   /// else in this app currently needs it directly; reach for [primary]
-  /// first.
-  static const Color primaryMuted = BrandColors.brand200;
+  /// first. Nocturne --color-accent-2 (#a7a1db) — the system's own second
+  /// accent hue.
+  static const Color primaryMuted = Color(0xFFA7A1DB);
 
   // ---- Coral — rationed to exactly one UI element: the earned/verified
   // badge treatment (BadgeCard's medallion + its level pill on the Badges
-  // screen). Never a generic accent, never a second CTA. ----
+  // screen). Never a generic accent, never a second CTA. Deliberately NOT
+  // re-themed by the Nocturne import — Nocturne's palette has no warm hue
+  // at all (indigo/blurple + neutral only), so there's no source color to
+  // import here; still [BrandColors.accent600] from the pre-Nocturne
+  // brand-tokens.css mirror. ----
   static const Color coral = BrandColors.accent600;
   /// [coral] at 16% alpha — the medallion/pill's tinted background.
   static const Color coralSoft = Color(0x29E85A3A);
@@ -131,15 +158,17 @@ class AppColors {
   // ---- Success — status meaning only (a completed/passing state).
   // General "verified" signals that aren't the one coral-rationed badge
   // element (external-credential chips, profile/home badge-count stats,
-  // the reusable SkillBadge chip) live here. ----
+  // the reusable SkillBadge chip) live here. Deliberately NOT re-themed —
+  // Nocturne defines no semantic success token; see [coral] doc above for
+  // why these roles stay on the old [BrandColors] mirror. ----
   static const Color success = BrandColors.success;
   static const Color successSoft = Color(0x291D9E75);
 
-  // ---- Warning ----
+  // ---- Warning — same "no Nocturne equivalent" reasoning as [success]. ----
   static const Color warning = BrandColors.warning;
   static const Color warningSoft = Color(0x29BA7517);
 
-  // ---- Error ----
+  // ---- Error — same "no Nocturne equivalent" reasoning as [success]. ----
   /// Background-fill use only (see class doc) — 4.45:1 as text/icon on
   /// dark, just under AA. Use [errorBright] for anything rendered directly
   /// on [background]/[surface].
@@ -155,7 +184,12 @@ class AppColors {
   static const Color googleBrandBlue = Color(0xFF4285F4);
 }
 
-/// Spacing scale — identical values to web's --space-1..--space-8 (4px base).
+/// Spacing scale. Unchanged by the Nocturne import: nocturne-styles.css's
+/// own --space-1..--space-8 (2.8/5.6/8.4/11.2/16.8/22.4px) is this exact
+/// scale scaled by a uniform ×0.7 — i.e. the same 4px-base scale rendered
+/// at the design canvas's phone-frame zoom, not a distinct set of values.
+/// Kept as the pre-existing 4px-base numbers rather than importing the
+/// scaled-down ones.
 class AppSpacing {
   AppSpacing._();
 
@@ -169,31 +203,34 @@ class AppSpacing {
   static const double space8 = 48;
 }
 
-/// Border radius scale — identical values to web's --radius-sm/md/lg/full.
+/// Border radius scale. sm/md/lg adopt nocturne-styles.css's
+/// --radius-sm/md/lg exactly (4/8/14 — lg was already 14). [full] has no
+/// Nocturne token to import (its pill/circle shapes use inline 50%/99px,
+/// not a named radius) so it's kept at the prior effectively-round value.
 class AppRadius {
   AppRadius._();
 
-  static const double sm = 8;
-  static const double md = 10;
+  static const double sm = 4;
+  static const double md = 8;
   static const double lg = 14;
   static const double full = 999;
 }
 
-/// Elevation shadows. Same blur/spread/offset geometry as web's
-/// --shadow-sm/md/lg, but recolored: web's shadows are a dark tint
-/// (rgba(20,27,45,x)) meant to lift a card off a *light* page, which reads
-/// as almost nothing on a dark page. Pure black at a higher alpha is what
-/// actually produces visible depth against [AppColors.background]/[surface].
+/// Elevation shadows. nocturne-styles.css's --shadow-sm/md/lg pair a
+/// solid-color 1px "ring" (`0 0 0 1px <color>`) with a blur component on
+/// md/lg only. The ring is already provided by this app's existing card
+/// border ([AppColors.border] via CardTheme's [BorderSide]/[AppCard]), so
+/// only the blur component is imported here — sm has none in the source
+/// (hence the empty list), md/lg take Nocturne's blur/offset/color
+/// (opacity converted to this app's 0-255 alpha) as-is.
 class AppShadows {
   AppShadows._();
 
-  static const List<BoxShadow> sm = [
-    BoxShadow(color: Color(0x40000000), blurRadius: 8, offset: Offset(0, 2)),
-  ];
+  static const List<BoxShadow> sm = [];
   static const List<BoxShadow> md = [
-    BoxShadow(color: Color(0x59000000), blurRadius: 60, spreadRadius: -24, offset: Offset(0, 24)),
+    BoxShadow(color: Color(0x8C000000), blurRadius: 18, offset: Offset(0, 6)),
   ];
   static const List<BoxShadow> lg = [
-    BoxShadow(color: Color(0x66000000), blurRadius: 60, spreadRadius: -20, offset: Offset(0, 24)),
+    BoxShadow(color: Color(0xA6000000), blurRadius: 40, offset: Offset(0, 16)),
   ];
 }
