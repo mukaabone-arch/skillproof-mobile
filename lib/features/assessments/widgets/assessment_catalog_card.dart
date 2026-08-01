@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../models/assessment_catalog_entry.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/actionable_notice.dart';
 import '../../../widgets/app_button.dart';
 import '../../../widgets/app_card.dart';
 import '../card_state.dart';
@@ -23,6 +24,9 @@ class AssessmentCatalogCard extends StatelessWidget {
     required this.onTakeAssessment,
     this.highlighted = false,
     this.premium = false,
+    this.profileReady = true,
+    this.profileGateMessage,
+    this.onCompleteProfile,
     super.key,
   });
 
@@ -36,9 +40,22 @@ class AssessmentCatalogCard extends StatelessWidget {
   /// so this card stays a plain, pure StatelessWidget.
   final bool premium;
 
+  /// See resolveCardDisplay's own doc comment on the profileReady param —
+  /// same default-true, same "only the available state is affected" scope.
+  /// [profileGateMessage]/[onCompleteProfile] are only read when this is
+  /// false and the entry would otherwise be startable; both should be
+  /// non-null in that case (the caller — BadgesScreen's _AvailableSection —
+  /// always supplies them together), but this widget degrades to a generic
+  /// message and no action rather than asserting, since a StatelessWidget
+  /// is the wrong place to enforce that invariant.
+  final bool profileReady;
+  final String? profileGateMessage;
+  final VoidCallback? onCompleteProfile;
+
   @override
   Widget build(BuildContext context) {
-    final display = resolveCardDisplay(entry, premium: premium);
+    final display = resolveCardDisplay(entry, premium: premium, profileReady: profileReady);
+    final showProfileGate = entry.state == AssessmentCatalogState.available && !profileReady;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -87,7 +104,14 @@ class AssessmentCatalogCard extends StatelessWidget {
                 style: AppTypography.bodySmall,
               ),
             ],
-            if (display.metaText != null) ...[
+            if (showProfileGate) ...[
+              const SizedBox(height: AppSpacing.space2),
+              ActionableNotice(
+                message: profileGateMessage ?? 'Complete your profile to start earning verified badges.',
+                actionLabel: 'Go to Profile',
+                onAction: onCompleteProfile,
+              ),
+            ] else if (display.metaText != null) ...[
               const SizedBox(height: AppSpacing.space2),
               Text(
                 display.metaText!,

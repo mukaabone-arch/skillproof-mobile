@@ -89,14 +89,51 @@ class CandidateProfile {
     return candidateRoleTitleLabels[roleTitle];
   }
 
-  /// Mirrors the API's own apply-time gate exactly
-  /// (CandidateJobsService.isProfileReadyToApply / profile-readiness.ts):
-  /// a name, plus either a headline or years of experience. Used to show a
-  /// heads-up on the profile screen *before* the candidate hits the same
-  /// wall at apply time.
-  bool get readyToApply {
+  /// Mirrors the API's own single readiness rule exactly —
+  /// missingReadinessFields in apps/api's profile-readiness.ts, shared
+  /// verbatim by the job-apply gate (CandidateJobsService.apply) *and* both
+  /// assessment-start gates (AssessmentsService.startAttempt,
+  /// AssessmentSessionsService.createSession — see that file's own doc
+  /// comment: "same underlying readiness rule as isProfileReadyToApply").
+  /// One list, not a bool per field: 'headline' and 'role' are pushed
+  /// together as a pair whenever neither is present (matching the API
+  /// exactly, quirks included — see readinessGateMessage below), not because
+  /// both are independently required.
+  List<String> get _missingReadinessFields {
     final hasName = fullName?.trim().isNotEmpty ?? false;
     final hasHeadlineOrExperience = (headline?.trim().isNotEmpty ?? false) || yearsOfExp != null;
-    return hasName && hasHeadlineOrExperience;
+    return [
+      if (!hasName) 'name',
+      if (!hasHeadlineOrExperience) ...['headline', 'role'],
+    ];
+  }
+
+  /// Used to show a heads-up on the profile screen, and to gate the
+  /// assessments catalog's "Take assessment" action, *before* the candidate
+  /// hits the same wall server-side either way.
+  bool get readyToApply => _missingReadinessFields.isEmpty;
+
+  static const Map<String, String> _readinessFieldLabels = {
+    'name': 'your name',
+    'headline': 'a headline',
+    'role': 'your years of experience',
+  };
+
+  /// Null when ready. Mirrors apps/web/lib/profileReadiness.ts's own
+  /// readinessGateMessage algorithm exactly, including its one quirk: when
+  /// both name and headline-or-experience are missing, this lists all three
+  /// labels ("your name, a headline and your years of experience") even
+  /// though headline/role are really an OR pair — kept exactly as the web
+  /// version reads rather than independently "corrected" here, since the
+  /// two copies drifting apart would be a worse outcome than either one's
+  /// small imprecision.
+  String? get readinessGateMessage {
+    final missing = _missingReadinessFields;
+    if (missing.isEmpty) return null;
+    final labels = missing.map((m) => _readinessFieldLabels[m]!).toList();
+    final joined = labels.length > 1
+        ? '${labels.sublist(0, labels.length - 1).join(', ')} and ${labels.last}'
+        : labels.first;
+    return 'Add $joined to start earning verified badges.';
   }
 }
