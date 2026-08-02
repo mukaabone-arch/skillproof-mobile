@@ -26,6 +26,15 @@ sealed class BrowseState {
   const BrowseState();
 }
 
+/// No search has been run yet — Browse is search-first, matching
+/// apps/web/components/CandidateJobs.tsx's `total === null` sentinel
+/// (see that file's own comment: "search-first: the tab no longer
+/// auto-loads"). Results, including a filterless "show everything" search,
+/// only appear once the candidate presses Search.
+class BrowseInitial extends BrowseState {
+  const BrowseInitial();
+}
+
 class BrowseLoading extends BrowseState {
   const BrowseLoading();
 }

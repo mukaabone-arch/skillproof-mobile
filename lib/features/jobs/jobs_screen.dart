@@ -273,6 +273,9 @@ class _BrowseTabState extends ConsumerState<_BrowseTab> {
         ),
         Expanded(
           child: switch (state) {
+            BrowseInitial() => const EmptyState(
+                message: 'Search openings — pick a skill, location, or remote, then press Search.',
+              ),
             BrowseLoading() => const Center(child: CircularProgressIndicator()),
             BrowseError(:final message) => _ErrorRetry(message: message, onRetry: _search),
             BrowseLoaded(:final jobs) when jobs.isEmpty =>
