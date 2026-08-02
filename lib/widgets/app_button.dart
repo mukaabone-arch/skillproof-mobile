@@ -40,7 +40,24 @@ class AppButton extends StatelessWidget {
             ? Text(label)
             : Row(
                 mainAxisSize: MainAxisSize.min,
-                children: [icon!, const SizedBox(width: 8), Text(label)],
+                children: [
+                  icon!,
+                  const SizedBox(width: 8),
+                  // Flexible, not a bare Text: an icon+label button stretched
+                  // to full width (expand: true) gives this Row a bounded
+                  // width, and an unwrapped Text tries to lay out at its own
+                  // intrinsic width regardless — that's what overflowed at
+                  // 375px on "Sign in with Google". Flexible lets it shrink
+                  // to whatever's left after the icon, ellipsizing on a
+                  // label that still doesn't fit rather than overflowing;
+                  // harmless for a naturally-sized (expand: false) button,
+                  // where the Row's own incoming width is unbounded and
+                  // Flexible's default loose fit just falls back to the
+                  // text's preferred size, identical to today.
+                  Flexible(
+                    child: Text(label, overflow: TextOverflow.ellipsis, maxLines: 1),
+                  ),
+                ],
               );
 
     final button = variant == AppButtonVariant.primary

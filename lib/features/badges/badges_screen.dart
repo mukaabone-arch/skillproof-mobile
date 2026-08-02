@@ -14,6 +14,9 @@ import '../assessments/assessments_state.dart';
 import '../assessments/widgets/assessment_catalog_card.dart';
 import '../entitlements/entitlements_controller.dart';
 import '../entitlements/entitlements_state.dart';
+import '../profile/profile_controller.dart';
+import '../profile/profile_state.dart';
+import '../root/root_tab_provider.dart';
 import 'badges_controller.dart';
 import 'badges_highlight_provider.dart';
 import 'badges_state.dart';
@@ -168,6 +171,20 @@ class _AvailableSection extends ConsumerWidget {
     final entitlementsState = ref.watch(entitlementsControllerProvider);
     final entitlements = entitlementsState is EntitlementsLoaded ? entitlementsState.entitlements : null;
 
+    // Reads the same profileControllerProvider the Profile tab already
+    // watches — BadgesScreen is kept alive in RootScreen's IndexedStack
+    // alongside it (see BadgesScreen's own doc comment), so this is a
+    // second subscriber to an already-fetched value, not a new /profiles/me
+    // call. Defaults to ready while the profile is still loading or failed
+    // to load, matching apps/web/app/assessments/page.tsx's own "assumed
+    // ready until the profile actually loads and says otherwise" — a ready
+    // candidate should never see a flash of a disabled button, and the
+    // server enforces the real gate regardless of what this shows.
+    final profileState = ref.watch(profileControllerProvider);
+    final profile = profileState is ProfileLoaded ? profileState.profile : null;
+    final profileReady = profile?.readyToApply ?? true;
+    final profileGateMessage = profile?.readinessGateMessage;
+
     return switch (state) {
       AssessmentsLoading() => const Padding(
           padding: EdgeInsets.symmetric(vertical: AppSpacing.space4),
@@ -209,6 +226,14 @@ class _AvailableSection extends ConsumerWidget {
                   entry: entry,
                   highlighted: entry.skillId == highlightedSkillId,
                   premium: entitlements?.isPremium ?? false,
+                  profileReady: profileReady,
+                  profileGateMessage: profileGateMessage,
+                  // No Navigator.popUntil dance here unlike
+                  // job_detail_screen.dart's identical prompt — this card
+                  // lives directly in a bottom-nav tab (BadgesScreen), not
+                  // a pushed route on top of one, so switching the tab
+                  // index alone is already visible.
+                  onCompleteProfile: () => ref.read(rootTabIndexProvider.notifier).state = RootTab.profile,
                   onTakeAssessment: () => _takeAssessment(context, ref, entry),
                 ),
               ),

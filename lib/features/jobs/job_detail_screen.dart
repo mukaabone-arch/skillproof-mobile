@@ -5,6 +5,7 @@ import '../../models/job.dart';
 import '../../models/matched_job.dart' show SkillMatch;
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
+import '../../widgets/actionable_notice.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/job_description.dart';
 import '../../widgets/usage_meter.dart';
@@ -136,7 +137,7 @@ class _JobDetailBody extends ConsumerWidget {
         ),
         if (state.applyIssueCode == 'PROFILE_INCOMPLETE') ...[
           const SizedBox(height: AppSpacing.space4),
-          _ActionableNotice(
+          ActionableNotice(
             message: 'Almost there — add your name and either a headline or years of '
                 'experience so this employer knows who they\'re reviewing.',
             actionLabel: 'Go to Profile',
@@ -153,7 +154,7 @@ class _JobDetailBody extends ConsumerWidget {
         ],
         if (state.applyIssueCode == 'BADGE_REQUIRED') ...[
           const SizedBox(height: AppSpacing.space4),
-          _ActionableNotice(
+          ActionableNotice(
             message: state.applyIssueMessage ??
                 'Earn at least one verified skill badge before applying — take an '
                     'assessment to get started.',
@@ -246,42 +247,6 @@ class _GapAnalysis extends StatelessWidget {
             ),
           ),
       ],
-    );
-  }
-}
-
-/// Actionable prompt shown for apply-time issues the candidate can resolve
-/// themselves (PROFILE_INCOMPLETE / BADGE_REQUIRED) — styled distinctly
-/// from [state.applyError] so it doesn't read as a raw failure. Indigo, not
-/// green: this is guidance text about *earning* a badge, not a verified
-/// skill/badge/certificate itself, so it stays out of the success-green
-/// color family per the rule on AppColors.
-class _ActionableNotice extends StatelessWidget {
-  const _ActionableNotice({required this.message, this.actionLabel, this.onAction});
-
-  final String message;
-  final String? actionLabel;
-  final VoidCallback? onAction;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.space4),
-      decoration: BoxDecoration(
-        color: AppColors.primarySoft,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(message, style: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimary)),
-          if (actionLabel != null && onAction != null) ...[
-            const SizedBox(height: AppSpacing.space3),
-            AppButton(label: actionLabel!, variant: AppButtonVariant.secondary, onPressed: onAction),
-          ],
-        ],
-      ),
     );
   }
 }

@@ -79,5 +79,46 @@ void main() {
       expect(display.metaText, contains("used all retakes allowed"));
       expect(display.metaText, isNot(contains('Premium')));
     });
+
+    test('available, profile not ready: disabled, no meta text (the card renders the gate notice instead)', () {
+      final display = resolveCardDisplay(
+        _entry(state: AssessmentCatalogState.available),
+        profileReady: false,
+      );
+
+      expect(display.buttonEnabled, isFalse);
+      expect(display.buttonLabel, 'Take assessment');
+      expect(display.metaText, isNull);
+    });
+
+    test('available, profile ready (the default): unaffected, same as no profileReady argument at all', () {
+      final display = resolveCardDisplay(
+        _entry(state: AssessmentCatalogState.available),
+        profileReady: true,
+      );
+
+      expect(display.buttonEnabled, isTrue);
+    });
+
+    test('in_progress, profile not ready: still governed by its own reason, not a second contradictory one', () {
+      final display = resolveCardDisplay(
+        _entry(state: AssessmentCatalogState.inProgress),
+        profileReady: false,
+      );
+
+      expect(display.buttonEnabled, isFalse);
+      expect(display.buttonLabel, 'Assessment in progress');
+      expect(display.metaText, contains("You've already started this"));
+    });
+
+    test('cooldown, profile not ready: still governed by its own reason, not a second contradictory one', () {
+      final display = resolveCardDisplay(
+        _entry(state: AssessmentCatalogState.cooldown),
+        profileReady: false,
+      );
+
+      expect(display.buttonEnabled, isFalse);
+      expect(display.metaText, contains('used all retakes allowed'));
+    });
   });
 }

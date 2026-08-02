@@ -24,9 +24,32 @@ class AssessmentCardDisplay {
 /// still applies on Premium too, just at a higher cap (see
 /// plans.config.ts), so it's never framed as fully removed like the
 /// cooldown is.
-AssessmentCardDisplay resolveCardDisplay(AssessmentCatalogEntry entry, {bool premium = false}) {
+///
+/// [profileReady] mirrors the same profile-readiness gate the backend
+/// enforces on assessment start (PROFILE_INCOMPLETE_FOR_ASSESSMENT — see
+/// CandidateProfile.readyToApply/readinessGateMessage, the same rule the
+/// web catalog's Start button already gates on) and apps.web/app/
+/// assessments/page.tsx's own "assumed ready until the profile actually
+/// loads and says otherwise" default: true, so a ready candidate never
+/// sees a flash of a disabled button while the profile is still loading.
+/// Only the `available` case can ever be affected — inProgress/cooldown
+/// are already disabled for their own unrelated reasons, and adding a
+/// second, contradictory reason to an already-disabled button would only
+/// confuse which explanation is the real one. metaText stays null here on
+/// purpose (rather than carrying the gate message itself) — the caller
+/// (AssessmentCatalogCard) renders an ActionableNotice with a "Go to
+/// Profile" action instead of a plain Text in this specific case, so the
+/// message lives there, not duplicated into this field too.
+AssessmentCardDisplay resolveCardDisplay(AssessmentCatalogEntry entry, {bool premium = false, bool profileReady = true}) {
   switch (entry.state) {
     case AssessmentCatalogState.available:
+      if (!profileReady) {
+        return const AssessmentCardDisplay(
+          state: AssessmentCatalogState.available,
+          buttonLabel: 'Take assessment',
+          buttonEnabled: false,
+        );
+      }
       return const AssessmentCardDisplay(
         state: AssessmentCatalogState.available,
         buttonLabel: 'Take assessment',
