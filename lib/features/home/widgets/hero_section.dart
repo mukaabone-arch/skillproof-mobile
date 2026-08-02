@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/greeting.dart';
 import '../../../models/matched_job.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_typography.dart';
@@ -132,7 +133,7 @@ class HeroSection extends ConsumerWidget {
   /// themselves yet.
   String _greeting({required String? fullName, required bool isFirstSession}) {
     final trimmed = fullName?.trim();
-    if (trimmed != null && trimmed.isNotEmpty) return 'Welcome, $trimmed';
+    if (trimmed != null && trimmed.isNotEmpty) return '${timeOfDayGreeting()}, $trimmed';
     if (isFirstSession) return 'Welcome to SkillProof';
     return 'Welcome back';
   }
