@@ -5,6 +5,7 @@ import '../../core/providers.dart';
 import '../../models/application.dart';
 import '../../models/job.dart';
 import '../../models/matched_job.dart';
+import '../../models/skill.dart';
 
 final jobsRepositoryProvider = Provider<JobsRepository>((ref) {
   return JobsRepository(apiClient: ref.read(apiClientProvider));
@@ -50,6 +51,19 @@ class JobsRepository {
           .map((j) => Job.fromJson(j as Map<String, dynamic>))
           .toList(),
     );
+  }
+
+  /// GET /taxonomy for the Browse tab's skill filter — same source and
+  /// `skillId` query param as apps/web/components/CandidateJobs.tsx's own
+  /// search form. The API groups skills by domain; flattened here since
+  /// this app's dropdowns are plain flat lists (see Skill's doc comment).
+  Future<List<Skill>> taxonomySkills() async {
+    final response = await apiClient.get('/taxonomy') as List<dynamic>;
+    return [
+      for (final domainJson in response)
+        for (final skillJson in (domainJson as Map<String, dynamic>)['skills'] as List<dynamic>)
+          Skill.fromJson(skillJson as Map<String, dynamic>),
+    ];
   }
 
   Future<Job> browseOne(String id) async {

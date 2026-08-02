@@ -15,6 +15,7 @@ import 'browse_controller.dart';
 import 'job_detail_screen.dart';
 import 'jobs_state.dart';
 import 'matched_controller.dart';
+import 'taxonomy_controller.dart';
 import 'widgets/job_card.dart';
 
 /// applicationStatusDetail: false collapses the 5 raw ApplicationStatus
@@ -167,20 +168,23 @@ class _MatchedTab extends ConsumerWidget {
             itemBuilder: (context, index) {
               final matchedJob = jobs[index];
               final verifiedMatches = matchedJob.matched.where((m) => m.verified).toList();
-              return JobCard(
-                job: matchedJob.job,
-                onTap: () => _openJob(context, matchedJob.job.id),
-                trailing: ScoreBar(score: matchedJob.score),
-                child: verifiedMatches.isEmpty
-                    ? null
-                    : Wrap(
-                        spacing: AppSpacing.space2,
-                        runSpacing: AppSpacing.space2,
-                        children: [
-                          for (final m in verifiedMatches.take(4))
-                            SkillBadge(label: m.skillName, level: m.candidateLevel),
-                        ],
-                      ),
+              return Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.space3),
+                child: JobCard(
+                  job: matchedJob.job,
+                  onTap: () => _openJob(context, matchedJob.job.id),
+                  trailing: ScoreBar(score: matchedJob.score),
+                  child: verifiedMatches.isEmpty
+                      ? null
+                      : Wrap(
+                          spacing: AppSpacing.space2,
+                          runSpacing: AppSpacing.space2,
+                          children: [
+                            for (final m in verifiedMatches.take(4))
+                              SkillBadge(label: m.skillName, level: m.candidateLevel),
+                          ],
+                        ),
+                ),
               );
             },
           ),
@@ -199,6 +203,7 @@ class _BrowseTab extends ConsumerStatefulWidget {
 class _BrowseTabState extends ConsumerState<_BrowseTab> {
   final _locationController = TextEditingController();
   bool _remoteOnly = false;
+  String? _skillId;
 
   @override
   void dispose() {
@@ -208,6 +213,7 @@ class _BrowseTabState extends ConsumerState<_BrowseTab> {
 
   void _search() {
     ref.read(browseControllerProvider.notifier).search(
+          skillId: _skillId,
           location: _locationController.text.trim(),
           remote: _remoteOnly ? true : null,
         );
@@ -216,6 +222,7 @@ class _BrowseTabState extends ConsumerState<_BrowseTab> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(browseControllerProvider);
+    final skills = ref.watch(taxonomySkillsProvider);
 
     return Column(
       children: [
@@ -225,6 +232,17 @@ class _BrowseTabState extends ConsumerState<_BrowseTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                DropdownButtonFormField<String?>(
+                  initialValue: _skillId,
+                  decoration: const InputDecoration(labelText: 'Skill'),
+                  items: [
+                    const DropdownMenuItem<String?>(value: null, child: Text('Any skill')),
+                    for (final skill in skills)
+                      DropdownMenuItem<String?>(value: skill.id, child: Text(skill.name)),
+                  ],
+                  onChanged: (value) => setState(() => _skillId = value),
+                ),
+                const SizedBox(height: AppSpacing.space3),
                 TextField(
                   controller: _locationController,
                   style: AppTypography.bodyLarge,
@@ -278,7 +296,10 @@ class _BrowseTabState extends ConsumerState<_BrowseTab> {
                     );
                   }
                   final job = jobs[index - 1];
-                  return JobCard(job: job, onTap: () => _openJob(context, job.id));
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.space3),
+                    child: JobCard(job: job, onTap: () => _openJob(context, job.id)),
+                  );
                 },
               ),
           },
@@ -315,45 +336,48 @@ class _ApplicationsTab extends ConsumerWidget {
             itemBuilder: (context, index) {
               final application = applications[index];
               final statusStyle = _statusPillStyle(application.status);
-              return AppCard(
-                onTap: () => _openJob(context, application.jobId),
-                padding: const EdgeInsets.all(AppSpacing.space4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(child: Text(application.jobTitle, style: AppTypography.titleMedium)),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.space3,
-                            vertical: AppSpacing.space1,
+              return Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.space3),
+                child: AppCard(
+                  onTap: () => _openJob(context, application.jobId),
+                  padding: const EdgeInsets.all(AppSpacing.space4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(child: Text(application.jobTitle, style: AppTypography.titleMedium)),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.space3,
+                              vertical: AppSpacing.space1,
+                            ),
+                            decoration: BoxDecoration(
+                              color: statusStyle.background,
+                              borderRadius: BorderRadius.circular(AppRadius.full),
+                            ),
+                            child: Text(
+                              _displayStatus(application.status, detailed),
+                              style: AppTypography.metaLabel(color: statusStyle.foreground),
+                            ),
                           ),
-                          decoration: BoxDecoration(
-                            color: statusStyle.background,
-                            borderRadius: BorderRadius.circular(AppRadius.full),
-                          ),
-                          child: Text(
-                            _displayStatus(application.status, detailed),
-                            style: AppTypography.metaLabel(color: statusStyle.foreground),
-                          ),
+                        ],
+                      ),
+                      if (!detailed) ...[
+                        const SizedBox(height: AppSpacing.space1),
+                        Text(
+                          'Upgrade to see the exact status instead of a rough stage.',
+                          style: AppTypography.bodySmall.copyWith(color: AppColors.primary),
                         ),
                       ],
-                    ),
-                    if (!detailed) ...[
                       const SizedBox(height: AppSpacing.space1),
-                      Text(
-                        'Upgrade to see the exact status instead of a rough stage.',
-                        style: AppTypography.bodySmall.copyWith(color: AppColors.primary),
-                      ),
+                      Text(application.orgName, style: AppTypography.bodySmall),
+                      const SizedBox(height: AppSpacing.space1),
+                      Text('Applied ${_formatDate(application.createdAt)}', style: AppTypography.bodySmall),
                     ],
-                    const SizedBox(height: AppSpacing.space1),
-                    Text(application.orgName, style: AppTypography.bodySmall),
-                    const SizedBox(height: AppSpacing.space1),
-                    Text('Applied ${_formatDate(application.createdAt)}', style: AppTypography.bodySmall),
-                  ],
+                  ),
                 ),
               );
             },
