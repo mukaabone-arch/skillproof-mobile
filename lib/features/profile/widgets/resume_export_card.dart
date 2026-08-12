@@ -39,8 +39,8 @@ class ResumeExportCard extends ConsumerWidget {
             const SizedBox(height: AppSpacing.space2),
             Text(
               limits.resumeBranding
-                  ? 'Your PDF includes a "Verified by SkillProof" footer — Premium removes this.'
-                  : 'Your PDF has no SkillProof branding — Premium benefit.',
+                  ? 'Your PDF includes a "Verified by Myambii" footer — Premium removes this.'
+                  : 'Your PDF has no Myambii branding — Premium benefit.',
               style: AppTypography.bodySmall,
             ),
             // Deliberately not driven by limits.resumeTemplates here: every

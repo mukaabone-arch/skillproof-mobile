@@ -1,4 +1,4 @@
-# Release Process for SkillProof Mobile
+# Release Process for Myambii Mobile
 
 ## Coordinated Release Strategy
 

@@ -1,12 +1,12 @@
-class SkillProofUser {
-  SkillProofUser({
+class MyambiiUser {
+  MyambiiUser({
     required this.id,
     required this.role,
     this.phone,
     this.email,
   });
 
-  factory SkillProofUser.fromJson(Map<String, dynamic> json) => SkillProofUser(
+  factory MyambiiUser.fromJson(Map<String, dynamic> json) => MyambiiUser(
         id: json['id'] as String,
         role: json['role'] as String? ?? 'CANDIDATE',
         phone: json['phone'] as String?,

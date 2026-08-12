@@ -104,7 +104,7 @@ class _FeatureStripState extends State<FeatureStrip> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     final reduced = MediaQuery.disableAnimationsOf(context);
     return Semantics(
-      label: 'Your SkillProof journey: verify your skills, earn badges, match with roles, interview, and get hired.',
+      label: 'Your Myambii journey: verify your skills, earn badges, match with roles, interview, and get hired.',
       container: true,
       child: ExcludeSemantics(
         child: Container(

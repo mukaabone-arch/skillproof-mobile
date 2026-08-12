@@ -16,7 +16,7 @@ import '../../../theme/app_typography.dart';
 ///   EXPIRED        — warning amber, overriding whichever of the three
 ///                     tiers above the cert started in.
 /// Never reaches for [AppColors.success] — that green stays exclusively
-/// SkillProof-assessed badges' color, same rule [CredentialStatusChip]
+/// Myambii-assessed badges' color, same rule [CredentialStatusChip]
 /// followed for the feature this replaces.
 class CertificationTrustChip extends StatelessWidget {
   const CertificationTrustChip({required this.status, super.key});

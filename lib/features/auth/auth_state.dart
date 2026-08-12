@@ -17,7 +17,7 @@ class AuthLoading extends AuthState {
 class AuthAuthenticated extends AuthState {
   const AuthAuthenticated(this.user);
 
-  final SkillProofUser user;
+  final MyambiiUser user;
 }
 
 class AuthUnauthenticated extends AuthState {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:skillproof/theme/app_theme.dart';
-import 'package:skillproof/widgets/app_button.dart';
+import 'package:myambii/theme/app_theme.dart';
+import 'package:myambii/widgets/app_button.dart';
 
 /// Renders at a ~375-wide phone viewport. Any RenderFlex overflow throws in
 /// the test harness, so these passing IS the no-overflow check — same

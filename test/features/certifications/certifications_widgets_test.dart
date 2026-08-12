@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:skillproof/core/api_client.dart';
-import 'package:skillproof/features/certifications/certifications_controller.dart';
-import 'package:skillproof/features/certifications/certifications_repository.dart';
-import 'package:skillproof/features/certifications/certifications_state.dart';
-import 'package:skillproof/features/certifications/widgets/certification_form.dart';
-import 'package:skillproof/features/certifications/widgets/certifications_section.dart';
-import 'package:skillproof/models/certification.dart';
-import 'package:skillproof/theme/app_theme.dart';
+import 'package:myambii/core/api_client.dart';
+import 'package:myambii/features/certifications/certifications_controller.dart';
+import 'package:myambii/features/certifications/certifications_repository.dart';
+import 'package:myambii/features/certifications/certifications_state.dart';
+import 'package:myambii/features/certifications/widgets/certification_form.dart';
+import 'package:myambii/features/certifications/widgets/certifications_section.dart';
+import 'package:myambii/models/certification.dart';
+import 'package:myambii/theme/app_theme.dart';
 
 /// A controller whose state is set directly rather than fetched — these
 /// tests are about layout at a phone width, not the load/save network path

@@ -1,4 +1,4 @@
-# SkillProof Mobile (Flutter)
+# Myambii Mobile (Flutter)
 
 Candidate-facing app: auth, profile, jobs, applications, badges. Assessments
 stay on web — not built natively.
@@ -10,17 +10,17 @@ This repo ships only `lib/` + `pubspec.yaml`; platform folders (`android/`,
 
 ```powershell
 cd apps\mobile
-flutter create . --platforms=android,ios --org com.flairfuture --project-name skillproof
+flutter create . --platforms=android,ios --org com.flairfuture --project-name myambii
 flutter pub get
 flutter run
 ```
 
-`--project-name skillproof` must match the `name:` field already in
+`--project-name myambii` must match the `name:` field already in
 `pubspec.yaml`, or `flutter create` will refuse to run. Combined with
 `--org com.flairfuture`, this produces:
 
-- Android `applicationId`: `com.flairfuture.skillproof`
-- iOS bundle id: `com.flairfuture.skillproof`
+- Android `applicationId`: `com.flairfuture.myambii`
+- iOS bundle id: `com.flairfuture.myambii`
 
 `flutter create .` on a directory that already has `lib/` and `pubspec.yaml`
 only fills in the missing platform folders — it will not overwrite the
@@ -124,7 +124,7 @@ lib/
     api_client.dart                HTTP client: auth header, 401 -> refresh -> retry once
     providers.dart                 tokenStorageProvider, apiClientProvider
   models/
-    user.dart                      SkillProofUser
+    user.dart                      MyambiiUser
   features/
     auth/
       auth_repository.dart         /auth/otp/request, /auth/otp/verify, /auth/logout, /users/me
@@ -141,7 +141,7 @@ lib/
 2. User enters the OTP, `LoginScreen` posts `{ phone, otp }` to
    `POST /auth/otp/verify`, which returns `{ accessToken, refreshToken, user }`.
 3. `AuthController` stores both tokens via `TokenStorage` (Keystore/Keychain)
-   and flips state to `AuthAuthenticated`; `SkillProofApp` swaps to
+   and flips state to `AuthAuthenticated`; `MyambiiApp` swaps to
    `HomeScreen` automatically — no manual `Navigator` call needed.
 4. Every subsequent `ApiClient.get`/`post` attaches
    `Authorization: Bearer <accessToken>`. On a `401`, the client posts

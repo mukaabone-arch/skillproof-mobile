@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:skillproof/features/assessments/widgets/assessment_catalog_card.dart';
-import 'package:skillproof/models/assessment_catalog_entry.dart';
-import 'package:skillproof/theme/app_theme.dart';
+import 'package:myambii/features/assessments/widgets/assessment_catalog_card.dart';
+import 'package:myambii/models/assessment_catalog_entry.dart';
+import 'package:myambii/theme/app_theme.dart';
 
 AssessmentCatalogEntry _entry({
   AssessmentCatalogState state = AssessmentCatalogState.available,

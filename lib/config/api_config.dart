@@ -1,4 +1,4 @@
-/// API connection settings for the SkillProof backend.
+/// API connection settings for the Myambii backend.
 class ApiConfig {
   ApiConfig._();
 

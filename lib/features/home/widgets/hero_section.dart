@@ -81,7 +81,7 @@ class HeroSection extends ConsumerWidget {
 
     final hasProfile = profile.completeness > 0;
     // "Verified skill" for journey purposes is either proof tier — a
-    // SkillProof badge or a verified certification — matching the
+    // Myambii badge or a verified certification — matching the
     // apply-gate's own either/or rule. This never leaks into scoring or
     // into any green-colored element; see StatusCards for how the two
     // tiers stay visually distinct even while being summed here.
@@ -134,7 +134,7 @@ class HeroSection extends ConsumerWidget {
   String _greeting({required String? fullName, required bool isFirstSession}) {
     final trimmed = fullName?.trim();
     if (trimmed != null && trimmed.isNotEmpty) return '${timeOfDayGreeting()}, $trimmed';
-    if (isFirstSession) return 'Welcome to SkillProof';
+    if (isFirstSession) return 'Welcome to Myambii';
     return 'Welcome back';
   }
 

@@ -59,7 +59,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             otp: _otpController.text.trim(),
           );
       // A successful verify flips global auth state to Authenticated;
-      // SkillProofApp swaps to RootScreen on its own.
+      // MyambiiApp swaps to RootScreen on its own.
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
     } finally {
@@ -75,7 +75,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       await ref.read(authControllerProvider.notifier).signInWithGoogle();
       // Same routing as _verifyOtp: a successful sign-in flips global auth
-      // state to Authenticated and SkillProofApp swaps to RootScreen on its
+      // state to Authenticated and MyambiiApp swaps to RootScreen on its
       // own. A cancelled native chooser resolves normally (no throw) —
       // AuthController absorbs that case, so there's nothing to show here.
     } catch (e) {
@@ -110,7 +110,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
-                          'SkillProof',
+                          'Myambii',
                           style: AppTypography.titleMedium,
                           textAlign: TextAlign.center,
                         ),

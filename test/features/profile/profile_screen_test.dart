@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:skillproof/features/profile/profile_screen.dart';
-import 'package:skillproof/models/profile.dart';
+import 'package:myambii/features/profile/profile_screen.dart';
+import 'package:myambii/models/profile.dart';
 
 CandidateProfile _profile({
   String? headline,

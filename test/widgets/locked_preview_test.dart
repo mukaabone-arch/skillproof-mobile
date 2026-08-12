@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:skillproof/theme/app_theme.dart';
-import 'package:skillproof/widgets/locked_preview.dart';
+import 'package:myambii/theme/app_theme.dart';
+import 'package:myambii/widgets/locked_preview.dart';
 
 Widget _host(Widget child) {
   return MaterialApp(

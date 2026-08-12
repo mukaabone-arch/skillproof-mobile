@@ -42,7 +42,7 @@ jobs:
         with:
           files: build/app/outputs/flutter-apk/app-release.apk
           body: |
-            ## SkillProof Mobile v${{ github.ref_name }}
+            ## Myambii Mobile v${{ github.ref_name }}
             
             ### Connected to Render Backend
             - API: https://api.skillproof.flairfuture.com

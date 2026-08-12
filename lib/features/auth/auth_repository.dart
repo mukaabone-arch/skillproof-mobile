@@ -31,7 +31,7 @@ class AuthRepository {
     await apiClient.post('/auth/otp/request', {'phone': phone});
   }
 
-  Future<SkillProofUser> verifyOtp({
+  Future<MyambiiUser> verifyOtp({
     required String phone,
     required String otp,
   }) async {
@@ -46,7 +46,7 @@ class AuthRepository {
     );
 
     try {
-      return SkillProofUser.fromJson(response['user'] as Map<String, dynamic>);
+      return MyambiiUser.fromJson(response['user'] as Map<String, dynamic>);
     } catch (_) {
       // Tokens are already saved above, so the handshake itself genuinely
       // succeeded — a malformed embedded user object shouldn't be reported
@@ -62,7 +62,7 @@ class AuthRepository {
   /// client's secret (apps/api's GoogleOAuthProvider) and returns the same
   /// { accessToken, refreshToken, user } shape as phone OTP verify — so
   /// everything past this method is identical to the OTP path.
-  Future<SkillProofUser> signInWithGoogle() async {
+  Future<MyambiiUser> signInWithGoogle() async {
     final GoogleSignInAccount? account = await _googleSignIn.signIn();
     if (account == null) {
       // Native chooser was dismissed — GoogleSignIn.signIn() resolves to
@@ -106,7 +106,7 @@ class AuthRepository {
     );
 
     try {
-      return SkillProofUser.fromJson(response['user'] as Map<String, dynamic>);
+      return MyambiiUser.fromJson(response['user'] as Map<String, dynamic>);
     } catch (_) {
       // Same reasoning as verifyOtp above: the code-for-token exchange
       // already succeeded and tokens are saved, so a malformed embedded
@@ -115,9 +115,9 @@ class AuthRepository {
     }
   }
 
-  Future<SkillProofUser> fetchMe() async {
+  Future<MyambiiUser> fetchMe() async {
     final response = await apiClient.get('/users/me') as Map<String, dynamic>;
-    return SkillProofUser.fromJson(response);
+    return MyambiiUser.fromJson(response);
   }
 
   Future<void> logout() async {

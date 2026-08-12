@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:skillproof/features/badges/widgets/badge_card.dart';
-import 'package:skillproof/models/badge.dart';
-import 'package:skillproof/theme/app_theme.dart';
+import 'package:myambii/features/badges/widgets/badge_card.dart';
+import 'package:myambii/models/badge.dart';
+import 'package:myambii/theme/app_theme.dart';
 
 VerifiedBadge _badge({required BadgeVerificationMethod verifiedBy}) {
   return VerifiedBadge(

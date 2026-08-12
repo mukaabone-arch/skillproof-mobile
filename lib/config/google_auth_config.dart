@@ -3,7 +3,7 @@
 ///
 ///  - [androidClientId]: the "Android" OAuth client registered in Google
 ///    Cloud Console, keyed to this app's package name
-///    (com.flairfuture.skillproof) and its signing SHA-1 certificate
+///    (com.flairfuture.myambii) and its signing SHA-1 certificate
 ///    fingerprint. This is what lets the native sign-in sheet run at all
 ///    on this platform — Android resolves it itself via Play Services, so
 ///    it isn't actually passed to the plugin on this platform, but it

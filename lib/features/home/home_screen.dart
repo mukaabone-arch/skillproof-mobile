@@ -36,7 +36,7 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('SkillProof'),
+        title: const Text('Myambii'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),

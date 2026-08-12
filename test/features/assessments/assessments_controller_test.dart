@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:skillproof/core/api_client.dart';
-import 'package:skillproof/features/assessments/assessments_controller.dart';
-import 'package:skillproof/features/assessments/assessments_repository.dart';
-import 'package:skillproof/models/assessment_catalog_entry.dart';
+import 'package:myambii/core/api_client.dart';
+import 'package:myambii/features/assessments/assessments_controller.dart';
+import 'package:myambii/features/assessments/assessments_repository.dart';
+import 'package:myambii/models/assessment_catalog_entry.dart';
 
 AssessmentCatalogEntry _entry(String skillId) => AssessmentCatalogEntry(
       skillId: skillId,

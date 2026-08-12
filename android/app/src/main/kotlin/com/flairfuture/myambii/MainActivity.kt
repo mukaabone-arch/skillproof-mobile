@@ -1,4 +1,4 @@
-package com.flairfuture.skillproof
+package com.flairfuture.myambii
 
 import io.flutter.embedding.android.FlutterActivity
 

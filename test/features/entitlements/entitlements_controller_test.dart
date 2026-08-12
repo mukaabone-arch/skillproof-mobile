@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:skillproof/core/api_client.dart';
-import 'package:skillproof/features/entitlements/entitlements_controller.dart';
-import 'package:skillproof/features/entitlements/entitlements_repository.dart';
-import 'package:skillproof/features/entitlements/entitlements_state.dart';
-import 'package:skillproof/models/entitlements.dart';
+import 'package:myambii/core/api_client.dart';
+import 'package:myambii/features/entitlements/entitlements_controller.dart';
+import 'package:myambii/features/entitlements/entitlements_repository.dart';
+import 'package:myambii/features/entitlements/entitlements_state.dart';
+import 'package:myambii/models/entitlements.dart';
 
 Entitlements _entitlements({String tier = 'FREE', int? applicationsLimit = 10}) {
   return Entitlements(

@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:skillproof/core/api_client.dart';
-import 'package:skillproof/features/jobs/job_detail_controller.dart';
-import 'package:skillproof/features/jobs/jobs_repository.dart';
-import 'package:skillproof/features/jobs/jobs_state.dart';
-import 'package:skillproof/models/job.dart';
-import 'package:skillproof/models/matched_job.dart';
+import 'package:myambii/core/api_client.dart';
+import 'package:myambii/features/jobs/job_detail_controller.dart';
+import 'package:myambii/features/jobs/jobs_repository.dart';
+import 'package:myambii/features/jobs/jobs_state.dart';
+import 'package:myambii/models/job.dart';
+import 'package:myambii/models/matched_job.dart';
 
 Job _job({required bool alreadyApplied}) => Job(
       id: 'job-1',

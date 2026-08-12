@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:skillproof/features/assessments/card_state.dart';
-import 'package:skillproof/models/assessment_catalog_entry.dart';
+import 'package:myambii/features/assessments/card_state.dart';
+import 'package:myambii/models/assessment_catalog_entry.dart';
 
 AssessmentCatalogEntry _entry({
   required AssessmentCatalogState state,

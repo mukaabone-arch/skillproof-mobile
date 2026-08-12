@@ -13,15 +13,15 @@ import 'theme/app_theme.dart';
 /// router: the top level only has two destinations (login, the post-login
 /// shell), and the auth state already models exactly when each applies.
 /// Navigation among Home/Jobs/Profile once signed in lives in [RootScreen].
-class SkillProofApp extends ConsumerWidget {
-  const SkillProofApp({super.key});
+class MyambiiApp extends ConsumerWidget {
+  const MyambiiApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authControllerProvider);
 
     return MaterialApp(
-      title: 'SkillProof',
+      title: 'Myambii',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
       darkTheme: AppTheme.dark,
