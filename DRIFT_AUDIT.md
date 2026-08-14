@@ -153,8 +153,8 @@ A minimal mobile Interviews feature would need: a repository hitting `/interview
 
 **Mobile's production config** (`prod.json`, `run-prod.ps1`, `build-prod-apk.ps1`, and `.github/workflows/build-apk.yml` — all four agree):
 ```
-API_BASE_URL=https://api.skillproof.flairfuture.com
-WEB_BASE_URL=https://skillproof.flairfuture.com
+API_BASE_URL=https://api.myambii.com
+WEB_BASE_URL=https://www.myambii.com
 ```
 These are injected via `--dart-define` at build time; `prod.json` itself isn't read by the app, it's a human cross-check doc (RELEASE.md explicitly tells releasers to diff it against the workflow's dart-define flags).
 

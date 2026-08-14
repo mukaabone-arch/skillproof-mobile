@@ -8,7 +8,7 @@ This repository contains both the Flutter mobile app and backend services (deplo
 
 ### 1. Ensure Backend is Ready
 - Verify all backend changes are deployed to Render
-- Test the backend API at `https://api.skillproof.flairfuture.com`
+- Test the backend API at `https://api.myambii.com`
 
 ### 2. Tag the Release
 ```powershell

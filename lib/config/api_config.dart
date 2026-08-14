@@ -12,7 +12,7 @@ class ApiConfig {
   /// device needs your machine's LAN IP.)
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://api.skillproof.flairfuture.com',
+    defaultValue: 'https://api.myambii.com',
   );
 
   /// Base URL of the web app — for links that only make sense in a full
@@ -29,6 +29,6 @@ class ApiConfig {
   /// localhost or the 10.0.2.2 emulator-only loopback alias).
   static const String webBaseUrl = String.fromEnvironment(
     'WEB_BASE_URL',
-    defaultValue: 'https://skillproof.flairfuture.com',
+    defaultValue: 'https://www.myambii.com',
   );
 }
