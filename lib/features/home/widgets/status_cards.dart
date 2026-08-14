@@ -23,15 +23,25 @@ class StatusCardsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(child: _ProfileStatusCard()),
-        SizedBox(width: AppSpacing.space3),
-        Expanded(child: _VerifiedSkillsStatusCard()),
-        SizedBox(width: AppSpacing.space3),
-        Expanded(child: _ApplicationsStatusCard()),
-      ],
+    // IntrinsicHeight + stretch: equalizes the three cards to the tallest
+    // one's height regardless of content. Not load-bearing today (the
+    // zero-state copy below is short enough on all three to size the same
+    // on its own) but a defensive backstop against _ApplicationsStatusCard's
+    // _statusSummary(), which concatenates one segment per distinct
+    // application status ("3 pending, 2 interview, 1 rejected") and can run
+    // long enough to wrap for a candidate with several applications —
+    // the same uneven-height shape this was fixing, just later.
+    return const IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(child: _ProfileStatusCard()),
+          SizedBox(width: AppSpacing.space3),
+          Expanded(child: _VerifiedSkillsStatusCard()),
+          SizedBox(width: AppSpacing.space3),
+          Expanded(child: _ApplicationsStatusCard()),
+        ],
+      ),
     );
   }
 }
@@ -159,7 +169,7 @@ class _VerifiedSkillsStatusCard extends ConsumerWidget {
       );
       meta = total == 0
           ? Text(
-              'Earn a badge or add a certification',
+              'None yet',
               style: AppTypography.bodySmall,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,

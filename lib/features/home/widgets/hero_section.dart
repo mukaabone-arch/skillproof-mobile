@@ -130,12 +130,15 @@ class HeroSection extends ConsumerWidget {
   /// Never shows the raw phone/email as a "name" — greets by fullName once
   /// it exists, otherwise a neutral greeting that still distinguishes a
   /// brand new visitor from someone returning who just hasn't named
-  /// themselves yet.
+  /// themselves yet. Both nameless branches are time-of-day based, same as
+  /// the named branch — mirrors apps/web/lib/greeting.ts + Dashboard.tsx's
+  /// identical change, kept in step deliberately so the two platforms never
+  /// show different copy for the same state.
   String _greeting({required String? fullName, required bool isFirstSession}) {
     final trimmed = fullName?.trim();
     if (trimmed != null && trimmed.isNotEmpty) return '${timeOfDayGreeting()}, $trimmed';
-    if (isFirstSession) return 'Welcome to MyAmbii';
-    return 'Welcome back';
+    if (isFirstSession) return '${timeOfDayGreeting()} — welcome to MyAmbii';
+    return '${timeOfDayGreeting()} — welcome back';
   }
 
   /// Highest-scoring match the candidate hasn't already applied to —

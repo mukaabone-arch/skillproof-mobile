@@ -25,6 +25,9 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
+  assets:
+    - assets/images/myambii-logo.png
+
   # Bundled font assets — deliberately NOT the google_fonts package, whose
   # runtime fetch from fonts.gstatic.com crashed the app offline. Static
   # per-weight instances (not variable TTFs: Flutter's fontWeight matching

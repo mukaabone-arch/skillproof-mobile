@@ -36,7 +36,15 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('MyAmbii'),
+        title: const Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Image(image: AssetImage('assets/images/myambii-logo.png'), height: 28, width: 28),
+            SizedBox(width: AppSpacing.space2),
+            Text('MyAmbii'),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
