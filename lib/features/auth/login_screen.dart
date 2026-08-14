@@ -110,7 +110,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
-                          'Myambii',
+                          'MyAmbii',
                           style: AppTypography.titleMedium,
                           textAlign: TextAlign.center,
                         ),

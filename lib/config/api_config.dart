@@ -1,4 +1,4 @@
-/// API connection settings for the Myambii backend.
+/// API connection settings for the MyAmbii backend.
 class ApiConfig {
   ApiConfig._();
 

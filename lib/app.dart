@@ -21,7 +21,7 @@ class MyambiiApp extends ConsumerWidget {
     final authState = ref.watch(authControllerProvider);
 
     return MaterialApp(
-      title: 'Myambii',
+      title: 'MyAmbii',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
       darkTheme: AppTheme.dark,

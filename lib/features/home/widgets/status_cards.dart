@@ -121,12 +121,12 @@ class _ProfileStatusCard extends ConsumerWidget {
 /// The one card that blends both proof tiers into a single count (per
 /// spec: "verified skills count (badges + certifications)"). The headline
 /// number itself is deliberately neutral (textPrimary), not green — it's a
-/// mixed metric, not literally "a verified Myambii skill" — and the
+/// mixed metric, not literally "a verified MyAmbii skill" — and the
 /// breakdown line underneath is the only place color appears, with green
 /// reserved strictly for the actual badge sub-count and brand for the
 /// verified-certification sub-count. This keeps the two-tier rule intact
 /// even in a rolled-up summary tile: green never touches anything that
-/// isn't a Myambii-assessed badge.
+/// isn't a MyAmbii-assessed badge.
 class _VerifiedSkillsStatusCard extends ConsumerWidget {
   const _VerifiedSkillsStatusCard();
 
@@ -169,7 +169,7 @@ class _VerifiedSkillsStatusCard extends ConsumerWidget {
               runSpacing: 2,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                if (badgeCount > 0) _TierDot(label: '$badgeCount Myambii', color: AppColors.success),
+                if (badgeCount > 0) _TierDot(label: '$badgeCount MyAmbii', color: AppColors.success),
                 if (certificationCount > 0)
                   _TierDot(label: '$certificationCount certified', color: AppColors.primary),
               ],

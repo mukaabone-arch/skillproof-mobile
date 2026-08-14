@@ -36,7 +36,7 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Myambii'),
+        title: const Text('MyAmbii'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
