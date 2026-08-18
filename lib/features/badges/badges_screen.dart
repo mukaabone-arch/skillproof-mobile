@@ -93,7 +93,7 @@ class _BadgesScreenState extends ConsumerState<BadgesScreen> {
                   ),
                   const SizedBox(height: AppSpacing.space3),
                   Text(
-                    'Each skill has up to four levels — Foundational, Practitioner, Advanced, and Expert — '
+                    'Each skill has three levels — Foundational, Practitioner, and Advanced — '
                     'each one more rigorous than the last. Employers see exactly which level you\'ve reached '
                     'for every skill.',
                     style: AppTypography.bodyMedium,
