@@ -35,6 +35,13 @@ class MyambiiApp extends ConsumerWidget {
   }
 }
 
+/// Shown while [AuthController._restoreSession] decides where next (see
+/// auth_controller.dart) — the only "where do we go next" logic in the app,
+/// this widget just renders whatever that decision is currently loading
+/// toward. Deliberately pixel-matched to the generated native splash
+/// (flutter_native_splash config in pubspec.yaml: same #161826 background,
+/// same assets/icon/app_icon_dark_navy_1024.png image, same 256x256 logical
+/// size) so the native-to-Flutter handoff has no visible seam.
 class _SplashScreen extends StatelessWidget {
   const _SplashScreen();
 
@@ -42,7 +49,13 @@ class _SplashScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Scaffold(
       backgroundColor: AppColors.background,
-      body: Center(child: CircularProgressIndicator()),
+      body: Center(
+        child: Image(
+          image: AssetImage('assets/icon/app_icon_dark_navy_1024.png'),
+          width: 256,
+          height: 256,
+        ),
+      ),
     );
   }
 }
