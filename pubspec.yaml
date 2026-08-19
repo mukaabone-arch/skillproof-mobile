@@ -29,7 +29,7 @@ flutter:
 
   assets:
     - assets/images/myambii-logo.png
-    - assets/icon/app_icon_dark_navy_1024.png
+    - assets/icon/splash_logo_1024.png
 
   # Bundled font assets — deliberately NOT the google_fonts package, whose
   # runtime fetch from fonts.gstatic.com crashed the app offline. Static
@@ -61,35 +61,31 @@ flutter:
 
 # ---- flutter_launcher_icons ----
 # image_path is the flat/legacy icon (used as-is for iOS and for Android's
-# pre-adaptive-icon fallback). adaptive_icon_foreground is a separate,
-# smaller-scale render of the same mark for Android's adaptive icon system;
-# adaptive_icon_background is a flat colour, not an image, matching
-# AppColors.background (lib/theme/app_colors.dart) so the two icon systems
-# read as the same app. Both source PNGs were rendered on a slightly
-# different navy (#0F1420) than AppColors.background (#161826) — see the
-# splash config note below, same caveat applies here.
+# pre-adaptive-icon fallback) — opaque, rendered directly on
+# AppColors.background (lib/theme/app_colors.dart) #161826.
+# adaptive_icon_foreground is a transparent-background render of the same
+# mark at 66% scale for Android's adaptive icon system; adaptive_icon_background
+# is a flat colour (also #161826) that now actually shows through the
+# foreground's real alpha margin, unlike the first-pass source images.
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/icon/app_icon_dark_navy_1024.png"
+  image_path: "assets/icon/app_icon_1024.png"
   remove_alpha_ios: true
   adaptive_icon_background: "#161826"
-  adaptive_icon_foreground: "assets/icon/app_icon_dark_navy_padded_1024.png"
+  adaptive_icon_foreground: "assets/icon/app_icon_adaptive_foreground_1024.png"
 
 # ---- flutter_native_splash ----
 # color/background_color must equal AppColors.background (#161826) — this
 # native (pre-Flutter-engine) splash has to hand off invisibly to
 # lib/app.dart's _SplashScreen, which is painted on AppColors.background
-# directly. NOTE: the source image itself was rendered on #0F1420, not
-# #161826 — it's a fully opaque square with no transparent margin, so the
-# navy baked into the PNG will show as a faint, slightly-darker square
-# against this background_color rather than blending into it. Flagged for
-# follow-up; not something this config can fix without a new source image.
+# directly. image is transparent-background (splash_logo_1024.png), so it
+# composites cleanly onto color instead of carrying its own baked square.
 flutter_native_splash:
   color: "#161826"
-  image: assets/icon/app_icon_dark_navy_1024.png
+  image: assets/icon/splash_logo_1024.png
   android_12:
-    image: assets/icon/app_icon_dark_navy_1024.png
+    image: assets/icon/splash_logo_1024.png
     color: "#161826"
   android: true
   ios: true

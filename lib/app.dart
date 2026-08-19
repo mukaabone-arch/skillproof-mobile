@@ -40,8 +40,9 @@ class MyambiiApp extends ConsumerWidget {
 /// this widget just renders whatever that decision is currently loading
 /// toward. Deliberately pixel-matched to the generated native splash
 /// (flutter_native_splash config in pubspec.yaml: same #161826 background,
-/// same assets/icon/app_icon_dark_navy_1024.png image, same 256x256 logical
-/// size) so the native-to-Flutter handoff has no visible seam.
+/// same assets/icon/splash_logo_1024.png image — transparent background, so
+/// it composites onto AppColors.background with no baked-in square — same
+/// 256x256 logical size) so the native-to-Flutter handoff has no visible seam.
 class _SplashScreen extends StatelessWidget {
   const _SplashScreen();
 
@@ -51,7 +52,7 @@ class _SplashScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       body: Center(
         child: Image(
-          image: AssetImage('assets/icon/app_icon_dark_navy_1024.png'),
+          image: AssetImage('assets/icon/splash_logo_1024.png'),
           width: 256,
           height: 256,
         ),
