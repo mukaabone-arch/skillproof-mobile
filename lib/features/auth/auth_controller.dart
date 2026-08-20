@@ -70,6 +70,24 @@ class AuthController extends StateNotifier<AuthState> {
     }
   }
 
+  /// Same shared AuthState/RootScreen routing as [signInWithGoogle] — a
+  /// successful sign-in flips state to [AuthAuthenticated] regardless of
+  /// which provider it came from.
+  Future<void> signInWithGithub() async {
+    state = const AuthLoading();
+    try {
+      final user = await _repository.signInWithGithub();
+      state = AuthAuthenticated(user);
+    } on GithubSignInCancelled {
+      // Same as GoogleSignInCancelled above — an ordinary cancel, not an
+      // error, so no message for the login screen to show.
+      state = const AuthUnauthenticated();
+    } catch (e) {
+      state = AuthUnauthenticated(error: e.toString());
+      rethrow;
+    }
+  }
+
   Future<void> logout() async {
     await _repository.logout();
     state = const AuthUnauthenticated();

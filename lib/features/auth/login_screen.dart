@@ -20,9 +20,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _otpSent = false;
   bool _submitting = false;
   bool _googleSubmitting = false;
+  bool _githubSubmitting = false;
   String? _error;
 
-  bool get _anySubmitting => _submitting || _googleSubmitting;
+  bool get _anySubmitting => _submitting || _googleSubmitting || _githubSubmitting;
 
   @override
   void dispose() {
@@ -82,6 +83,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (mounted) setState(() => _error = e.toString());
     } finally {
       if (mounted) setState(() => _googleSubmitting = false);
+    }
+  }
+
+  Future<void> _signInWithGithub() async {
+    setState(() {
+      _githubSubmitting = true;
+      _error = null;
+    });
+    try {
+      await ref.read(authControllerProvider.notifier).signInWithGithub();
+      // Same routing as _signInWithGoogle — a cancelled browser tab or a
+      // decline on GitHub's consent screen both resolve normally (no
+      // throw); AuthController absorbs GithubSignInCancelled.
+    } catch (e) {
+      if (mounted) setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _githubSubmitting = false);
     }
   }
 
@@ -147,7 +165,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           label: _otpSent ? 'Verify OTP' : 'Send OTP',
                           busy: _submitting,
                           expand: true,
-                          onPressed: _googleSubmitting ? null : (_otpSent ? _verifyOtp : _sendOtp),
+                          onPressed: (_googleSubmitting || _githubSubmitting)
+                              ? null
+                              : (_otpSent ? _verifyOtp : _sendOtp),
                         ),
                         if (_otpSent) ...[
                           const SizedBox(height: AppSpacing.space2),
@@ -179,7 +199,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           icon: const _GoogleGlyph(),
                           busy: _googleSubmitting,
                           expand: true,
-                          onPressed: _submitting ? null : _signInWithGoogle,
+                          onPressed: (_submitting || _githubSubmitting) ? null : _signInWithGoogle,
+                        ),
+                        const SizedBox(height: AppSpacing.space3),
+                        AppButton(
+                          label: 'Sign in with GitHub',
+                          variant: AppButtonVariant.secondary,
+                          icon: const _GithubGlyph(),
+                          busy: _githubSubmitting,
+                          expand: true,
+                          onPressed: (_submitting || _googleSubmitting) ? null : _signInWithGithub,
                         ),
                         if (_error != null) ...[
                           const SizedBox(height: AppSpacing.space3),
@@ -225,4 +254,58 @@ class _GoogleGlyph extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Minimal Octocat-silhouette mark — same "no image asset/package required"
+/// approach as [_GoogleGlyph], at the same 18x18 size/weight. A simplified
+/// head-with-ears shape rather than a single letter (unlike Google's "G",
+/// GitHub's own mark has no letter to fall back on).
+class _GithubGlyph extends StatelessWidget {
+  const _GithubGlyph();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 18,
+      height: 18,
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(color: AppColors.githubBrandBlack, shape: BoxShape.circle),
+      child: const CustomPaint(size: Size(11, 11), painter: _OctocatPainter()),
+    );
+  }
+}
+
+class _OctocatPainter extends CustomPainter {
+  const _OctocatPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+
+    // Ears — two small triangles peeking above the head circle.
+    final earWidth = size.width * 0.28;
+    final earHeight = size.height * 0.32;
+    for (final dx in [0.0, size.width - earWidth]) {
+      final ear = Path()
+        ..moveTo(dx, earHeight)
+        ..lineTo(dx + earWidth / 2, 0)
+        ..lineTo(dx + earWidth, earHeight)
+        ..close();
+      canvas.drawPath(ear, paint);
+    }
+
+    // Head — a rounded blob covering the lower ~80% of the glyph, overlapping
+    // the ears' base so the two shapes read as one silhouette, not two
+    // disconnected pieces.
+    final headRect = Rect.fromLTWH(0, size.height * 0.22, size.width, size.height * 0.78);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(headRect, Radius.circular(size.width * 0.42)),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

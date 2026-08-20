@@ -30,6 +30,24 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- flutter_web_auth_2's own redirect-capture activity (GitHub
+             sign-in — see lib/features/auth/auth_repository.dart's
+             signInWithGithub) — required by the plugin itself, not
+             app-defined; the class lives in the plugin, not this app's
+             source. Scheme must exactly match GithubAuthConfig.redirectUri
+             and the GitHub OAuth App's registered callback URL. -->
+        <activity
+            android:name="com.linusu.flutter_web_auth_2.CallbackActivity"
+            android:exported="true"
+            android:taskAffinity="">
+            <intent-filter android:label="flutter_web_auth_2">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="com.myambii"/>
+            </intent-filter>
+        </activity>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

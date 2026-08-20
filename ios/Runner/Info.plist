@@ -28,6 +28,23 @@
 		<true/>
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>Used to select a profile photo to upload.</string>
+		<!-- GitHub sign-in redirect (see lib/config/github_auth_config.dart
+		     and lib/features/auth/auth_repository.dart's signInWithGithub) —
+		     flutter_web_auth_2's ASWebAuthenticationSession needs this app's
+		     custom scheme registered to hand the OAuth redirect back to it.
+		     Must exactly match GithubAuthConfig.redirectUri's scheme and the
+		     GitHub OAuth App's registered callback URL. -->
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleURLName</key>
+				<string>com.myambii.oauth.github</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>com.myambii</string>
+				</array>
+			</dict>
+		</array>
 		<key>UIApplicationSceneManifest</key>
 		<dict>
 			<key>UIApplicationSupportsMultipleScenes</key>

@@ -1,7 +1,11 @@
+import 'package:flutter/services.dart';
+import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../../config/github_auth_config.dart';
 import '../../config/google_auth_config.dart';
 import '../../core/api_client.dart';
+import '../../core/pkce.dart';
 import '../../core/token_storage.dart';
 import '../../models/user.dart';
 
@@ -10,6 +14,14 @@ import '../../models/user.dart';
 /// of surfacing an error banner for an ordinary "changed my mind" tap.
 class GoogleSignInCancelled implements Exception {
   const GoogleSignInCancelled();
+}
+
+/// GitHub counterpart to [GoogleSignInCancelled] — thrown when the user
+/// dismisses the browser tab/ASWebAuthenticationSession before completing
+/// sign-in, or declines on GitHub's own consent screen. Same contract:
+/// callers treat this silently rather than showing an error banner.
+class GithubSignInCancelled implements Exception {
+  const GithubSignInCancelled();
 }
 
 /// Talks to the /auth and /users/me endpoints. Field names below must
@@ -109,6 +121,96 @@ class AuthRepository {
       return MyambiiUser.fromJson(response['user'] as Map<String, dynamic>);
     } catch (_) {
       // Same reasoning as verifyOtp above: the code-for-token exchange
+      // already succeeded and tokens are saved, so a malformed embedded
+      // user object shouldn't discard a valid session.
+      return fetchMe();
+    }
+  }
+
+  /// Browser-based GitHub OAuth (PKCE) → POST /auth/github, same server-
+  /// side exchange contract as [signInWithGoogle] (apps/api's
+  /// GithubOAuthProvider completes the code-for-token exchange with the
+  /// client secret, which never leaves the API). Unlike Google, GitHub has
+  /// no platform-native SDK this app can use, so this drives the OAuth
+  /// redirect manually: flutter_web_auth_2 opens the system browser
+  /// (ASWebAuthenticationSession on iOS, Chrome Auth Tab on Android) at
+  /// GitHub's authorize URL and resolves once GitHub redirects back to
+  /// [GithubAuthConfig.redirectUri].
+  ///
+  /// PKCE (RFC 7636, S256) is mandatory here, unlike the optional
+  /// `codeVerifier` on the Google path above: this is a manual
+  /// authorization-code flow a public client (this app, no client secret)
+  /// drives over a system browser — exactly PKCE's threat model (some other
+  /// app on the device intercepting the redirect and racing to redeem the
+  /// code first). `state` is a separate, non-PKCE CSRF check — it proves
+  /// the redirect this call received actually answers the authorize request
+  /// *this call* sent, not a stale or forged one.
+  Future<MyambiiUser> signInWithGithub() async {
+    final verifier = Pkce.generateVerifier();
+    final challenge = Pkce.challengeFor(verifier);
+    final state = Pkce.generateState();
+
+    final authorizeUri = Uri.https('github.com', '/login/oauth/authorize', {
+      'client_id': GithubAuthConfig.clientId,
+      'redirect_uri': GithubAuthConfig.redirectUri,
+      'scope': GithubAuthConfig.scope,
+      'state': state,
+      'code_challenge': challenge,
+      'code_challenge_method': 'S256',
+    });
+
+    final String result;
+    try {
+      result = await FlutterWebAuth2.authenticate(
+        url: authorizeUri.toString(),
+        callbackUrlScheme: GithubAuthConfig.callbackUrlScheme,
+      );
+    } on PlatformException catch (e) {
+      // Both platforms use this code for "user dismissed the browser
+      // without completing sign-in" — verified directly against the
+      // plugin's own source (AuthenticationManagementActivity.kt on
+      // Android, FlutterWebAuth2Plugin.swift on iOS), not just its docs.
+      if (e.code == 'CANCELED') {
+        throw const GithubSignInCancelled();
+      }
+      rethrow;
+    }
+
+    final callback = Uri.parse(result);
+
+    // GitHub redirects with `error` (not a thrown exception) when the user
+    // declines on its own consent screen — the same "changed my mind"
+    // outcome as dismissing the browser tab, so it gets the same
+    // cancellation treatment rather than an error banner.
+    if (callback.queryParameters['error'] != null) {
+      throw const GithubSignInCancelled();
+    }
+
+    final returnedState = callback.queryParameters['state'];
+    if (returnedState == null || returnedState != state) {
+      throw Exception('GitHub sign-in could not be verified. Please try again.');
+    }
+
+    final code = callback.queryParameters['code'];
+    if (code == null) {
+      throw Exception('GitHub did not return an authorization code.');
+    }
+
+    final response = await apiClient.post('/auth/github', {
+      'code': code,
+      'redirectUri': GithubAuthConfig.redirectUri,
+      'codeVerifier': verifier,
+    }) as Map<String, dynamic>;
+
+    await tokenStorage.saveTokens(
+      accessToken: response['accessToken'] as String,
+      refreshToken: response['refreshToken'] as String,
+    );
+
+    try {
+      return MyambiiUser.fromJson(response['user'] as Map<String, dynamic>);
+    } catch (_) {
+      // Same reasoning as signInWithGoogle/verifyOtp above: the exchange
       // already succeeded and tokens are saved, so a malformed embedded
       // user object shouldn't discard a valid session.
       return fetchMe();

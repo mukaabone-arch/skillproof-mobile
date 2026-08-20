@@ -182,6 +182,9 @@ class AppColors {
   // Google's own brand blue for the "Sign in with Google" glyph; Google's
   // brand guidelines fix this exact hue regardless of app theme. ----
   static const Color googleBrandBlue = Color(0xFF4285F4);
+  /// Same reasoning as [googleBrandBlue] — GitHub's own near-black mark
+  /// color for the "Sign in with GitHub" glyph.
+  static const Color githubBrandBlack = Color(0xFF181717);
 }
 
 /// Spacing scale. Unchanged by the Nocturne import: nocturne-styles.css's
