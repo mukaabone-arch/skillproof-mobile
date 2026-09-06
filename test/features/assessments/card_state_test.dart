@@ -120,5 +120,38 @@ void main() {
       expect(display.buttonEnabled, isFalse);
       expect(display.metaText, contains('used all retakes allowed'));
     });
+
+    test('available, locked to a different skill: disabled, no meta text (the card renders the lock banner instead)', () {
+      final display = resolveCardDisplay(
+        _entry(state: AssessmentCatalogState.available),
+        freeSkillLocked: 'Prompt Engineering',
+      );
+
+      expect(display.buttonEnabled, isFalse);
+      expect(display.buttonLabel, 'Take assessment');
+      expect(display.metaText, isNull);
+    });
+
+    test('available, locked AND profile not ready: the lock wins, not a second contradictory reason', () {
+      final display = resolveCardDisplay(
+        _entry(state: AssessmentCatalogState.available),
+        freeSkillLocked: 'Prompt Engineering',
+        profileReady: false,
+      );
+
+      expect(display.buttonEnabled, isFalse);
+      expect(display.buttonLabel, 'Take assessment');
+    });
+
+    test('in_progress, locked to a different skill: still governed by its own reason, not the lock', () {
+      final display = resolveCardDisplay(
+        _entry(state: AssessmentCatalogState.inProgress),
+        freeSkillLocked: 'Prompt Engineering',
+      );
+
+      expect(display.buttonEnabled, isFalse);
+      expect(display.buttonLabel, 'Assessment in progress');
+      expect(display.metaText, contains("You've already started this"));
+    });
   });
 }

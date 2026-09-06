@@ -10,7 +10,9 @@ import '../../theme/app_typography.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/collapsible_section.dart';
+import '../account/account_settings_screen.dart';
 import '../auth/auth_controller.dart';
+import '../documents/documents_screen.dart';
 import '../badges/badges_controller.dart';
 import '../badges/badges_state.dart';
 import '../badges/widgets/earned_badges_section.dart';
@@ -26,9 +28,8 @@ import 'widgets/profile_photo_section.dart';
 import 'widgets/profile_view.dart';
 import 'widgets/profile_viewers_section.dart';
 import 'widgets/resume_export_card.dart';
-// TODO: resume upload — blocked on file_picker / compileSdk 36 conflict.
-// Resume upload works on web; revisit when updating the Android toolchain
-// for release builds.
+// TODO(resume upload): blocked — see ProfileRepository.uploadResume's own
+// TODO for the current (2026-09) reason.
 // import 'widgets/resume_section.dart';
 
 /// The candidate's profile — replaces the earlier placeholder. This is
@@ -112,9 +113,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     onOpenCertificate: (b) => _openCertificate(context, b),
                   ),
                 ),
-                // TODO: resume upload — blocked on file_picker / compileSdk 36
-                // conflict. Resume upload works on web; revisit when updating
-                // the Android toolchain for release builds.
+                // TODO(resume upload): blocked — see this file's import-time
+                // TODO above and ProfileRepository.uploadResume's own TODO.
                 // const SizedBox(height: AppSpacing.space3),
                 // ResumeSection(state: state),
                 const SizedBox(height: AppSpacing.space6),
@@ -130,6 +130,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 const SizedBox(height: AppSpacing.space3),
                 const ResumeExportCard(),
+                const SizedBox(height: AppSpacing.space3),
+                _AccountLinksCard(
+                  onOpenBilling: () =>
+                      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const DocumentsScreen())),
+                  onOpenAccountSettings: () =>
+                      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AccountSettingsScreen())),
+                ),
               ],
             ),
           ),
@@ -259,6 +266,31 @@ class _IncompleteProfileHint extends StatelessWidget {
               style: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimary),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Links off to the two account-family screens that don't belong competing
+/// for space in this ListView (both are their own multi-step flows) — same
+/// reasoning as web's own separate /profile/account and /profile/billing
+/// pages linked from /profile rather than sections embedded in it.
+class _AccountLinksCard extends StatelessWidget {
+  const _AccountLinksCard({required this.onOpenBilling, required this.onOpenAccountSettings});
+
+  final VoidCallback onOpenBilling;
+  final VoidCallback onOpenAccountSettings;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AppButton(label: 'Billing documents', variant: AppButtonVariant.secondary, onPressed: onOpenBilling),
+          const SizedBox(height: AppSpacing.space2),
+          AppButton(label: 'Account settings', variant: AppButtonVariant.secondary, onPressed: onOpenAccountSettings),
         ],
       ),
     );

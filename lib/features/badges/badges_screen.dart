@@ -185,6 +185,18 @@ class _AvailableSection extends ConsumerWidget {
     final profileReady = profile?.readyToApply ?? true;
     final profileGateMessage = profile?.readinessGateMessage;
 
+    // Mirrors apps/web/app/assessments/page.tsx's CategorySection exactly:
+    // gated on tier + limits.singleSkillRestriction, not on freeSkillLock
+    // alone (see PlanLimits.singleSkillRestriction's own doc comment for
+    // why a null lock is ambiguous without it). Computed once per build,
+    // then compared per entry below — the catalog endpoint itself carries
+    // no lock information (confirmed against the API), so this
+    // cross-reference is the only way to know.
+    final freeSkillLock =
+        (entitlements != null && entitlements.tier == 'FREE' && entitlements.limits.singleSkillRestriction)
+            ? entitlements.freeSkillLock
+            : null;
+
     return switch (state) {
       AssessmentsLoading() => const Padding(
           padding: EdgeInsets.symmetric(vertical: AppSpacing.space4),
@@ -228,6 +240,8 @@ class _AvailableSection extends ConsumerWidget {
                   premium: entitlements?.isPremium ?? false,
                   profileReady: profileReady,
                   profileGateMessage: profileGateMessage,
+                  freeSkillLocked:
+                      freeSkillLock != null && freeSkillLock.skillId != entry.skillId ? freeSkillLock.skillName : null,
                   // No Navigator.popUntil dance here unlike
                   // job_detail_screen.dart's identical prompt — this card
                   // lives directly in a bottom-nav tab (BadgesScreen), not

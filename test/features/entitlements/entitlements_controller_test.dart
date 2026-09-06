@@ -20,9 +20,11 @@ Entitlements _entitlements({String tier = 'FREE', int? applicationsLimit = 10}) 
       resumeBranding: true,
       resumeTemplates: const ['default'],
       interviewPrep: false,
+      singleSkillRestriction: false,
     ),
     assessmentsUsage: UsageEntry(used: 1, limit: 2, resetsAt: DateTime.utc(2026, 8, 1)),
     applicationsUsage: UsageEntry(used: 4, limit: applicationsLimit, resetsAt: DateTime.utc(2026, 8, 1)),
+    freeSkillLock: null,
   );
 }
 

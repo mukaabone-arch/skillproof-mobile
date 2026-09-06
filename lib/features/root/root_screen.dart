@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../account/account_status_controller.dart';
 import '../assessments/assessments_controller.dart';
 import '../badges/badges_controller.dart';
 import '../badges/badges_screen.dart';
@@ -72,6 +73,10 @@ class _RootScreenState extends ConsumerState<RootScreen> with WidgetsBindingObse
     ref.read(assessmentsControllerProvider.notifier).load();
     ref.read(interviewsControllerProvider.notifier).load();
     ref.read(entitlementsControllerProvider.notifier).load();
+    // Catches a deactivation made from another device/session while this
+    // one was backgrounded — AccountStatusGate wraps RootScreen, so a
+    // flip to deactivated here surfaces ReactivateScreen on the next build.
+    ref.read(accountStatusControllerProvider.notifier).load();
   }
 
   @override

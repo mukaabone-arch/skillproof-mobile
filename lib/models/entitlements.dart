@@ -16,6 +16,7 @@ class PlanLimits {
     required this.resumeBranding,
     required this.resumeTemplates,
     required this.interviewPrep,
+    required this.singleSkillRestriction,
   });
 
   factory PlanLimits.fromJson(Map<String, dynamic> json) => PlanLimits(
@@ -30,6 +31,7 @@ class PlanLimits {
         resumeBranding: json['resumeBranding'] as bool,
         resumeTemplates: (json['resumeTemplates'] as List<dynamic>).cast<String>(),
         interviewPrep: json['interviewPrep'] as bool,
+        singleSkillRestriction: json['singleSkillRestriction'] as bool,
       );
 
   /// null = unlimited.
@@ -48,8 +50,29 @@ class PlanLimits {
   final List<String> resumeTemplates;
   final bool interviewPrep;
 
+  /// True on FREE today — a candidate on this tier can only ever attempt
+  /// self-serve assessments for one skill, whichever they started first
+  /// (see Entitlements.freeSkillLock and EntitlementsService.
+  /// checkSkillLockEligibility on the API side). Gate on this AND the tier,
+  /// never on freeSkillLock alone: a null lock could mean "not restricted"
+  /// or "restricted but hasn't started yet," and only this flag tells them
+  /// apart.
+  final bool singleSkillRestriction;
+
   bool get fullProfileViewers => profileViewers == 'full';
   bool get detailedGapAnalysis => gapAnalysis == 'detailed';
+}
+
+/// Present only once a FREE candidate has locked in their one self-serve
+/// skill — see PlanLimits.singleSkillRestriction's own doc comment.
+class FreeSkillLock {
+  FreeSkillLock({required this.skillId, required this.skillName});
+
+  factory FreeSkillLock.fromJson(Map<String, dynamic> json) =>
+      FreeSkillLock(skillId: json['skillId'] as String, skillName: json['skillName'] as String);
+
+  final String skillId;
+  final String skillName;
 }
 
 /// One of usage.assessments / usage.applications — the only two metrics
@@ -77,6 +100,7 @@ class Entitlements {
     required this.limits,
     required this.assessmentsUsage,
     required this.applicationsUsage,
+    required this.freeSkillLock,
   });
 
   factory Entitlements.fromJson(Map<String, dynamic> json) {
@@ -86,6 +110,8 @@ class Entitlements {
       limits: PlanLimits.fromJson(json['limits'] as Map<String, dynamic>),
       assessmentsUsage: UsageEntry.fromJson(usage['assessments'] as Map<String, dynamic>),
       applicationsUsage: UsageEntry.fromJson(usage['applications'] as Map<String, dynamic>),
+      freeSkillLock:
+          json['freeSkillLock'] == null ? null : FreeSkillLock.fromJson(json['freeSkillLock'] as Map<String, dynamic>),
     );
   }
 
@@ -95,6 +121,11 @@ class Entitlements {
   final PlanLimits limits;
   final UsageEntry assessmentsUsage;
   final UsageEntry applicationsUsage;
+
+  /// See FreeSkillLock's own doc comment. Null before a FREE candidate's
+  /// first self-serve attempt, and always null off the FREE tier or for an
+  /// exempt/grandfathered candidate.
+  final FreeSkillLock? freeSkillLock;
 
   bool get isPremium => tier == 'PREMIUM';
 }

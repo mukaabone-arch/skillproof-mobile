@@ -40,9 +40,31 @@ class AssessmentCardDisplay {
 /// (AssessmentCatalogCard) renders an ActionableNotice with a "Go to
 /// Profile" action instead of a plain Text in this specific case, so the
 /// message lives there, not duplicated into this field too.
-AssessmentCardDisplay resolveCardDisplay(AssessmentCatalogEntry entry, {bool premium = false, bool profileReady = true}) {
+/// [freeSkillLocked] mirrors apps/web/app/assessments/page.tsx's
+/// CategorySection: computed by the caller as `freeSkillLock.skillName`
+/// whenever this entry's skill differs from the one skill a FREE candidate
+/// already locked in, else null — this function never re-derives that
+/// itself. Takes precedence over [profileReady] for the `available` case,
+/// exactly like web: a locked-out skill is hidden from starting at all,
+/// it doesn't queue up a second, less-relevant reason behind the profile
+/// gate. Skills the candidate already holds a badge in are never `available`
+/// in the first place (they're `inProgress`/earned elsewhere), so this can
+/// never contradict a badge already on record.
+AssessmentCardDisplay resolveCardDisplay(
+  AssessmentCatalogEntry entry, {
+  bool premium = false,
+  bool profileReady = true,
+  String? freeSkillLocked,
+}) {
   switch (entry.state) {
     case AssessmentCatalogState.available:
+      if (freeSkillLocked != null) {
+        return const AssessmentCardDisplay(
+          state: AssessmentCatalogState.available,
+          buttonLabel: 'Take assessment',
+          buttonEnabled: false,
+        );
+      }
       if (!profileReady) {
         return const AssessmentCardDisplay(
           state: AssessmentCatalogState.available,

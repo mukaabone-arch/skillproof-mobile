@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../config/api_config.dart';
+import '../../../core/external_link.dart';
 import '../../../models/assessment_catalog_entry.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_typography.dart';
@@ -27,6 +29,7 @@ class AssessmentCatalogCard extends StatelessWidget {
     this.profileReady = true,
     this.profileGateMessage,
     this.onCompleteProfile,
+    this.freeSkillLocked,
     super.key,
   });
 
@@ -52,10 +55,23 @@ class AssessmentCatalogCard extends StatelessWidget {
   final String? profileGateMessage;
   final VoidCallback? onCompleteProfile;
 
+  /// This skill's name if a FREE candidate is locked to a *different* skill,
+  /// else null — the caller (BadgesScreen's _AvailableSection) computes this
+  /// per entry from entitlementsControllerProvider, same as web's
+  /// CategorySection. Takes precedence over the profile gate below; see
+  /// resolveCardDisplay's own doc comment.
+  final String? freeSkillLocked;
+
   @override
   Widget build(BuildContext context) {
-    final display = resolveCardDisplay(entry, premium: premium, profileReady: profileReady);
-    final showProfileGate = entry.state == AssessmentCatalogState.available && !profileReady;
+    final display = resolveCardDisplay(
+      entry,
+      premium: premium,
+      profileReady: profileReady,
+      freeSkillLocked: freeSkillLocked,
+    );
+    final showLockGate = entry.state == AssessmentCatalogState.available && freeSkillLocked != null;
+    final showProfileGate = entry.state == AssessmentCatalogState.available && !showLockGate && !profileReady;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -104,7 +120,23 @@ class AssessmentCatalogCard extends StatelessWidget {
                 style: AppTypography.bodySmall,
               ),
             ],
-            if (showProfileGate) ...[
+            if (showLockGate) ...[
+              const SizedBox(height: AppSpacing.space2),
+              ActionableNotice(
+                message: '🔒 Your free plan\'s assessments are locked to $freeSkillLocked. '
+                    'Upgrade to Premium to attempt ${entry.skillName} too.',
+                actionLabel: 'Upgrade to Premium',
+                // Plain outbound browser link, same mechanism as
+                // "Take assessment" above — no payment/billing code runs in
+                // this app. NOTE: Google Play's billing policy also
+                // restricts steering users toward external payment, not
+                // just in-app processing — this link is part of what's
+                // going to advisers alongside the Tier B (subscription
+                // checkout) policy decision, so it may need to change
+                // depending on that answer. Not an independent choice.
+                onAction: () => openInBrowser('${ApiConfig.webBaseUrl}/upgrade'),
+              ),
+            ] else if (showProfileGate) ...[
               const SizedBox(height: AppSpacing.space2),
               ActionableNotice(
                 message: profileGateMessage ?? 'Complete your profile to start earning verified badges.',
