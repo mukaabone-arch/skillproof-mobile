@@ -72,9 +72,10 @@ class JobDetailController extends StateNotifier<JobDetailState> {
   }
 
   /// Mirrors apps/web/app/jobs/[id]/page.tsx: a 400 with a machine-readable
-  /// `code` (PROFILE_INCOMPLETE / BADGE_REQUIRED) means the request was
-  /// well-formed but the candidate needs to take an action first, so it
-  /// gets a targeted prompt instead of surfacing as a raw error string.
+  /// `code` (PROFILE_INCOMPLETE / RESUME_REQUIRED / AI_EXPERIENCE_REQUIRED /
+  /// BADGE_REQUIRED) means the request was well-formed but the candidate
+  /// needs to take an action first, so it gets a targeted prompt instead of
+  /// surfacing as a raw error string.
   Future<void> apply() async {
     final current = state;
     if (current is! JobDetailLoaded) return;
@@ -99,7 +100,10 @@ class JobDetailController extends StateNotifier<JobDetailState> {
       state = JobDetailLoaded(job: refreshed, missing: current.missing, skillFrequency: current.skillFrequency);
     } on ApiException catch (e) {
       final code = e.body is Map ? (e.body as Map)['code'] as String? : null;
-      if (code == 'PROFILE_INCOMPLETE' || code == 'BADGE_REQUIRED') {
+      if (code == 'PROFILE_INCOMPLETE' ||
+          code == 'RESUME_REQUIRED' ||
+          code == 'AI_EXPERIENCE_REQUIRED' ||
+          code == 'BADGE_REQUIRED') {
         state = cleared.copyWith(
           applying: false,
           applyIssueCode: code,

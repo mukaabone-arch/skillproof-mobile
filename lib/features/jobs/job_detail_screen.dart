@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../config/api_config.dart';
+import '../../core/external_link.dart';
 import '../../models/job.dart';
 import '../../models/matched_job.dart' show SkillMatch;
 import '../../theme/app_colors.dart';
@@ -150,6 +152,29 @@ class _JobDetailBody extends ConsumerWidget {
               ref.read(rootTabIndexProvider.notifier).state = RootTab.profile;
               Navigator.of(context).popUntil((route) => route.isFirst);
             },
+          ),
+        ],
+        if (state.applyIssueCode == 'AI_EXPERIENCE_REQUIRED') ...[
+          const SizedBox(height: AppSpacing.space4),
+          ActionableNotice(
+            message: 'Add your years of AI experience before applying — enter 0 if you\'re new to AI.',
+            actionLabel: 'Go to Profile',
+            onAction: () {
+              // Same "switch tab, then pop back to root" reasoning as
+              // PROFILE_INCOMPLETE above — this screen sits on top of the
+              // IndexedStack the bottom nav controls.
+              ref.read(rootTabIndexProvider.notifier).state = RootTab.profile;
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            },
+          ),
+        ],
+        if (state.applyIssueCode == 'RESUME_REQUIRED') ...[
+          const SizedBox(height: AppSpacing.space4),
+          ActionableNotice(
+            message: 'Upload a resume before applying. Resume upload isn\'t available in the app yet — '
+                'open your profile on myambii.com to add one.',
+            actionLabel: 'Open web profile',
+            onAction: () => openInBrowser('${ApiConfig.webBaseUrl}/profile'),
           ),
         ],
         if (state.applyIssueCode == 'BADGE_REQUIRED') ...[

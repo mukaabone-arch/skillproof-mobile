@@ -119,6 +119,7 @@ class ProfileController extends StateNotifier<ProfileState> {
     required String roleTitleOther,
     required String location,
     required double? yearsOfExp,
+    required double? aiYearsOfExp,
     required String githubUrl,
     required String linkedinUrl,
   }) async {
@@ -139,6 +140,7 @@ class ProfileController extends StateNotifier<ProfileState> {
         roleTitleOther: roleTitle == 'OTHER' && roleTitleOther.isNotEmpty ? roleTitleOther : null,
         location: location.isEmpty ? null : location,
         yearsOfExp: yearsOfExp,
+        aiYearsOfExp: aiYearsOfExp,
         githubUrl: githubUrl.isEmpty ? null : githubUrl,
         linkedinUrl: linkedinUrl.isEmpty ? null : linkedinUrl,
       );
@@ -150,9 +152,10 @@ class ProfileController extends StateNotifier<ProfileState> {
     }
   }
 
-  // TODO: resume upload — blocked on file_picker / compileSdk 36 conflict.
-  // Resume upload works on web; revisit when updating the Android toolchain
-  // for release builds.
+  // TODO(resume upload): blocked — see ProfileRepository.uploadResume's own
+  // TODO for the current (2026-09) reason, which is an upstream
+  // flutter_plugin_android_lifecycle wait, not the compileSdk issue this
+  // comment originally named.
   //
   // Future<void> uploadResume(File file) async {
   //   final current = state;

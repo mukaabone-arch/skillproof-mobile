@@ -17,6 +17,7 @@ CandidateProfile _profile({
     roleTitleOther: roleTitleOther,
     location: location,
     yearsOfExp: null,
+    aiYearsOfExp: null,
     githubUrl: null,
     linkedinUrl: null,
     completeness: 50,

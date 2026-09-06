@@ -31,6 +31,7 @@ class CandidateProfile {
     required this.roleTitleOther,
     required this.location,
     required this.yearsOfExp,
+    required this.aiYearsOfExp,
     required this.githubUrl,
     required this.linkedinUrl,
     required this.completeness,
@@ -47,6 +48,7 @@ class CandidateProfile {
         roleTitleOther: json['roleTitleOther'] as String?,
         location: json['location'] as String?,
         yearsOfExp: (json['yearsOfExp'] as num?)?.toDouble(),
+        aiYearsOfExp: (json['aiYearsOfExp'] as num?)?.toDouble(),
         githubUrl: json['githubUrl'] as String?,
         linkedinUrl: json['linkedinUrl'] as String?,
         completeness: json['completeness'] as int? ?? 0,
@@ -74,6 +76,14 @@ class CandidateProfile {
   final String? roleTitleOther;
   final String? location;
   final double? yearsOfExp;
+
+  /// Years working specifically with AI/ML systems, part of [yearsOfExp]
+  /// above rather than additive to it. Required (alongside a resume) before
+  /// CandidateJobsService.apply lets a job application through — see
+  /// AI_EXPERIENCE_REQUIRED in job_detail_controller.dart. 0 is a genuine,
+  /// complete answer ("no AI experience yet"), distinct from null ("not
+  /// answered") — never treat this as falsy.
+  final double? aiYearsOfExp;
   final String? githubUrl;
   final String? linkedinUrl;
   final int completeness;

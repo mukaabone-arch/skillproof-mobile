@@ -9,8 +9,8 @@ import '../../../widgets/app_card.dart';
 import '../profile_controller.dart';
 import '../profile_state.dart';
 
-/// Edit form for fullName/headline/location/yearsOfExp/email/githubUrl/
-/// linkedinUrl. Client-side validation on email/years/URLs mirrors (but
+/// Edit form for fullName/headline/location/yearsOfExp/aiYearsOfExp/email/
+/// githubUrl/linkedinUrl. Client-side validation on email/years/URLs mirrors (but
 /// doesn't replace) the server's own DTO validation — the server still
 /// re-validates and is the source of truth (e.g. the email-conflict check
 /// can only happen server-side).
@@ -35,6 +35,9 @@ class _ProfileEditFormState extends ConsumerState<ProfileEditForm> {
   late final _yearsController = TextEditingController(
     text: widget.profile.yearsOfExp != null ? _formatYears(widget.profile.yearsOfExp!) : '',
   );
+  late final _aiYearsController = TextEditingController(
+    text: widget.profile.aiYearsOfExp != null ? _formatYears(widget.profile.aiYearsOfExp!) : '',
+  );
   late final _githubController = TextEditingController(text: widget.profile.githubUrl ?? '');
   late final _linkedinController = TextEditingController(text: widget.profile.linkedinUrl ?? '');
 
@@ -46,6 +49,7 @@ class _ProfileEditFormState extends ConsumerState<ProfileEditForm> {
     _roleTitleOtherController.dispose();
     _locationController.dispose();
     _yearsController.dispose();
+    _aiYearsController.dispose();
     _githubController.dispose();
     _linkedinController.dispose();
     super.dispose();
@@ -61,6 +65,11 @@ class _ProfileEditFormState extends ConsumerState<ProfileEditForm> {
           roleTitleOther: _roleTitleOtherController.text.trim(),
           location: _locationController.text.trim(),
           yearsOfExp: double.tryParse(_yearsController.text.trim()),
+          // double.tryParse('') is null (not answered — omitted from the
+          // PATCH body entirely) vs double.tryParse('0') is 0.0 (a genuine
+          // "no AI experience yet" answer, sent as such) — see
+          // ProfileRepository.update's own doc comment on this field.
+          aiYearsOfExp: double.tryParse(_aiYearsController.text.trim()),
           githubUrl: _githubController.text.trim(),
           linkedinUrl: _linkedinController.text.trim(),
         );
@@ -167,6 +176,19 @@ class _ProfileEditFormState extends ConsumerState<ProfileEditForm> {
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               validator: _validateYears,
               decoration: const InputDecoration(labelText: 'Years of experience'),
+            ),
+            const SizedBox(height: AppSpacing.space3),
+            TextFormField(
+              controller: _aiYearsController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              validator: _validateYears,
+              decoration: const InputDecoration(
+                labelText: 'AI experience',
+                hintText: 'Enter 0 if none yet',
+                helperText: 'Years working specifically with AI/ML systems — part of your total '
+                    'experience above. Required before you can apply to jobs.',
+                helperMaxLines: 2,
+              ),
             ),
             const SizedBox(height: AppSpacing.space3),
             TextFormField(

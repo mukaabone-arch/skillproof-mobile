@@ -100,8 +100,9 @@ class JobDetailLoaded extends JobDetailState {
   final Job job;
   final bool applying;
 
-  /// 'PROFILE_INCOMPLETE' or 'BADGE_REQUIRED' — drives an actionable prompt
-  /// in place of the raw API error text.
+  /// 'PROFILE_INCOMPLETE', 'RESUME_REQUIRED', 'AI_EXPERIENCE_REQUIRED', or
+  /// 'BADGE_REQUIRED' — drives an actionable prompt in place of the raw API
+  /// error text.
   final String? applyIssueCode;
   final String? applyIssueMessage;
   final String? applyError;

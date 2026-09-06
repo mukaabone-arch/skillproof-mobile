@@ -84,8 +84,9 @@ class JobsRepository {
   }
 
   /// On failure the API returns 400 with a machine-readable `code`
-  /// (PROFILE_INCOMPLETE / BADGE_REQUIRED) inside [ApiException.body] —
-  /// callers should branch on that instead of showing the raw message.
+  /// (PROFILE_INCOMPLETE / RESUME_REQUIRED / AI_EXPERIENCE_REQUIRED /
+  /// BADGE_REQUIRED) inside [ApiException.body] — callers should branch on
+  /// that instead of showing the raw message.
   Future<void> apply(String jobId) => apiClient.post('/jobs/$jobId/apply');
 
   Future<List<Application>> myApplications() async {
