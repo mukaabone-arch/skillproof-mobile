@@ -222,6 +222,39 @@ class AuthRepository {
     return MyambiiUser.fromJson(response);
   }
 
+  /// The four /auth/link/* calls below back VerifyScreen. All four (plus
+  /// fetchMe and logout above) are exempt from CandidateVerificationGuard
+  /// server-side — AuthController is @SkipVerificationGate() class-wide,
+  /// UsersController.me method-wide — so they work for an unverified
+  /// candidate; this is deliberately the one screen in the app that isn't
+  /// blocked by the gate it exists to satisfy.
+  Future<void> requestLinkPhoneOtp(String phone) async {
+    await apiClient.post('/auth/link/phone/request', {'phone': phone});
+  }
+
+  Future<MyambiiUser> verifyLinkPhoneOtp({
+    required String phone,
+    required String otp,
+  }) async {
+    await apiClient.post('/auth/link/phone/verify', {'phone': phone, 'otp': otp});
+    // The link/verify response is a bare ack, not a full user — see
+    // AuthController.verifyLinkPhoneOtp's own return contract — so refetch
+    // rather than try to construct MyambiiUser from it.
+    return fetchMe();
+  }
+
+  Future<void> requestLinkEmailOtp(String email) async {
+    await apiClient.post('/auth/link/email/request', {'email': email});
+  }
+
+  Future<MyambiiUser> verifyLinkEmailOtp({
+    required String email,
+    required String otp,
+  }) async {
+    await apiClient.post('/auth/link/email/verify', {'email': email, 'otp': otp});
+    return fetchMe();
+  }
+
   Future<void> logout() async {
     final refreshToken = await tokenStorage.readRefreshToken();
     if (refreshToken != null) {

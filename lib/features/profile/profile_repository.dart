@@ -49,6 +49,7 @@ class ProfileRepository {
     String? roleTitleOther,
     String? location,
     double? yearsOfExp,
+    double? aiYearsOfExp,
     String? githubUrl,
     String? linkedinUrl,
   }) async {
@@ -58,8 +59,34 @@ class ProfileRepository {
       if (headline != null) 'headline': headline,
       if (roleTitle != null) 'roleTitle': roleTitle,
       if (roleTitleOther != null) 'roleTitleOther': roleTitleOther,
-      if (location != null) 'location': location,
+      // UpdateProfileDto dropped the plain `location` field for structured
+      // locationCity/Region/Country/PlaceId/Lat/Lng — locationLegacy is the
+      // documented free-text fallback for exactly this case.
+      //
+      // TODO(location parity): deliberately deferred, not an oversight —
+      // structured location isn't required by any apply-time gate
+      // (RESUME_REQUIRED/AI_EXPERIENCE_REQUIRED/PROFILE_INCOMPLETE all
+      // ignore location entirely) and nothing server-side reads
+      // locationCity/Lat/Lng for matching or filtering yet, so a mobile
+      // candidate on locationLegacy loses nothing functional today. Revisit
+      // if/when location-based job matching ships — LocationAutocomplete
+      // already exists on web (apps/web/components/LocationAutocomplete.tsx,
+      // over GET /locations/search) and there's a country restriction
+      // already in production config, both signs this may not stay
+      // hypothetical. Building the picker means a new UI pattern for this
+      // app (debounced typeahead + dismiss-on-outside-tap dropdown) with no
+      // current precedent — non-trivial, budget it as its own piece of work
+      // rather than folding it into a profile-field change.
+      if (location != null) 'locationLegacy': location,
       if (yearsOfExp != null) 'yearsOfExp': yearsOfExp,
+      // Deliberately `!= null`, not a truthiness/empty check — aiYearsOfExp:
+      // 0 is a genuine, complete answer ("no AI experience yet") that must
+      // still be sent, distinct from null ("not answered yet"), which must
+      // not be sent at all (an omitted key leaves the field untouched
+      // server-side; see UpdateProfileDto/ProfilesService.updateMe on the
+      // API side). The caller (ProfileEditForm) is responsible for turning
+      // an empty text field into null and "0" into 0.0 before calling this.
+      if (aiYearsOfExp != null) 'aiYearsOfExp': aiYearsOfExp,
       if (githubUrl != null) 'githubUrl': githubUrl,
       if (linkedinUrl != null) 'linkedinUrl': linkedinUrl,
     };
@@ -111,9 +138,40 @@ class ProfileRepository {
     }
   }
 
-  // TODO: resume upload — blocked on file_picker / compileSdk 36 conflict.
-  // Resume upload works on web; revisit when updating the Android toolchain
-  // for release builds.
+  // TODO(resume upload): blocked, current as of 2026-09 investigation — NOT
+  // the "file_picker / compileSdk 36" issue this TODO originally named. Both
+  // file_picker (11.x+) and file_selector now require Android's "Built-in
+  // Kotlin" compilation mode (AGP 9+), which this app cannot turn on
+  // (android.builtInKotlin=true in android/gradle.properties) without
+  // breaking flutter_plugin_android_lifecycle — a transitive dependency of
+  // BOTH image_picker_android and google_sign_in_android — which as of its
+  // latest release (2.0.35) has not migrated to built-in Kotlin and still
+  // unconditionally applies the classic Kotlin Gradle Plugin. This is an
+  // upstream wait (on flutter_plugin_android_lifecycle), not something an
+  // upgrade of google_sign_in/image_picker/flutter_secure_storage/
+  // flutter_web_auth_2 on our side can fix: pub's version solver also
+  // refuses to resolve file_picker below 11.0.3 in this project's
+  // dependency graph, so downgrading isn't a path either. Confirmed
+  // empirically (temporarily added each package, flipped the gradle
+  // property, ran `flutter build apk --debug`) rather than assumed.
+  //
+  // Deliberately NOT worked around by upgrading google_sign_in to 7.x to
+  // unblock the flag flip: that's a breaking rewrite (GoogleSignIn becomes
+  // a singleton requiring `await initialize()`; auth/authorization split
+  // into separate calls) landing on auth_repository.dart/auth_controller.dart
+  // while they carry untested GitHub PKCE work — not worth the risk to ship
+  // resume upload a session sooner.
+  //
+  // Fallback if this needs to ship before flutter_plugin_android_lifecycle
+  // catches up: a small custom Android platform channel in plain Java (not
+  // Kotlin) using Storage Access Framework's ACTION_OPEN_DOCUMENT for
+  // application/pdf, with a thin Dart MethodChannel wrapper — Java
+  // compilation is untouched by the built-in-Kotlin split, so this avoids
+  // the conflict entirely at the cost of owning ~80-120 lines of native
+  // code (plus an iOS equivalent) instead of a community package. Not built
+  // now — resume upload is web-only in the meantime (see RESUME_REQUIRED
+  // handling in job_detail_screen.dart, which sends the candidate to the
+  // web app's /profile page instead of an in-app picker).
   //
   // /// Step 1 of 2 for AI-assisted profile fill: uploads the PDF to
   // /// POST /profiles/me/resume, which stores the file and returns the

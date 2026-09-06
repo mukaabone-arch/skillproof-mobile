@@ -88,6 +88,27 @@ class AuthController extends StateNotifier<AuthState> {
     }
   }
 
+  /// The four methods below back VerifyScreen — see AuthRepository's own
+  /// doc comment on why they work even while [state] is an unverified
+  /// AuthAuthenticated. Deliberately don't route through AuthLoading like
+  /// verifyOtp/signInWithGoogle do: VerifyScreen manages its own per-field
+  /// busy/error state (mirroring LoginScreen's OTP flow), and flipping the
+  /// whole app to AuthLoading mid-link would tear down the screen the user
+  /// is actively typing into.
+  Future<void> requestLinkPhoneOtp(String phone) => _repository.requestLinkPhoneOtp(phone);
+
+  Future<void> verifyLinkPhoneOtp({required String phone, required String otp}) async {
+    final user = await _repository.verifyLinkPhoneOtp(phone: phone, otp: otp);
+    state = AuthAuthenticated(user);
+  }
+
+  Future<void> requestLinkEmailOtp(String email) => _repository.requestLinkEmailOtp(email);
+
+  Future<void> verifyLinkEmailOtp({required String email, required String otp}) async {
+    final user = await _repository.verifyLinkEmailOtp(email: email, otp: otp);
+    state = AuthAuthenticated(user);
+  }
+
   Future<void> logout() async {
     await _repository.logout();
     state = const AuthUnauthenticated();

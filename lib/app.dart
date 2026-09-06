@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'features/account/account_status_gate.dart';
 import 'features/auth/auth_controller.dart';
 import 'features/auth/auth_state.dart';
 import 'features/auth/login_screen.dart';
+import 'features/auth/verify_screen.dart';
 import 'features/entitlements/widgets/limit_reached_listener.dart';
 import 'features/root/root_screen.dart';
 import 'theme/app_colors.dart';
@@ -27,7 +29,14 @@ class MyambiiApp extends ConsumerWidget {
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.dark,
       home: switch (authState) {
-        AuthAuthenticated() => const LimitReachedListener(child: RootScreen()),
+        // A hard gate, not a nag: every route except /users/me and
+        // /auth/* 400s with CANDIDATE_VERIFICATION_INCOMPLETE for an
+        // unverified candidate (see candidate-verification.guard.ts), so
+        // there's nothing in RootScreen worth letting them reach yet.
+        AuthAuthenticated(:final user) when !user.isVerified => const VerifyScreen(),
+        AuthAuthenticated() => const LimitReachedListener(
+            child: AccountStatusGate(child: RootScreen()),
+          ),
         AuthInitial() || AuthLoading() => const _SplashScreen(),
         AuthUnauthenticated() => const LoginScreen(),
       },
