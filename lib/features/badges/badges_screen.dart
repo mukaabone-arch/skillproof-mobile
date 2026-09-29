@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../config/api_config.dart';
 import '../../core/external_link.dart';
+import '../../core/web_handoff.dart';
 import '../../models/assessment_catalog_entry.dart';
 import '../../models/badge.dart';
 import '../../theme/app_colors.dart';
@@ -12,6 +13,7 @@ import '../../widgets/usage_meter.dart';
 import '../assessments/assessments_controller.dart';
 import '../assessments/assessments_state.dart';
 import '../assessments/widgets/assessment_catalog_card.dart';
+import '../auth/auth_controller.dart';
 import '../entitlements/entitlements_controller.dart';
 import '../entitlements/entitlements_state.dart';
 import '../profile/profile_controller.dart';
@@ -146,7 +148,7 @@ class _BadgesScreenState extends ConsumerState<BadgesScreen> {
 
   Future<void> _openAssessments(BuildContext context) async {
     try {
-      await openInBrowser('${ApiConfig.webBaseUrl}/assessments');
+      await openWebAuthenticated('/assessments', () => ref.read(authRepositoryProvider).createWebSessionCode());
     } catch (_) {
       if (context.mounted) _showOpenFailedSnackBar(context, 'assessments');
     }

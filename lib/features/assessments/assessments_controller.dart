@@ -1,24 +1,28 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../config/api_config.dart';
-import '../../core/external_link.dart';
+import '../../core/web_handoff.dart';
 import '../../models/assessment_catalog_entry.dart';
+import '../auth/auth_controller.dart';
 import 'assessments_repository.dart';
 import 'assessments_state.dart';
 
 final assessmentsControllerProvider =
     StateNotifierProvider.autoDispose<AssessmentsController, AssessmentsState>((ref) {
-  return AssessmentsController(ref.read(assessmentsRepositoryProvider))..load();
+  return AssessmentsController(
+    ref.read(assessmentsRepositoryProvider),
+    launcher: (path) => openWebAuthenticated(path, () => ref.read(authRepositoryProvider).createWebSessionCode()),
+  )..load();
 });
 
-/// Opens a URL for a "Take assessment" tap. Real callers get
-/// core/external_link.dart's openInBrowser; tests inject a fake so the
-/// double-launch guard below can be verified without a platform channel.
-typedef AssessmentLauncher = Future<void> Function(String url);
+/// Opens a web path for a "Take assessment" tap — real callers get
+/// openWebAuthenticated (the mobile→web session bridge, so the browser
+/// opens already signed in); tests inject a fake so the double-launch guard
+/// below can be verified without a platform channel or a network call.
+typedef AssessmentLauncher = Future<void> Function(String path);
 
 class AssessmentsController extends StateNotifier<AssessmentsState> {
-  AssessmentsController(this._repository, {AssessmentLauncher? launcher})
-      : _launch = launcher ?? openInBrowser,
+  AssessmentsController(this._repository, {required AssessmentLauncher launcher})
+      : _launch = launcher,
         super(const AssessmentsLoading());
 
   final AssessmentsRepository _repository;
@@ -59,7 +63,7 @@ class AssessmentsController extends StateNotifier<AssessmentsState> {
     if (_launching.contains(entry.skillId)) return;
     _launching.add(entry.skillId);
     try {
-      await _launch('${ApiConfig.webBaseUrl}${entry.webPath}');
+      await _launch(entry.webPath);
     } finally {
       _launching.remove(entry.skillId);
     }
