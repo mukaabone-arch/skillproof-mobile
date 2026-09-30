@@ -228,10 +228,38 @@ class _LinkEmailCardState extends ConsumerState<_LinkEmailCard> {
       _error = null;
     });
     try {
-      await ref.read(authControllerProvider.notifier).verifyLinkEmailOtp(
-            email: _emailController.text.trim(),
-            otp: _otpController.text.trim(),
-          );
+      final controller = ref.read(authControllerProvider.notifier);
+      final result = await controller.verifyLinkEmailOtp(
+        email: _emailController.text.trim(),
+        otp: _otpController.text.trim(),
+      );
+      // The candidate is about to see badges/history they didn't have a
+      // moment ago — an unexplained appearance of data is alarming, not
+      // delightful, so this has to be shown (and acknowledged) BEFORE
+      // applyLinkEmailResult below flips auth state and this screen gets
+      // swapped out from under it. Skipped only if the widget is already
+      // gone for some unrelated reason — the account switch itself still
+      // happened server-side regardless.
+      if (result.switchedAccount && mounted) {
+        await showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('Welcome back'),
+            content: Text(
+              'We found your existing account and signed you in.'
+              '${result.message != null ? ' ${result.message}' : ''}',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Continue'),
+              ),
+            ],
+          ),
+        );
+      }
+      controller.applyLinkEmailResult(result);
       // Same reasoning as _LinkPhoneCardState._verifyOtp above.
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
