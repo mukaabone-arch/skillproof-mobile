@@ -104,9 +104,23 @@ class AuthController extends StateNotifier<AuthState> {
 
   Future<void> requestLinkEmailOtp(String email) => _repository.requestLinkEmailOtp(email);
 
-  Future<void> verifyLinkEmailOtp({required String email, required String otp}) async {
-    final user = await _repository.verifyLinkEmailOtp(email: email, otp: otp);
-    state = AuthAuthenticated(user);
+  /// Unlike every other verifyLink*/verifyChange* method here, this does
+  /// NOT flip [state] itself. When the result is a duplicate-account
+  /// switch, VerifyScreen (its own call site) has to show a blocking
+  /// "we found your existing account" notice and let the candidate
+  /// acknowledge it BEFORE [state] flips to the (now fully verified)
+  /// account — flipping first would swap VerifyScreen out from under that
+  /// notice before it ever had a chance to show, since satisfying both
+  /// link requirements at once is exactly what a switch does. Call
+  /// [applyLinkEmailResult] once that's done — or immediately, for the
+  /// ordinary non-switch case, where there's nothing to show first.
+  Future<LinkEmailResult> verifyLinkEmailOtp({required String email, required String otp}) {
+    return _repository.verifyLinkEmailOtp(email: email, otp: otp);
+  }
+
+  /// See [verifyLinkEmailOtp]'s own doc comment on why this is separate.
+  void applyLinkEmailResult(LinkEmailResult result) {
+    state = AuthAuthenticated(result.user);
   }
 
   Future<void> logout() async {

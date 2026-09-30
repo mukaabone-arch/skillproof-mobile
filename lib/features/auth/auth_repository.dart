@@ -24,6 +24,23 @@ class GithubSignInCancelled implements Exception {
   const GithubSignInCancelled();
 }
 
+/// Result of [AuthRepository.verifyLinkEmailOtp] — a bare [MyambiiUser]
+/// isn't enough once the API can respond with `switchedAccount: true` (the
+/// 2026-09-30 duplicate-account fix): the candidate who just typed an OTP
+/// may have been signed into a DIFFERENT, pre-existing account rather than
+/// having the email attached to the one they started with. [switchedAccount]
+/// is what VerifyScreen uses to decide whether to show a "we found your
+/// existing account" notice before the app moves on; [message] is only ever
+/// present alongside a switch, and only when there's something the app
+/// couldn't otherwise tell the candidate — e.g. which phone number survived.
+class LinkEmailResult {
+  const LinkEmailResult({required this.user, required this.switchedAccount, this.message});
+
+  final MyambiiUser user;
+  final bool switchedAccount;
+  final String? message;
+}
+
 /// Talks to the /auth and /users/me endpoints. Field names below must
 /// match the API's DTOs exactly — a global ValidationPipe with
 /// forbidNonWhitelisted rejects any request body with extra fields.
@@ -256,12 +273,31 @@ class AuthRepository {
     await apiClient.post('/auth/link/email/request', {'email': email});
   }
 
-  Future<MyambiiUser> verifyLinkEmailOtp({
+  /// 2026-09-30 duplicate-account fix: this OTP verify can resolve onto a
+  /// DIFFERENT, pre-existing account than the one this call started on —
+  /// see AuthController.verifyLinkEmailOtp's own doc comment on how the
+  /// response's `switchedAccount: true` is threaded up to VerifyScreen.
+  /// When it's true, the tokens this request itself was authenticated with
+  /// belong to an account the server just deleted — they're swapped for
+  /// the new pair the server minted for the real account BEFORE fetchMe()
+  /// runs, or that call (and every one after it) 401s against a user that
+  /// no longer exists.
+  Future<LinkEmailResult> verifyLinkEmailOtp({
     required String email,
     required String otp,
   }) async {
-    await apiClient.post('/auth/link/email/verify', {'email': email, 'otp': otp});
-    return fetchMe();
+    final response = await apiClient.post('/auth/link/email/verify', {'email': email, 'otp': otp}) as Map<String, dynamic>;
+
+    final switchedAccount = response['switchedAccount'] == true;
+    if (switchedAccount) {
+      await tokenStorage.saveTokens(
+        accessToken: response['accessToken'] as String,
+        refreshToken: response['refreshToken'] as String,
+      );
+    }
+
+    final user = await fetchMe();
+    return LinkEmailResult(user: user, switchedAccount: switchedAccount, message: response['message'] as String?);
   }
 
   Future<void> logout() async {
