@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../config/api_config.dart';
-import '../../../core/external_link.dart';
+import '../../../core/web_handoff.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_button.dart';
 import '../../../widgets/app_card.dart';
+import '../../auth/auth_controller.dart';
 import '../../entitlements/entitlements_controller.dart';
 import '../../entitlements/entitlements_state.dart';
 
@@ -58,16 +58,16 @@ class ResumeExportCard extends ConsumerWidget {
           AppButton(
             label: 'Build resume',
             variant: AppButtonVariant.secondary,
-            onPressed: () => _openResumeBuilder(context),
+            onPressed: () => _openResumeBuilder(context, ref),
           ),
         ],
       ),
     );
   }
 
-  Future<void> _openResumeBuilder(BuildContext context) async {
+  Future<void> _openResumeBuilder(BuildContext context, WidgetRef ref) async {
     try {
-      await openInBrowser('${ApiConfig.webBaseUrl}/resume');
+      await openWebAuthenticated('/resume', () => ref.read(authRepositoryProvider).createWebSessionCode());
     } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

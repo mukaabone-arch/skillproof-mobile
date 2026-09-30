@@ -222,6 +222,15 @@ class AuthRepository {
     return MyambiiUser.fromJson(response);
   }
 
+  /// Mints a short-lived, single-use code the web app can redeem for a
+  /// session — see core/web_handoff.dart's openWebAuthenticated, which is
+  /// what this backs. The JWT itself never leaves this call: only the
+  /// exchange code does, in the URL the caller hands to the browser.
+  Future<String> createWebSessionCode() async {
+    final response = await apiClient.post('/auth/web-session') as Map<String, dynamic>;
+    return response['code'] as String;
+  }
+
   /// The four /auth/link/* calls below back VerifyScreen. All four (plus
   /// fetchMe and logout above) are exempt from CandidateVerificationGuard
   /// server-side — AuthController is @SkipVerificationGate() class-wide,

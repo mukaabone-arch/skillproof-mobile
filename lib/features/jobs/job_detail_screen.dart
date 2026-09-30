@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../config/api_config.dart';
-import '../../core/external_link.dart';
+import '../../core/web_handoff.dart';
 import '../../models/job.dart';
 import '../../models/matched_job.dart' show SkillMatch;
 import '../../theme/app_colors.dart';
@@ -11,6 +10,7 @@ import '../../widgets/actionable_notice.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/job_description.dart';
 import '../../widgets/usage_meter.dart';
+import '../auth/auth_controller.dart';
 import '../entitlements/entitlements_controller.dart';
 import '../entitlements/entitlements_state.dart';
 import '../root/root_tab_provider.dart';
@@ -174,7 +174,7 @@ class _JobDetailBody extends ConsumerWidget {
             message: 'Upload a resume before applying. Resume upload isn\'t available in the app yet — '
                 'open your profile on myambii.com to add one.',
             actionLabel: 'Open web profile',
-            onAction: () => openInBrowser('${ApiConfig.webBaseUrl}/profile'),
+            onAction: () => openWebAuthenticated('/profile', () => ref.read(authRepositoryProvider).createWebSessionCode()),
           ),
         ],
         if (state.applyIssueCode == 'BADGE_REQUIRED') ...[
