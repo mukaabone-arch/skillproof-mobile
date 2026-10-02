@@ -95,7 +95,7 @@ class _LimitReachedSheet extends StatelessWidget {
             const SizedBox(height: AppSpacing.space3),
             Text(
               'Free plans include $limit $label per calendar month$resetLine. '
-              'Upgrade to Premium for unlimited $label — no monthly wall.',
+              'Unlimited $label is part of MyAmbii Premium.',
               style: AppTypography.bodyMedium,
             ),
             const SizedBox(height: AppSpacing.space5),

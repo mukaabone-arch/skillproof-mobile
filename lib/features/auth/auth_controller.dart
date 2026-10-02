@@ -65,6 +65,13 @@ class AuthController extends StateNotifier<AuthState> {
       // login screen doesn't show a banner for an ordinary cancel.
       state = const AuthUnauthenticated();
     } catch (e) {
+      // ignore: avoid_print
+      // Deliberate. A silent Google sign-in failure cost two days on
+      // 2026-10-02 — the exception was in AuthUnauthenticated.error but
+      // nothing rendered it, and Android's own log carried the real cause
+      // all along. Greppable:
+      //   adb logcat | Select-String GOOGLE_SIGNIN_FAILED
+      print('GOOGLE_SIGNIN_FAILED: $e');
       state = AuthUnauthenticated(error: e.toString());
       rethrow;
     }

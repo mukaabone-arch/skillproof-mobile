@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../config/api_config.dart';
-import '../../../core/external_link.dart';
 import '../../../models/assessment_catalog_entry.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_typography.dart';
@@ -120,21 +118,17 @@ class AssessmentCatalogCard extends StatelessWidget {
                 style: AppTypography.bodySmall,
               ),
             ],
-            if (showLockGate) ...[
+              if (showLockGate) ...[
               const SizedBox(height: AppSpacing.space2),
+              // Informational only — no tappable route to checkout. Google
+              // Play's billing policy restricts steering users toward
+              // external payment, not just in-app processing, so the
+              // outbound /upgrade link was removed for v1. Restore it only
+              // if the Tier B advisers confirm linking out is acceptable
+              // under India's framework.
               ActionableNotice(
                 message: '🔒 Your free plan\'s assessments are locked to $freeSkillLocked. '
-                    'Upgrade to Premium to attempt ${entry.skillName} too.',
-                actionLabel: 'Upgrade to Premium',
-                // Plain outbound browser link, same mechanism as
-                // "Take assessment" above — no payment/billing code runs in
-                // this app. NOTE: Google Play's billing policy also
-                // restricts steering users toward external payment, not
-                // just in-app processing — this link is part of what's
-                // going to advisers alongside the Tier B (subscription
-                // checkout) policy decision, so it may need to change
-                // depending on that answer. Not an independent choice.
-                onAction: () => openInBrowser('${ApiConfig.webBaseUrl}/upgrade'),
+                    'Attempting ${entry.skillName} is part of MyAmbii Premium.',
               ),
             ] else if (showProfileGate) ...[
               const SizedBox(height: AppSpacing.space2),
