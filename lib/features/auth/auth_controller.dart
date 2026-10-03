@@ -52,6 +52,22 @@ class AuthController extends StateNotifier<AuthState> {
     }
   }
 
+  Future<void> requestCandidateEmailOtp(String email) =>
+      _repository.requestCandidateEmailOtp(email);
+
+  /// Same state transitions and error handling as [verifyOtp] — the two
+  /// must stay interchangeable, so change them together.
+  Future<void> verifyCandidateEmailOtp({required String email, required String otp}) async {
+    state = const AuthLoading();
+    try {
+      final user = await _repository.verifyCandidateEmailOtp(email: email, otp: otp);
+      state = AuthAuthenticated(user);
+    } catch (e) {
+      state = AuthUnauthenticated(error: e.toString());
+      rethrow;
+    }
+  }
+
   /// Same shared AuthState/RootScreen routing as [verifyOtp] — a
   /// successful sign-in of either kind flips state to [AuthAuthenticated]
   /// and the rest of the app doesn't know or care which one happened.

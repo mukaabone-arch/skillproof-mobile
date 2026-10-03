@@ -86,6 +86,37 @@ class AuthRepository {
     }
   }
 
+  /// Candidate email sign-in. Deliberately the candidate endpoints, not
+  /// /auth/employer/otp/* — those reject a candidate's email outright.
+  /// Response shape matches verifyOtp, so the token/user handling below is
+  /// the same.
+  Future<void> requestCandidateEmailOtp(String email) async {
+    await apiClient.post('/auth/email/otp/request', {'email': email});
+  }
+
+  Future<MyambiiUser> verifyCandidateEmailOtp({
+    required String email,
+    required String otp,
+  }) async {
+    final response = await apiClient.post('/auth/email/otp/verify', {
+      'email': email,
+      'otp': otp,
+    }) as Map<String, dynamic>;
+
+    await tokenStorage.saveTokens(
+      accessToken: response['accessToken'] as String,
+      refreshToken: response['refreshToken'] as String,
+    );
+
+    try {
+      return MyambiiUser.fromJson(response['user'] as Map<String, dynamic>);
+    } catch (_) {
+      // Same reasoning as verifyOtp above: tokens are already saved, so a
+      // malformed embedded user object is not a failed sign-in.
+      return fetchMe();
+    }
+  }
+
   /// Native Google sign-in → server auth code → POST /auth/google, which
   /// does the actual code-for-token exchange server-side using the web
   /// client's secret (apps/api's GoogleOAuthProvider) and returns the same
