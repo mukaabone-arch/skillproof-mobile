@@ -14,7 +14,13 @@ class LoginScreen extends ConsumerStatefulWidget {
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
+enum _LoginMode { email, phone }
+
 class _LoginScreenState extends ConsumerState<LoginScreen> {
+  // Email first, matching the web app — most existing candidates signed up
+  // with an email, so this is the path that signs them straight back in.
+  _LoginMode _mode = _LoginMode.email;
+  final _emailController = TextEditingController();
   final _phoneController = TextEditingController(text: '+91');
   final _otpController = TextEditingController();
   bool _otpSent = false;
@@ -24,11 +30,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   bool get _anySubmitting => _submitting || _googleSubmitting;
 
+  bool get _isEmail => _mode == _LoginMode.email;
+
+  TextEditingController get _activeController => _isEmail ? _emailController : _phoneController;
+
   @override
   void dispose() {
+    _emailController.dispose();
     _phoneController.dispose();
     _otpController.dispose();
     super.dispose();
+  }
+
+  /// Switching tabs drops any OTP already in flight. Otherwise a code sent
+  /// to a phone could be submitted against an email address — the verify
+  /// fails with a confusing message and the OTP is burned.
+  void _selectMode(_LoginMode mode) {
+    if (mode == _mode) return;
+    setState(() {
+      _mode = mode;
+      _otpSent = false;
+      _error = null;
+      _otpController.clear();
+    });
   }
 
   Future<void> _sendOtp() async {
@@ -37,9 +61,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _error = null;
     });
     try {
-      await ref
-          .read(authControllerProvider.notifier)
-          .requestOtp(_phoneController.text.trim());
+      final controller = ref.read(authControllerProvider.notifier);
+      final input = _activeController.text.trim();
+      // Trim only. The server lowercases and normalises the email, so the
+      // same address resolves to one OTP entry however it was typed.
+      if (_isEmail) {
+        await controller.requestCandidateEmailOtp(input);
+      } else {
+        await controller.requestOtp(input);
+      }
       if (mounted) setState(() => _otpSent = true);
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
@@ -54,10 +84,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _error = null;
     });
     try {
-      await ref.read(authControllerProvider.notifier).verifyOtp(
-            phone: _phoneController.text.trim(),
-            otp: _otpController.text.trim(),
-          );
+      final controller = ref.read(authControllerProvider.notifier);
+      final input = _activeController.text.trim();
+      final otp = _otpController.text.trim();
+      if (_isEmail) {
+        await controller.verifyCandidateEmailOtp(email: input, otp: otp);
+      } else {
+        await controller.verifyOtp(phone: input, otp: otp);
+      }
       // A successful verify flips global auth state to Authenticated;
       // MyambiiApp swaps to RootScreen on its own.
     } catch (e) {
@@ -121,12 +155,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
                         ),
                         const SizedBox(height: AppSpacing.space5),
+                        SegmentedButton<_LoginMode>(
+                          segments: const [
+                            ButtonSegment(value: _LoginMode.email, label: Text('Email')),
+                            ButtonSegment(value: _LoginMode.phone, label: Text('Phone')),
+                          ],
+                          selected: {_mode},
+                          showSelectedIcon: false,
+                          onSelectionChanged: _anySubmitting
+                              ? null
+                              : (selection) => _selectMode(selection.first),
+                        ),
+                        const SizedBox(height: AppSpacing.space4),
                         TextField(
-                          controller: _phoneController,
-                          keyboardType: TextInputType.phone,
+                          controller: _activeController,
+                          keyboardType: _isEmail ? TextInputType.emailAddress : TextInputType.phone,
                           enabled: !_otpSent && !_anySubmitting,
                           style: AppTypography.bodyLarge,
-                          decoration: const InputDecoration(labelText: 'Phone number'),
+                          decoration: InputDecoration(
+                            labelText: _isEmail ? 'Email' : 'Phone number',
+                          ),
                         ),
                         if (_otpSent) ...[
                           const SizedBox(height: AppSpacing.space4),
@@ -158,7 +206,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       _otpSent = false;
                                       _error = null;
                                     }),
-                            child: const Text('Change number'),
+                            child: Text(_isEmail ? 'Change email' : 'Change number'),
                           ),
                         ],
                         const SizedBox(height: AppSpacing.space5),
