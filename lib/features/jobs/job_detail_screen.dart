@@ -239,7 +239,7 @@ class _GapAnalysis extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.space2),
           Text(
-            'Upgrade to see which of these gaps matter most across your matches.',
+            'Gap ranking across your matches is part of MyAmbii Premium.',
             style: AppTypography.bodySmall.copyWith(color: AppColors.primary),
           ),
         ],

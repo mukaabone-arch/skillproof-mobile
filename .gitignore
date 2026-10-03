@@ -53,3 +53,8 @@ prod.json
 android/signing.txt
 android/signing.txt
 android/signing.txt
+
+# Local debugging artifacts
+signin*.txt
+gsi.log
+*.logcat

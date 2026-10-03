@@ -371,7 +371,7 @@ class _ApplicationsTab extends ConsumerWidget {
                       if (!detailed) ...[
                         const SizedBox(height: AppSpacing.space1),
                         Text(
-                          'Upgrade to see the exact status instead of a rough stage.',
+                          'Exact status is part of MyAmbii Premium.',
                           style: AppTypography.bodySmall.copyWith(color: AppColors.primary),
                         ),
                       ],
