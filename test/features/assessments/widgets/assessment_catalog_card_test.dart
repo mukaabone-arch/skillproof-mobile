@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:myambii/features/assessments/widgets/assessment_catalog_card.dart';
 import 'package:myambii/models/assessment_catalog_entry.dart';
 import 'package:myambii/theme/app_theme.dart';
+import 'package:myambii/widgets/app_button.dart';
 
 AssessmentCatalogEntry _entry({
   AssessmentCatalogState state = AssessmentCatalogState.available,
@@ -138,6 +139,26 @@ void main() {
 
     expect(find.textContaining('Retakes are limited so badges stay credible to employers'), findsOneWidget);
     expect(find.text('Go to Profile'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('an in-progress entry offers an enabled "Continue on the web" that hands off', (tester) async {
+    tester.view.physicalSize = const Size(375, 667);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    var handOffs = 0;
+    await tester.pumpWidget(_host(AssessmentCatalogCard(
+      entry: _entry(state: AssessmentCatalogState.inProgress),
+      onTakeAssessment: () => handOffs++,
+    )));
+
+    final button = tester.widget<AppButton>(find.byType(AppButton));
+    expect(button.label, 'Continue on the web');
+    expect(button.onPressed, isNotNull);
+
+    await tester.tap(find.text('Continue on the web'));
+    expect(handOffs, 1);
     expect(tester.takeException(), isNull);
   });
 }

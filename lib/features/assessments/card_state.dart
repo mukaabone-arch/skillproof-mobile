@@ -32,10 +32,11 @@ class AssessmentCardDisplay {
 /// assessments/page.tsx's own "assumed ready until the profile actually
 /// loads and says otherwise" default: true, so a ready candidate never
 /// sees a flash of a disabled button while the profile is still loading.
-/// Only the `available` case can ever be affected — inProgress/cooldown
-/// are already disabled for their own unrelated reasons, and adding a
-/// second, contradictory reason to an already-disabled button would only
-/// confuse which explanation is the real one. metaText stays null here on
+/// Only the `available` case can ever be affected — inProgress is always
+/// enabled (it resumes, it doesn't start, so the gate doesn't apply), and
+/// cooldown is already disabled for its own reason; adding a second,
+/// contradictory reason to a disabled button would only confuse which
+/// explanation is the real one. metaText stays null here on
 /// purpose (rather than carrying the gate message itself) — the caller
 /// (AssessmentCatalogCard) renders an ActionableNotice with a "Go to
 /// Profile" action instead of a plain Text in this specific case, so the
@@ -78,11 +79,15 @@ AssessmentCardDisplay resolveCardDisplay(
         buttonEnabled: true,
       );
     case AssessmentCatalogState.inProgress:
+      // Resumable on the web (the session bridge carries the candidate in
+      // signed-in, and starting an attempt returns the active one before the
+      // profile gate runs), so this is a real route, not a dead end. Enabled
+      // regardless of profileReady for the same reason.
       return const AssessmentCardDisplay(
         state: AssessmentCatalogState.inProgress,
-        buttonLabel: 'Assessment in progress',
-        buttonEnabled: false,
-        metaText: "You've already started this — finish it on the assessment site.",
+        buttonLabel: 'Continue on the web',
+        buttonEnabled: true,
+        metaText: "You've already started this — pick up where you left off.",
       );
     case AssessmentCatalogState.cooldown:
       // Mirrors apps/api's entitlements README: a lifetime-cap breach always

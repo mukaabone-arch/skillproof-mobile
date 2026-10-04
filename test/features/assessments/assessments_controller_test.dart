@@ -80,4 +80,28 @@ void main() {
       expect(launched, hasLength(2));
     });
   });
+
+  group('AssessmentsController.takeAssessment for an in-progress attempt', () {
+    test('hands off the entry\'s own webPath through the same launcher as a new start', () async {
+      final launched = <String>[];
+      final controller = AssessmentsController(
+        _unusedRepository(),
+        launcher: (url) async => launched.add(url),
+      );
+      final inProgress = AssessmentCatalogEntry(
+        skillId: 'skill-1',
+        skillName: 'Skill skill-1',
+        relevanceCount: 1,
+        badgeLevel: 'L1',
+        levelState: 'AVAILABLE',
+        estMinutes: 10,
+        state: AssessmentCatalogState.inProgress,
+        webPath: '/assessments/assessment-1',
+      );
+
+      await controller.takeAssessment(inProgress);
+
+      expect(launched, ['/assessments/assessment-1']);
+    });
+  });
 }
