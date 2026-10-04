@@ -117,7 +117,6 @@ class ProfileController extends StateNotifier<ProfileState> {
     required String headline,
     required String? roleTitle,
     required String roleTitleOther,
-    required String location,
     required double? yearsOfExp,
     required double? aiYearsOfExp,
     required String githubUrl,
@@ -134,11 +133,10 @@ class ProfileController extends StateNotifier<ProfileState> {
         // Same "empty means leave unchanged, never sent" contract as every
         // other field here — the API's @IsEnum would reject an explicit ''
         // anyway, so there's no way to clear a selection back to "Not set"
-        // once made, exactly like headline/location above.
+        // once made, exactly like headline above.
         roleTitle: (roleTitle == null || roleTitle.isEmpty) ? null : roleTitle,
         // Only meaningful when roleTitle is OTHER.
         roleTitleOther: roleTitle == 'OTHER' && roleTitleOther.isNotEmpty ? roleTitleOther : null,
-        location: location.isEmpty ? null : location,
         yearsOfExp: yearsOfExp,
         aiYearsOfExp: aiYearsOfExp,
         githubUrl: githubUrl.isEmpty ? null : githubUrl,

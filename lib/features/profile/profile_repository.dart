@@ -47,7 +47,6 @@ class ProfileRepository {
     String? headline,
     String? roleTitle,
     String? roleTitleOther,
-    String? location,
     double? yearsOfExp,
     double? aiYearsOfExp,
     String? githubUrl,
@@ -59,25 +58,9 @@ class ProfileRepository {
       if (headline != null) 'headline': headline,
       if (roleTitle != null) 'roleTitle': roleTitle,
       if (roleTitleOther != null) 'roleTitleOther': roleTitleOther,
-      // UpdateProfileDto dropped the plain `location` field for structured
-      // locationCity/Region/Country/PlaceId/Lat/Lng — locationLegacy is the
-      // documented free-text fallback for exactly this case.
-      //
-      // TODO(location parity): deliberately deferred, not an oversight —
-      // structured location isn't required by any apply-time gate
-      // (RESUME_REQUIRED/AI_EXPERIENCE_REQUIRED/PROFILE_INCOMPLETE all
-      // ignore location entirely) and nothing server-side reads
-      // locationCity/Lat/Lng for matching or filtering yet, so a mobile
-      // candidate on locationLegacy loses nothing functional today. Revisit
-      // if/when location-based job matching ships — LocationAutocomplete
-      // already exists on web (apps/web/components/LocationAutocomplete.tsx,
-      // over GET /locations/search) and there's a country restriction
-      // already in production config, both signs this may not stay
-      // hypothetical. Building the picker means a new UI pattern for this
-      // app (debounced typeahead + dismiss-on-outside-tap dropdown) with no
-      // current precedent — non-trivial, budget it as its own piece of work
-      // rather than folding it into a profile-field change.
-      if (location != null) 'locationLegacy': location,
+      // Location is web-only until the mobile picker ships — see
+      // DRIFT_AUDIT.md §Location. Free text here would be silently ignored
+      // for any candidate who set a structured location on the web.
       if (yearsOfExp != null) 'yearsOfExp': yearsOfExp,
       // Deliberately `!= null`, not a truthiness/empty check — aiYearsOfExp:
       // 0 is a genuine, complete answer ("no AI experience yet") that must
