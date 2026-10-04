@@ -166,6 +166,16 @@ These are injected via `--dart-define` at build time; `prod.json` itself isn't r
 
 ---
 
+## 7. Location — write path deferred to the web — `MISSING` on mobile
+
+Mobile's profile form no longer edits location. It shows the stored value read-only and hands off to the web `/profile` (session-bridged). Mobile sends no `location` on `PATCH /profiles/me`.
+
+**Why:** the web writes a structured location (`locationCity`/`Region`/`Country`/`PlaceId`/`Lat`/`Lng`) through its Places picker. The API's `formatLocation` prefers `locationCity`, so a free-text `locationLegacy` write from mobile was stored and then ignored for display for any candidate who had set a location on the web. Mobile also must not clear the structured fields on write: that would destroy lat/lng for web candidates, and location-based matching would then have no record of why they stopped matching.
+
+**What's still true:** structured location isn't required by any apply-time gate (RESUME_REQUIRED, AI_EXPERIENCE_REQUIRED and PROFILE_INCOMPLETE ignore it), and nothing server-side reads `locationCity`/Lat/Lng for matching or filtering yet. Revisit when location-based matching ships.
+
+**To close this:** build a mobile picker. `LocationAutocomplete` already exists on web (`apps/web/components/LocationAutocomplete.tsx`, over `GET /locations/search`), and a country restriction is already in production config. The mobile picker needs a debounced typeahead with a dismiss-on-outside-tap dropdown, which has no precedent in this app, so budget it as its own piece of work. Once it writes the structured fields, restore an editable Location field in `profile_edit_form.dart`.
+
 ## Prioritized punch list
 
 **Correctness first (none found — nothing is actually broken):**
@@ -179,3 +189,4 @@ These are injected via `--dart-define` at build time; `prod.json` itself isn't r
 4. **`STALE` — Copilot message divergence.** Step 1 copy/CTA text differs; step 2 web has a branch (`liveAssessmentCount`) mobile lacks, and the two apps may be keying off non-equivalent booleans (`hasVerifiedSkill` vs `hasBadge`). Low engineering cost, but a real user-facing inconsistency today.
 5. **`STALE` — External credential name-match signal.** `nameMatchState`/`rawMetadata.holderName` unread on mobile; low priority, advisory-only field.
 6. **Hygiene, no urgency:** hardcoded personal LAN IP default in `api_config.dart:27`; unverified production hostnames (can't confirm from repo, needs manual check against actual hosting config); new `resume/improve` and `resume/generate` endpoints have no mobile consumer (moot until resume upload itself is unblocked).
+7. **`MISSING` — Location editing is web-only.** Mobile shows the stored location read-only and hands off to the web. Closing it means building a mobile location picker that writes the structured fields. See §7.

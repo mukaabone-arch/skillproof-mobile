@@ -1,16 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/web_handoff.dart';
 import '../../../models/profile.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_button.dart';
 import '../../../widgets/app_card.dart';
+import '../../auth/auth_controller.dart';
 import '../profile_controller.dart';
 import '../profile_state.dart';
 
-/// Edit form for fullName/headline/location/yearsOfExp/aiYearsOfExp/email/
-/// githubUrl/linkedinUrl. Client-side validation on email/years/URLs mirrors (but
+/// Opens a signed-in web path. Overridden in tests to record the path
+/// instead of launching a browser.
+final profileWebHandoffProvider = Provider<Future<void> Function(String path)>((ref) {
+  return (path) => openWebAuthenticated(path, () => ref.read(authRepositoryProvider).createWebSessionCode());
+});
+
+/// Edit form for fullName/headline/yearsOfExp/aiYearsOfExp/email/githubUrl/
+/// linkedinUrl. Location is not editable here: mobile can't produce the
+/// structured location the web writes, so it's shown read-only with a
+/// hand-off to the web. Client-side validation on email/years/URLs mirrors (but
 /// doesn't replace) the server's own DTO validation — the server still
 /// re-validates and is the source of truth (e.g. the email-conflict check
 /// can only happen server-side).
@@ -24,6 +34,51 @@ class ProfileEditForm extends ConsumerStatefulWidget {
   ConsumerState<ProfileEditForm> createState() => _ProfileEditFormState();
 }
 
+/// Read-only Location row. The web writes a structured location (city/region/
+/// country/coordinates) through its Places picker, and mobile has no picker,
+/// so typing a free-text value here would be silently ignored for those
+/// candidates. The row shows what is stored and sends the candidate to the web.
+class _LocationOnWebRow extends ConsumerWidget {
+  const _LocationOnWebRow({required this.location});
+
+  final String? location;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isSet = location != null && location!.isNotEmpty;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Location', style: AppTypography.bodySmall),
+        const SizedBox(height: AppSpacing.space1),
+        Text(
+          isSet ? location! : 'Not set — set it on the web so employers can find you',
+          style: AppTypography.bodyLarge,
+        ),
+        const SizedBox(height: AppSpacing.space2),
+        AppButton(
+          label: isSet ? 'Change on the web' : 'Set on the web',
+          variant: AppButtonVariant.secondary,
+          expand: true,
+          onPressed: () => _openOnWeb(context, ref),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _openOnWeb(BuildContext context, WidgetRef ref) async {
+    try {
+      await ref.read(profileWebHandoffProvider)('/profile');
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open your profile on the web. Please try again.')),
+        );
+      }
+    }
+  }
+}
+
 class _ProfileEditFormState extends ConsumerState<ProfileEditForm> {
   final _formKey = GlobalKey<FormState>();
   late final _fullNameController = TextEditingController(text: widget.profile.fullName ?? '');
@@ -31,7 +86,6 @@ class _ProfileEditFormState extends ConsumerState<ProfileEditForm> {
   late final _headlineController = TextEditingController(text: widget.profile.headline ?? '');
   late String? _roleTitle = widget.profile.roleTitle;
   late final _roleTitleOtherController = TextEditingController(text: widget.profile.roleTitleOther ?? '');
-  late final _locationController = TextEditingController(text: widget.profile.location ?? '');
   late final _yearsController = TextEditingController(
     text: widget.profile.yearsOfExp != null ? _formatYears(widget.profile.yearsOfExp!) : '',
   );
@@ -47,7 +101,6 @@ class _ProfileEditFormState extends ConsumerState<ProfileEditForm> {
     _emailController.dispose();
     _headlineController.dispose();
     _roleTitleOtherController.dispose();
-    _locationController.dispose();
     _yearsController.dispose();
     _aiYearsController.dispose();
     _githubController.dispose();
@@ -63,7 +116,6 @@ class _ProfileEditFormState extends ConsumerState<ProfileEditForm> {
           headline: _headlineController.text.trim(),
           roleTitle: _roleTitle,
           roleTitleOther: _roleTitleOtherController.text.trim(),
-          location: _locationController.text.trim(),
           yearsOfExp: double.tryParse(_yearsController.text.trim()),
           // double.tryParse('') is null (not answered — omitted from the
           // PATCH body entirely) vs double.tryParse('0') is 0.0 (a genuine
@@ -165,11 +217,7 @@ class _ProfileEditFormState extends ConsumerState<ProfileEditForm> {
               ),
             ],
             const SizedBox(height: AppSpacing.space3),
-            TextFormField(
-              controller: _locationController,
-              maxLength: 120,
-              decoration: const InputDecoration(labelText: 'Location', counterText: ''),
-            ),
+            _LocationOnWebRow(location: widget.profile.location),
             const SizedBox(height: AppSpacing.space3),
             TextFormField(
               controller: _yearsController,
