@@ -29,11 +29,12 @@ void main() {
       expect(display.metaText, isNull);
     });
 
-    test('in_progress: disabled, with an explanatory meta line', () {
+    test('in_progress: enabled "Continue on the web", with an explanatory meta line', () {
       final display = resolveCardDisplay(_entry(state: AssessmentCatalogState.inProgress));
 
-      expect(display.buttonEnabled, isFalse);
-      expect(display.buttonLabel, 'Assessment in progress');
+      // Resumable on the web, so this is a route, not a dead end.
+      expect(display.buttonEnabled, isTrue);
+      expect(display.buttonLabel, 'Continue on the web');
       expect(display.metaText, isNotNull);
     });
 
@@ -100,14 +101,14 @@ void main() {
       expect(display.buttonEnabled, isTrue);
     });
 
-    test('in_progress, profile not ready: still governed by its own reason, not a second contradictory one', () {
+    test('in_progress, profile not ready: still resumable — the start gate never applies to an active attempt', () {
       final display = resolveCardDisplay(
         _entry(state: AssessmentCatalogState.inProgress),
         profileReady: false,
       );
 
-      expect(display.buttonEnabled, isFalse);
-      expect(display.buttonLabel, 'Assessment in progress');
+      expect(display.buttonEnabled, isTrue);
+      expect(display.buttonLabel, 'Continue on the web');
       expect(display.metaText, contains("You've already started this"));
     });
 
@@ -143,14 +144,14 @@ void main() {
       expect(display.buttonLabel, 'Take assessment');
     });
 
-    test('in_progress, locked to a different skill: still governed by its own reason, not the lock', () {
+    test('in_progress, locked to a different skill: still resumable — the lock only gates new starts', () {
       final display = resolveCardDisplay(
         _entry(state: AssessmentCatalogState.inProgress),
         freeSkillLocked: 'Prompt Engineering',
       );
 
-      expect(display.buttonEnabled, isFalse);
-      expect(display.buttonLabel, 'Assessment in progress');
+      expect(display.buttonEnabled, isTrue);
+      expect(display.buttonLabel, 'Continue on the web');
       expect(display.metaText, contains("You've already started this"));
     });
   });
