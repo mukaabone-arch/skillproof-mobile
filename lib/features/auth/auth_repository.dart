@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../config/github_auth_config.dart';
 import '../../config/google_auth_config.dart';
@@ -48,7 +49,9 @@ class AuthRepository {
   AuthRepository({required this.apiClient, required this.tokenStorage})
       : _googleSignIn = GoogleSignIn(
           scopes: const ['openid', 'email', 'profile'],
-          clientId: GoogleAuthConfig.androidClientId.isEmpty ? null : GoogleAuthConfig.androidClientId,
+          clientId: defaultTargetPlatform == TargetPlatform.iOS
+    ? null
+    : (GoogleAuthConfig.androidClientId.isEmpty ? null : GoogleAuthConfig.androidClientId),
           serverClientId: GoogleAuthConfig.serverClientId.isEmpty ? null : GoogleAuthConfig.serverClientId,
         );
 
