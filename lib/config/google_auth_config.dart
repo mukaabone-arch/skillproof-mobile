@@ -20,6 +20,7 @@ class GoogleAuthConfig {
 
   /// flutter run --dart-define=GOOGLE_ANDROID_CLIENT_ID=xxxxx.apps.googleusercontent.com
   static const String androidClientId = String.fromEnvironment('GOOGLE_ANDROID_CLIENT_ID');
+  static const String iosClientId = String.fromEnvironment('GOOGLE_IOS_CLIENT_ID');
 
   /// flutter run --dart-define=GOOGLE_SERVER_CLIENT_ID=xxxxx.apps.googleusercontent.com
   /// Must be the exact same client ID as apps/api's GOOGLE_CLIENT_ID.

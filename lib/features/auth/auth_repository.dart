@@ -50,7 +50,7 @@ class AuthRepository {
       : _googleSignIn = GoogleSignIn(
           scopes: const ['openid', 'email', 'profile'],
           clientId: defaultTargetPlatform == TargetPlatform.iOS
-    ? null
+              ? (GoogleAuthConfig.iosClientId.isEmpty ? null : GoogleAuthConfig.iosClientId)
     : (GoogleAuthConfig.androidClientId.isEmpty ? null : GoogleAuthConfig.androidClientId),
           serverClientId: GoogleAuthConfig.serverClientId.isEmpty ? null : GoogleAuthConfig.serverClientId,
         );

@@ -1,0 +1,7 @@
+{
+  "API_BASE_URL": "https://api.myambii.com",
+  "WEB_BASE_URL": "https://www.myambii.com",
+  "GOOGLE_ANDROID_CLIENT_ID": "637578179718-vf95oh1otj1s62ji1hes1lpeqg0564q6.apps.googleusercontent.com",
+  "GOOGLE_SERVER_CLIENT_ID": "637578179718-4du7jp8kee08gltqbkouae1bbts1keck.apps.googleusercontent.com",
+  "GOOGLE_IOS_CLIENT_ID": "637578179718-rqoicf41n0b9bm7gittd412sc7iukk59.apps.googleusercontent.com"
+}

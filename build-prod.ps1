@@ -31,7 +31,8 @@ $defines = @(
     # DEBUG client anyway. Kept for iOS and parity. Do not "correct" it
     # expecting Android behaviour to change.
     "--dart-define=GOOGLE_ANDROID_CLIENT_ID=637578179718-vf95oh1otj1s62ji1hes1lpeqg0564q6.apps.googleusercontent.com"
-
+    # The IOS client. 
+    "--dart-define=GOOGLE_IOS_CLIENT_ID=637578179718-rqoicf41n0b9bm7gittd412sc7iukk59.apps.googleusercontent.com"
     # The WEB client. This is the one that must be right.
     "--dart-define=GOOGLE_SERVER_CLIENT_ID=637578179718-4du7jp8kee08gltqbkouae1bbts1keck.apps.googleusercontent.com"
 )
