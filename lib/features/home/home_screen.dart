@@ -9,7 +9,7 @@ import '../entitlements/entitlements_controller.dart';
 import '../jobs/applications_controller.dart';
 import '../jobs/matched_controller.dart';
 import '../profile/profile_controller.dart';
-import 'widgets/feature_strip.dart';
+import 'widgets/feature_grid.dart';
 import 'widgets/hero_section.dart';
 import 'widgets/status_cards.dart';
 
@@ -70,11 +70,8 @@ class HomeScreen extends ConsumerWidget {
             HeroSection(),
             SizedBox(height: AppSpacing.space5),
             StatusCardsRow(),
-            SizedBox(height: AppSpacing.space7),
-            // Footer flourish, mirroring web Dashboard's placement at the
-            // very bottom of the page (web puts it under the resume link;
-            // this screen has no resume link, so it simply closes the page).
-            FeatureStrip(),
+            SizedBox(height: AppSpacing.space6),
+            FeatureGrid(),
           ],
         ),
       ),

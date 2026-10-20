@@ -17,8 +17,8 @@ import '../profile/profile_controller.dart';
 import '../profile/profile_screen.dart';
 import 'root_tab_provider.dart';
 
-/// Post-login shell: bottom nav across Home / Jobs / Badges / Interviews /
-/// Profile — see [RootTab] for the index each position maps to. Each tab
+/// Post-login shell: Home is a launcher; Jobs / Badges / Interviews /
+/// Profile open as pushed pages — see [RootTab] for the index each position maps to. Each tab
 /// is its own Scaffold (with its own AppBar), kept alive in an
 /// [IndexedStack] so switching tabs doesn't lose in-flight state like the
 /// Jobs filters. The active index lives in [rootTabIndexProvider] rather
@@ -38,14 +38,7 @@ class RootScreen extends ConsumerStatefulWidget {
 }
 
 class _RootScreenState extends ConsumerState<RootScreen> with WidgetsBindingObserver {
-  // Order must match [RootTab]'s indices exactly.
-  static const _tabs = [
-    HomeScreen(),
-    JobsScreen(),
-    BadgesScreen(),
-    InterviewsScreen(),
-    ProfileScreen(),
-  ];
+
 
   @override
   void initState() {
@@ -79,28 +72,32 @@ class _RootScreenState extends ConsumerState<RootScreen> with WidgetsBindingObse
     ref.read(accountStatusControllerProvider.notifier).load();
   }
 
+  /// The screen each [RootTab] opens as a full page (with its own back arrow).
+  Widget _screenFor(int tab) => switch (tab) {
+        RootTab.jobs => const JobsScreen(),
+        RootTab.badges => const BadgesScreen(),
+        RootTab.interviews => const InterviewsScreen(),
+        RootTab.profile => const ProfileScreen(),
+        _ => const HomeScreen(),
+      };
+
   @override
   Widget build(BuildContext context) {
-    final index = ref.watch(rootTabIndexProvider);
+    // Home is now a launcher (see FeatureGrid) — no bottom bar. Any code that
+    // sets rootTabIndexProvider (the grid, Close-the-gap, "Go to Profile")
+    // lands here: return to Home, then push that feature as its own page.
+    // Reset to home afterwards so tapping the same feature again still fires.
+    ref.listen<int>(rootTabIndexProvider, (previous, next) {
+      if (next == RootTab.home) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ref.read(rootTabIndexProvider.notifier).state = RootTab.home;
+        final nav = Navigator.of(context);
+        nav.popUntil((route) => route.isFirst);
+        nav.push(MaterialPageRoute<void>(builder: (_) => _screenFor(next)));
+      });
+    });
 
-    return Scaffold(
-      body: IndexedStack(index: index, children: _tabs),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: index,
-        onDestinationSelected: (i) => ref.read(rootTabIndexProvider.notifier).state = i,
-        // Order must match [RootTab]'s indices exactly.
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.work_outline), selectedIcon: Icon(Icons.work), label: 'Jobs'),
-          NavigationDestination(icon: Icon(Icons.verified_outlined), selectedIcon: Icon(Icons.verified), label: 'Badges'),
-          NavigationDestination(
-            icon: Icon(Icons.event_note_outlined),
-            selectedIcon: Icon(Icons.event_note),
-            label: 'Interviews',
-          ),
-          NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Profile'),
-        ],
-      ),
-    );
+    return const HomeScreen();
   }
 }

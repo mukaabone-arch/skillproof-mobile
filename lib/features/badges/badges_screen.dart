@@ -40,6 +40,20 @@ class _BadgesScreenState extends ConsumerState<BadgesScreen> {
   String? _highlightedSkillId;
   String? _pendingHighlightSkillId;
 
+  @override
+  void initState() {
+    super.initState();
+    // Now opened as a fresh page rather than kept alive in a tab stack, so a
+    // highlight set just before opening (Close the gap) won't reach the
+    // ref.listen below — read it once here instead.
+    _pendingHighlightSkillId = ref.read(badgesHighlightSkillIdProvider);
+    if (_pendingHighlightSkillId != null) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => ref.read(badgesHighlightSkillIdProvider.notifier).state = null,
+      );
+    }
+  }
+
   GlobalKey _keyFor(String skillId) => _cardKeys.putIfAbsent(skillId, () => GlobalKey());
 
   @override
