@@ -29,14 +29,22 @@ class FeatureGrid extends ConsumerWidget {
       _Feature('Help', Icons.help_outline, () => _openHelp(context)),
     ];
 
-    return GridView.count(
-      crossAxisCount: 3,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: AppSpacing.space5,
-      crossAxisSpacing: AppSpacing.space4,
-      childAspectRatio: 0.95,
-      children: [for (final f in features) _FeatureIcon(feature: f)],
+    // Wrap rather than GridView: GridView gives every cell a fixed height
+    // from its aspect ratio, which clips the label when the system text size
+    // is larger. Wrap lets each tile take exactly the height it needs.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const columns = 3;
+        const gap = AppSpacing.space4;
+        final tileWidth = (constraints.maxWidth - gap * (columns - 1)) / columns;
+        return Wrap(
+          spacing: gap,
+          runSpacing: AppSpacing.space5,
+          children: [
+            for (final f in features) SizedBox(width: tileWidth, child: _FeatureIcon(feature: f)),
+          ],
+        );
+      },
     );
   }
 
