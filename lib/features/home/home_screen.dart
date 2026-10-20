@@ -65,7 +65,14 @@ class HomeScreen extends ConsumerWidget {
           ]);
         },
         child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.space4),
+          // Explicit padding replaces ListView's automatic safe-area inset, so add the
+          // bottom one back - otherwise the last icon row sits under the home bar.
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.space4,
+            AppSpacing.space4,
+            AppSpacing.space4,
+            AppSpacing.space6 + MediaQuery.paddingOf(context).bottom,
+          ),
           children: const [
             HeroSection(),
             SizedBox(height: AppSpacing.space5),
