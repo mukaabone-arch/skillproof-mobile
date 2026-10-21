@@ -19,6 +19,7 @@ import '../../jobs/matched_controller.dart';
 import '../../profile/profile_controller.dart';
 import '../../profile/profile_state.dart';
 import '../../root/root_tab_provider.dart';
+import '../copilot_plan_controller.dart';
 import 'copilot_panel.dart';
 import 'journey_progress.dart';
 
@@ -39,8 +40,13 @@ class HeroSection extends ConsumerWidget {
     final certificationsState = ref.watch(certificationsControllerProvider);
     final applicationsState = ref.watch(applicationsControllerProvider);
     final matchedState = ref.watch(matchedControllerProvider);
+    // Fetched in parallel with the five above. Counted as loading (not
+    // rendered early from the on-device fallback) so the card never flips
+    // from one suggestion to a different one a moment later.
+    final planState = ref.watch(copilotPlanControllerProvider);
 
-    final loading = profileState is ProfileLoading ||
+    final loading = planState is CopilotPlanLoading ||
+        profileState is ProfileLoading ||
         badgesState is BadgesLoading ||
         certificationsState is CertificationsLoading ||
         applicationsState is ApplicationsLoading ||
@@ -68,6 +74,7 @@ class HeroSection extends ConsumerWidget {
           ref.read(certificationsControllerProvider.notifier).load();
           ref.read(applicationsControllerProvider.notifier).load();
           ref.read(matchedControllerProvider.notifier).load();
+          ref.read(copilotPlanControllerProvider.notifier).load();
         },
       );
     }
@@ -99,14 +106,21 @@ class HeroSection extends ConsumerWidget {
         ? JourneyStepState.done
         : (hasVerifiedSkill ? JourneyStepState.active : JourneyStepState.upcoming);
 
-    final copilot = buildCopilotMessage(
-      hasProfile: hasProfile,
-      hasVerifiedSkill: hasVerifiedSkill,
-      bestUnapplied: _bestUnapplied(matchedJobs),
-      recurringGap: _recurringGap(matchedJobs),
-      hasApplied: hasApplied,
-      applicationCount: applicationCount,
-    );
+    // Server plan first (same suggestion as the website, including interview,
+    // employer-invite and review states); the on-device ladder only when the
+    // plan endpoint is unavailable.
+    final planStep =
+        planState is CopilotPlanLoaded && planState.plan.steps.isNotEmpty ? planState.plan.steps.first : null;
+    final copilot = planStep != null
+        ? copilotMessageFromStep(planStep)
+        : buildCopilotMessage(
+            hasProfile: hasProfile,
+            hasVerifiedSkill: hasVerifiedSkill,
+            bestUnapplied: _bestUnapplied(matchedJobs),
+            recurringGap: _recurringGap(matchedJobs),
+            hasApplied: hasApplied,
+            applicationCount: applicationCount,
+          );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,6 +204,10 @@ class HeroSection extends ConsumerWidget {
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => JobDetailScreen(jobId: message.jobId!)),
         );
+      case CopilotAction.interviewsTab:
+        ref.read(rootTabIndexProvider.notifier).state = RootTab.interviews;
+      case CopilotAction.none:
+        break;
     }
   }
 }

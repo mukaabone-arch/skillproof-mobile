@@ -7,6 +7,7 @@ import '../badges/badges_controller.dart';
 import '../badges/badges_screen.dart';
 import '../certifications/certifications_controller.dart';
 import '../entitlements/entitlements_controller.dart';
+import '../home/copilot_plan_controller.dart';
 import '../home/home_screen.dart';
 import '../interviews/interviews_controller.dart';
 import '../interviews/interviews_screen.dart';
@@ -66,6 +67,7 @@ class _RootScreenState extends ConsumerState<RootScreen> with WidgetsBindingObse
     ref.read(assessmentsControllerProvider.notifier).load();
     ref.read(interviewsControllerProvider.notifier).load();
     ref.read(entitlementsControllerProvider.notifier).load();
+    ref.read(copilotPlanControllerProvider.notifier).load();
     // Catches a deactivation made from another device/session while this
     // one was backgrounded — AccountStatusGate wraps RootScreen, so a
     // flip to deactivated here surfaces ReactivateScreen on the next build.

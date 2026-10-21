@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../models/copilot_plan.dart';
 import '../../../models/matched_job.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_typography.dart';
@@ -10,7 +11,12 @@ import '../../../widgets/score_bar.dart';
 /// Which part of the app a [CopilotMessage]'s CTA should open — the same
 /// tab-index navigation the old NextStepCard already did, plus one new
 /// destination (a specific job) now that the message can name one.
-enum CopilotAction { profileTab, badgesTab, jobsTab, jobDetail }
+///
+/// [interviewsTab] and [none] were added with the server-side plan
+/// (GET /copilot/plan): the server can say "you have an interview invite",
+/// which the on-device ladder below never could, and one state (an
+/// assessment already with a reviewer) has nothing for the candidate to do.
+enum CopilotAction { profileTab, badgesTab, jobsTab, jobDetail, interviewsTab, none }
 
 class CopilotMessage {
   const CopilotMessage({
@@ -20,11 +26,15 @@ class CopilotMessage {
     required this.action,
     this.jobId,
     this.skillId,
+    this.meta,
   });
 
   final String eyebrow;
   final String message;
-  final String ctaLabel;
+  /// Null only with [CopilotAction.none] — the panel then shows no button.
+  final String? ctaLabel;
+  /// Optional status line under the message, e.g. "~40 min · expires in 3 days".
+  final String? meta;
   final CopilotAction action;
   /// Set only when [action] is [CopilotAction.jobDetail].
   final String? jobId;
@@ -33,6 +43,48 @@ class CopilotMessage {
   /// Badges, so the message and the card it opens always agree. See
   /// HeroSection._handleCopilotAction.
   final String? skillId;
+}
+
+/// Adapts one server plan step (GET /copilot/plan) to the panel's existing
+/// message shape. The server names a semantic destination; this is the one
+/// place that maps it onto the app's own screens. Assessments run on the
+/// web, so every assessment-flavoured target lands on Badges (whose
+/// "Available to verify" cards hand off to the web), same as the on-device
+/// ladder's "Earn a badge" CTA already did.
+CopilotMessage copilotMessageFromStep(CopilotStep step) {
+  final cta = step.cta;
+  if (cta == null) {
+    return CopilotMessage(
+      eyebrow: step.eyebrow,
+      message: step.message,
+      meta: step.meta,
+      ctaLabel: null,
+      action: CopilotAction.none,
+    );
+  }
+
+  final CopilotAction action;
+  if (cta.kind != 'navigate') {
+    action = CopilotAction.badgesTab; // start_assessment_request — started on the web
+  } else {
+    action = switch (cta.target) {
+      'profile' => CopilotAction.profileTab,
+      'job' when cta.jobId != null => CopilotAction.jobDetail,
+      'job' || 'jobs_matched' || 'jobs_applications' => CopilotAction.jobsTab,
+      'interviews' => CopilotAction.interviewsTab,
+      _ => CopilotAction.badgesTab, // assessments, assessment_session, or a target this build doesn't know yet
+    };
+  }
+
+  return CopilotMessage(
+    eyebrow: step.eyebrow,
+    message: step.message,
+    meta: step.meta,
+    ctaLabel: cta.label,
+    action: action,
+    jobId: cta.jobId,
+    skillId: cta.skillId,
+  );
 }
 
 /// A missing skill that recurs across enough of the candidate's top matches
@@ -49,9 +101,12 @@ class RecurringGap {
 /// blocks at least this many of the candidate's top matches.
 const int kRecurringGapMinCount = 2;
 
-/// The dashboard's hero message: one contextual suggestion, computed from
-/// data the rest of Home is already loading (profile, badges, external
-/// credentials, matched jobs, applications) — no separate AI backend call.
+/// The on-device fallback for the hero message, used only when
+/// GET /copilot/plan is unavailable (see HeroSection). One contextual
+/// suggestion, computed from data the rest of Home is already loading
+/// (profile, badges, external credentials, matched jobs, applications).
+/// Simpler than the server plan — it has no interview, employer-invite or
+/// review states — so delete it once the plan endpoint has proven itself.
 /// Priority order mirrors buildCopilotMessage in
 /// apps/web/components/Dashboard.tsx; keep the two in sync if either
 /// changes.
@@ -168,8 +223,14 @@ class CopilotPanel extends StatelessWidget {
             message.message,
             style: AppTypography.headlineSmall.copyWith(fontSize: 18, height: 1.4),
           ),
-          const SizedBox(height: AppSpacing.space4),
-          AppButton(label: message.ctaLabel, onPressed: onTap),
+          if (message.meta != null) ...[
+            const SizedBox(height: AppSpacing.space2),
+            Text(message.meta!, style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
+          ],
+          if (message.ctaLabel != null) ...[
+            const SizedBox(height: AppSpacing.space4),
+            AppButton(label: message.ctaLabel!, onPressed: onTap),
+          ],
         ],
       ),
     );

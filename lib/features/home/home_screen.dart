@@ -12,6 +12,7 @@ import '../profile/profile_controller.dart';
 import 'widgets/feature_grid.dart';
 import 'widgets/hero_section.dart';
 import 'widgets/status_cards.dart';
+import 'copilot_plan_controller.dart';
 
 /// Candidate dashboard hub — orient, show status, prompt the next action.
 /// Mirrors apps/web/components/Dashboard.tsx's purpose, phone-native:
@@ -62,6 +63,7 @@ class HomeScreen extends ConsumerWidget {
             ref.read(matchedControllerProvider.notifier).load(),
             ref.read(applicationsControllerProvider.notifier).load(),
             ref.read(entitlementsControllerProvider.notifier).load(),
+            ref.read(copilotPlanControllerProvider.notifier).load(),
           ]);
         },
         child: ListView(
