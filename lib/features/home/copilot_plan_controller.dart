@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api_client.dart';
@@ -66,6 +67,9 @@ class CopilotPlanController extends StateNotifier<CopilotPlanState> {
       final plan = await _repository.plan();
       if (mounted) state = CopilotPlanLoaded(plan);
     } catch (e) {
+      // Console only (visible in `flutter run` / device logs) — the candidate
+      // just sees the on-device fallback message, never this error.
+      debugPrint('copilot plan unavailable: $e');
       if (mounted) state = CopilotPlanUnavailable(e.toString());
     }
   }
