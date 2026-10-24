@@ -38,10 +38,10 @@
 		<array>
 			<dict>
 				<key>CFBundleURLSchemes</key>
-                <array>
-                <string>com.myambii</string>
-                <string>com.googleusercontent.apps.637578179718-rqoicf41n0b9bm7gittd412sc7iukk59</string>
-                </array>
+				<array>
+					<string>com.myambii</string>
+					<string>com.googleusercontent.apps.637578179718-rqoicf41n0b9bm7gittd412sc7iukk59</string>
+				</array>
 			</dict>
 		</array>
 		<key>UIApplicationSceneManifest</key>
@@ -65,7 +65,7 @@
 				</array>
 			</dict>
 			<key>GIDClientID</key>
-            <string>637578179718-rqoicf41n0b9bm7gittd412sc7iukk59.apps.googleusercontent.com</string>
+			<string>637578179718-rqoicf41n0b9bm7gittd412sc7iukk59.apps.googleusercontent.com</string>
 		</dict>
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
