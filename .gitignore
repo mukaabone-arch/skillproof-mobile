@@ -58,3 +58,4 @@ android/signing.txt
 signin*.txt
 gsi.log
 *.logcat
+*.p8
