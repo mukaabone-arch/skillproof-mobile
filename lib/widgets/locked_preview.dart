@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -29,6 +30,11 @@ class LockedPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // App Store guideline 3.1.1: on iOS, no "Premium unlocks…" upsell for a
+    // plan the app doesn't sell via in-app purchase. The teaser is always
+    // real data (see class doc), so it still stands on its own.
+    if (Platform.isIOS) return Text(teaser, style: AppTypography.bodyMedium);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,

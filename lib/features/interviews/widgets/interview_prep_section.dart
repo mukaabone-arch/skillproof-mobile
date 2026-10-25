@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -56,6 +58,9 @@ class InterviewPrepSection extends ConsumerWidget {
         : null;
 
     if (interviewPrep == null) return const SizedBox.shrink();
+    // iOS: hide the whole card for Free — its locked teaser is an upsell, and
+    // App Store guideline 3.1.1 rules that out (see LockedPreview).
+    if (!interviewPrep && Platform.isIOS) return const SizedBox.shrink();
 
     return AppCard(
       child: Column(
