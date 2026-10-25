@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,6 +8,14 @@ import '../../theme/app_typography.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/app_card.dart';
 import 'auth_controller.dart';
+
+/// Apple guideline 4.8: an iOS app that offers third-party sign-in (Google,
+/// GitHub…) must also offer Sign in with Apple. Until that exists, iOS shows
+/// email/phone OTP only; Android keeps Google. Flip to true once Sign in with
+/// Apple is added to the iOS build.
+const bool kSocialSignInOnIOS = false;
+
+bool get _showSocialSignIn => !Platform.isIOS || kSocialSignInOnIOS;
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -185,7 +195,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             enabled: !_googleSubmitting,
                             style: AppTypography.bodyLarge,
                             decoration: const InputDecoration(
-                              labelText: 'OTP (dev: 123456)',
+                              labelText: 'OTP',
                               counterText: '',
                             ),
                           ),
@@ -209,26 +219,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             child: Text(_isEmail ? 'Change email' : 'Change number'),
                           ),
                         ],
-                        const SizedBox(height: AppSpacing.space5),
-                        Row(
-                          children: [
-                            const Expanded(child: Divider(color: AppColors.border)),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space3),
-                              child: Text('or', style: AppTypography.bodySmall),
-                            ),
-                            const Expanded(child: Divider(color: AppColors.border)),
-                          ],
-                        ),
-                        const SizedBox(height: AppSpacing.space5),
-                        AppButton(
-                          label: 'Sign in with Google',
-                          variant: AppButtonVariant.secondary,
-                          icon: const _GoogleGlyph(),
-                          busy: _googleSubmitting,
-                          expand: true,
-                          onPressed: _submitting ? null : _signInWithGoogle,
-                        ),
+                        if (_showSocialSignIn) ...[
+                          const SizedBox(height: AppSpacing.space5),
+                          Row(
+                            children: [
+                              const Expanded(child: Divider(color: AppColors.border)),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space3),
+                                child: Text('or', style: AppTypography.bodySmall),
+                              ),
+                              const Expanded(child: Divider(color: AppColors.border)),
+                            ],
+                          ),
+                          const SizedBox(height: AppSpacing.space5),
+                          AppButton(
+                            label: 'Sign in with Google',
+                            variant: AppButtonVariant.secondary,
+                            icon: const _GoogleGlyph(),
+                            busy: _googleSubmitting,
+                            expand: true,
+                            onPressed: _submitting ? null : _signInWithGoogle,
+                          ),
+                        ],
                         // GitHub sign-in is temporarily hidden, not removed.
                         // Like Google, it only ever returns an email (no
                         // phone) — that's why VerifyScreen exists, and a
