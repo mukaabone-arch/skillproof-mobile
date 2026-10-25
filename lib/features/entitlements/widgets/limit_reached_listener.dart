@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 
 import '../../../core/limit_reached.dart';
@@ -94,8 +96,10 @@ class _LimitReachedSheet extends StatelessWidget {
             Text("You've used all ${limit ?? ''} of your $label this month", style: AppTypography.titleMedium),
             const SizedBox(height: AppSpacing.space3),
             Text(
-              'Free plans include $limit $label per calendar month$resetLine. '
-              'Unlimited $label is part of MyAmbii Premium.',
+              'Free plans include $limit $label per calendar month$resetLine.'
+              // App Store guideline 3.1.1: iOS can't point to a paid plan
+              // that isn't sold through in-app purchase.
+              '${Platform.isIOS ? '' : ' Unlimited $label is part of MyAmbii Premium.'}',
               style: AppTypography.bodyMedium,
             ),
             const SizedBox(height: AppSpacing.space5),

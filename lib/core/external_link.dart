@@ -1,6 +1,6 @@
 import 'package:url_launcher/url_launcher.dart';
 
-/// Opens [url] in the device's default browser (not an in-app webview) —
+/// Opens [url] in an in-app browser sheet (SFSafariViewController / Custom Tab) —
 /// used for pages that only make sense outside the app: the public badge
 /// certificate page, and assessments (deliberately browser-only, since
 /// their integrity monitoring is browser-based).
@@ -9,7 +9,11 @@ import 'package:url_launcher/url_launcher.dart';
 /// their own error UI rather than this silently failing to notice.
 Future<void> openInBrowser(String url) async {
   final uri = Uri.parse(url);
-  final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+  // In-app browser sheet, not the external browser: the candidate stays
+  // inside MyAmbii (with a Done button back), which App Store review expects
+  // for core flows like assessments. Same Safari/Chrome engine underneath,
+  // so browser-based integrity monitoring behaves the same.
+  final launched = await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
   if (!launched) {
     throw Exception('Could not open $url');
   }
