@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../config/github_auth_config.dart';
@@ -23,6 +24,12 @@ class GoogleSignInCancelled implements Exception {
 /// callers treat this silently rather than showing an error banner.
 class GithubSignInCancelled implements Exception {
   const GithubSignInCancelled();
+}
+
+/// Apple counterpart to [GoogleSignInCancelled] — the user closed the native
+/// Sign in with Apple sheet. Same contract: callers treat it silently.
+class AppleSignInCancelled implements Exception {
+  const AppleSignInCancelled();
 }
 
 /// Result of [AuthRepository.verifyLinkEmailOtp] — a bare [MyambiiUser]
@@ -174,6 +181,46 @@ class AuthRepository {
       // Same reasoning as verifyOtp above: the code-for-token exchange
       // already succeeded and tokens are saved, so a malformed embedded
       // user object shouldn't discard a valid session.
+      return fetchMe();
+    }
+  }
+
+  /// Native Sign in with Apple (iOS) → POST /auth/apple. The API verifies
+  /// Apple's identity token and signs the user in through the same
+  /// loginWithIdentity policy as Google/GitHub; the one-time authorization
+  /// code lets it revoke the Apple grant if the account is later deleted.
+  /// Only the email scope is requested — the profile flow collects the name,
+  /// and Apple would only send it on the very first sign-in anyway.
+  Future<MyambiiUser> signInWithApple() async {
+    final AuthorizationCredentialAppleID credential;
+    try {
+      credential = await SignInWithApple.getAppleIDCredential(
+        scopes: const [AppleIDAuthorizationScopes.email],
+      );
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code == AuthorizationErrorCode.canceled) throw const AppleSignInCancelled();
+      rethrow;
+    }
+
+    final identityToken = credential.identityToken;
+    if (identityToken == null) {
+      throw Exception('Apple did not return an identity token. Please try again.');
+    }
+
+    final response = await apiClient.post('/auth/apple', {
+      'identityToken': identityToken,
+      'authorizationCode': credential.authorizationCode,
+    }) as Map<String, dynamic>;
+
+    await tokenStorage.saveTokens(
+      accessToken: response['accessToken'] as String,
+      refreshToken: response['refreshToken'] as String,
+    );
+
+    try {
+      return MyambiiUser.fromJson(response['user'] as Map<String, dynamic>);
+    } catch (_) {
+      // Same reasoning as verifyOtp: tokens are saved, the sign-in succeeded.
       return fetchMe();
     }
   }

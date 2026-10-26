@@ -2,6 +2,7 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
@@ -10,9 +11,10 @@ import '../../widgets/app_card.dart';
 import 'auth_controller.dart';
 
 /// Apple guideline 4.8: an iOS app that offers third-party sign-in (Google,
-/// GitHub…) must also offer Sign in with Apple. Until that exists, iOS shows
-/// email/phone OTP only; Android keeps Google. Flip to true once Sign in with
-/// Apple is added to the iOS build.
+/// GitHub…) must also offer Sign in with Apple. iOS now has both (Apple
+/// button above Google, as prominent as required), but they stay hidden
+/// until tested end-to-end on a device — flip to true for the 1.1 release.
+/// Android shows Google only (Sign in with Apple is iOS-only here).
 const bool kSocialSignInOnIOS = false;
 
 bool get _showSocialSignIn => !Platform.isIOS || kSocialSignInOnIOS;
@@ -36,9 +38,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _otpSent = false;
   bool _submitting = false;
   bool _googleSubmitting = false;
+  bool _appleSubmitting = false;
   String? _error;
 
-  bool get _anySubmitting => _submitting || _googleSubmitting;
+  bool get _anySubmitting => _submitting || _googleSubmitting || _appleSubmitting;
 
   bool get _isEmail => _mode == _LoginMode.email;
 
@@ -108,6 +111,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (mounted) setState(() => _error = e.toString());
     } finally {
       if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  Future<void> _signInWithApple() async {
+    setState(() {
+      _appleSubmitting = true;
+      _error = null;
+    });
+    try {
+      await ref.read(authControllerProvider.notifier).signInWithApple();
+      // Same routing as Google: success flips global auth state; a cancelled
+      // Apple sheet resolves normally (AuthController absorbs it).
+    } catch (e) {
+      if (mounted) setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _appleSubmitting = false);
     }
   }
 
@@ -232,13 +251,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ],
                           ),
                           const SizedBox(height: AppSpacing.space5),
+                          // Apple first: guideline 4.8 wants Sign in with
+                          // Apple at least as prominent as other providers.
+                          // Apple's own button widget keeps its required
+                          // look (white on our dark theme).
+                          if (Platform.isIOS) ...[
+                            SizedBox(
+                              height: 48,
+                              child: AbsorbPointer(
+                                absorbing: _anySubmitting,
+                                child: Opacity(
+                                  opacity: _anySubmitting ? 0.6 : 1,
+                                  child: SignInWithAppleButton(
+                                    onPressed: _signInWithApple,
+                                    style: SignInWithAppleButtonStyle.white,
+                                    text: 'Sign in with Apple',
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.space3),
+                          ],
                           AppButton(
                             label: 'Sign in with Google',
                             variant: AppButtonVariant.secondary,
                             icon: const _GoogleGlyph(),
                             busy: _googleSubmitting,
                             expand: true,
-                            onPressed: _submitting ? null : _signInWithGoogle,
+                            onPressed: (_submitting || _appleSubmitting) ? null : _signInWithGoogle,
                           ),
                         ],
                         // GitHub sign-in is temporarily hidden, not removed.

@@ -93,6 +93,23 @@ class AuthController extends StateNotifier<AuthState> {
     }
   }
 
+  /// Sign in with Apple — same routing as [signInWithGoogle].
+  Future<void> signInWithApple() async {
+    state = const AuthLoading();
+    try {
+      final user = await _repository.signInWithApple();
+      state = AuthAuthenticated(user);
+    } on AppleSignInCancelled {
+      state = const AuthUnauthenticated();
+    } catch (e) {
+      // ignore: avoid_print
+      // Same greppable tag pattern as GOOGLE_SIGNIN_FAILED above.
+      print('APPLE_SIGNIN_FAILED: $e');
+      state = AuthUnauthenticated(error: e.toString());
+      rethrow;
+    }
+  }
+
   /// Same shared AuthState/RootScreen routing as [signInWithGoogle] — a
   /// successful sign-in flips state to [AuthAuthenticated] regardless of
   /// which provider it came from.

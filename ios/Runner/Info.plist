@@ -34,6 +34,8 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>GIDClientID</key>
+	<string>637578179718-rqoicf41n0b9bm7gittd412sc7iukk59.apps.googleusercontent.com</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
@@ -42,8 +44,6 @@
 	<string>Used to select a profile photo to upload.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
-		<key>GIDClientID</key>
-		<string>637578179718-rqoicf41n0b9bm7gittd412sc7iukk59.apps.googleusercontent.com</string>
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
 		<key>UISceneConfigurations</key>
