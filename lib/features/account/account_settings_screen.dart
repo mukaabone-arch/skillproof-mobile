@@ -5,6 +5,8 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/app_card.dart';
+import '../auth/auth_controller.dart';
+import '../auth/auth_state.dart';
 import 'account_controller.dart';
 import 'account_state.dart';
 import 'widgets/reason_picker.dart';
@@ -46,6 +48,16 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Delete/deactivate end the session (AccountController -> logout). The
+    // app root then shows the login screen, but this screen was pushed on
+    // top of it — so leave it as soon as auth flips to signed-out, instead
+    // of sitting here bound to a deleted session.
+    ref.listen(authControllerProvider, (previous, next) {
+      if (next is AuthUnauthenticated && mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+    });
+
     final state = ref.watch(accountControllerProvider);
 
     return Scaffold(
