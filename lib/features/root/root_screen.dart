@@ -18,19 +18,20 @@ import '../profile/profile_controller.dart';
 import '../profile/profile_screen.dart';
 import 'root_tab_provider.dart';
 
-/// Post-login shell: Home is a launcher; Jobs / Badges / Interviews /
-/// Profile open as pushed pages — see [RootTab] for the index each position maps to. Each tab
-/// is its own Scaffold (with its own AppBar), kept alive in an
-/// [IndexedStack] so switching tabs doesn't lose in-flight state like the
-/// Jobs filters. The active index lives in [rootTabIndexProvider] rather
-/// than local State so other screens can switch tabs programmatically.
+/// Post-login shell: a bottom bar (Home · Skills · Jobs · Interviews ·
+/// Profile) over an [IndexedStack], so each tab keeps its state (Jobs
+/// filters, scroll position) while you move between them. The active tab
+/// lives in [rootTabIndexProvider] so any screen can switch tabs — the
+/// co-pilot's CTA, "Close the gap", a job's PROFILE_INCOMPLETE prompt.
+/// Bar order differs from the [RootTab] index values on purpose; [_order]
+/// is the single place that maps one to the other.
 ///
-/// Also owns the app-resume refetch: assessments run on the web app (see
+/// Also owns the app-resume refetch: skill checks run on the web app (see
 /// core/external_link.dart), so the candidate leaves and comes back mid- or
-/// post-assessment with no in-app signal of what happened out there.
-/// Refetching everything on [AppLifecycleState.resumed] is what makes a
-/// newly-earned badge, an in-progress card, or the Home co-pilot's next
-/// suggestion show up without a manual pull-to-refresh.
+/// post-check with no in-app signal of what happened out there. Refetching
+/// everything on [AppLifecycleState.resumed] is what makes a newly-earned
+/// badge, an in-progress card, or Home's next suggestion show up without a
+/// manual pull-to-refresh.
 class RootScreen extends ConsumerStatefulWidget {
   const RootScreen({super.key});
 
@@ -38,9 +39,9 @@ class RootScreen extends ConsumerStatefulWidget {
   ConsumerState<RootScreen> createState() => _RootScreenState();
 }
 
+const List<int> _order = [RootTab.home, RootTab.badges, RootTab.jobs, RootTab.interviews, RootTab.profile];
+
 class _RootScreenState extends ConsumerState<RootScreen> with WidgetsBindingObserver {
-
-
   @override
   void initState() {
     super.initState();
@@ -74,32 +75,51 @@ class _RootScreenState extends ConsumerState<RootScreen> with WidgetsBindingObse
     ref.read(accountStatusControllerProvider.notifier).load();
   }
 
-  /// The screen each [RootTab] opens as a full page (with its own back arrow).
-  Widget _screenFor(int tab) => switch (tab) {
-        RootTab.jobs => const JobsScreen(),
-        RootTab.badges => const BadgesScreen(),
-        RootTab.interviews => const InterviewsScreen(),
-        RootTab.profile => const ProfileScreen(),
-        _ => const HomeScreen(),
-      };
-
   @override
   Widget build(BuildContext context) {
-    // Home is now a launcher (see FeatureGrid) — no bottom bar. Any code that
-    // sets rootTabIndexProvider (the grid, Close-the-gap, "Go to Profile")
-    // lands here: return to Home, then push that feature as its own page.
-    // Reset to home afterwards so tapping the same feature again still fires.
+    // A tab switch requested from a pushed page (e.g. a job detail's "Go to
+    // Profile") must close that page first, or the tab changes underneath it.
     ref.listen<int>(rootTabIndexProvider, (previous, next) {
-      if (next == RootTab.home) return;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        ref.read(rootTabIndexProvider.notifier).state = RootTab.home;
-        final nav = Navigator.of(context);
-        nav.popUntil((route) => route.isFirst);
-        nav.push(MaterialPageRoute<void>(builder: (_) => _screenFor(next)));
+        if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
       });
     });
 
-    return const HomeScreen();
+    final tab = ref.watch(rootTabIndexProvider);
+    final position = _order.indexOf(tab).clamp(0, _order.length - 1);
+
+    // Android back on another tab returns to Home instead of leaving the app.
+    return PopScope(
+      canPop: tab == RootTab.home,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) ref.read(rootTabIndexProvider.notifier).state = RootTab.home;
+      },
+      child: Scaffold(
+        body: IndexedStack(
+          index: position,
+          children: const [
+            HomeScreen(),
+            BadgesScreen(),
+            JobsScreen(),
+            InterviewsScreen(),
+            ProfileScreen(),
+          ],
+        ),
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: position,
+          onDestinationSelected: (i) => ref.read(rootTabIndexProvider.notifier).state = _order[i],
+          destinations: const [
+            NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
+            NavigationDestination(
+                icon: Icon(Icons.verified_outlined), selectedIcon: Icon(Icons.verified), label: 'Skills'),
+            NavigationDestination(icon: Icon(Icons.work_outline), selectedIcon: Icon(Icons.work), label: 'Jobs'),
+            NavigationDestination(
+                icon: Icon(Icons.event_note_outlined), selectedIcon: Icon(Icons.event_note), label: 'Interviews'),
+            NavigationDestination(
+                icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Profile'),
+          ],
+        ),
+      ),
+    );
   }
 }

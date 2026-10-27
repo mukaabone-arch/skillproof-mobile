@@ -21,7 +21,6 @@ import '../../profile/profile_state.dart';
 import '../../root/root_tab_provider.dart';
 import '../copilot_plan_controller.dart';
 import 'copilot_panel.dart';
-import 'journey_progress.dart';
 
 /// Greeting + journey stepper + AI co-pilot panel — one cohesive unit
 /// because all five signals (profile, badges, certifications,
@@ -98,13 +97,8 @@ class HeroSection extends ConsumerWidget {
     // same derivation as the web dashboard's isFirstSession, no new field.
     final isFirstSession = !hasProfile && !hasVerifiedSkill && !hasApplied;
 
-    final stage1 = hasProfile ? JourneyStepState.done : JourneyStepState.active;
-    final stage2 = hasVerifiedSkill
-        ? JourneyStepState.done
-        : (hasProfile ? JourneyStepState.active : JourneyStepState.upcoming);
-    final stage3 = hasApplied
-        ? JourneyStepState.done
-        : (hasVerifiedSkill ? JourneyStepState.active : JourneyStepState.upcoming);
+    // Profile basics + first verified skill — the checklist's two open steps.
+    final stepsLeft = (profile.readyToApply ? 0 : 1) + (hasVerifiedSkill ? 0 : 1);
 
     // Server plan first (same suggestion as the website, including interview,
     // employer-invite and review states); the on-device ladder only when the
@@ -129,12 +123,14 @@ class HeroSection extends ConsumerWidget {
           _greeting(fullName: profile.fullName, isFirstSession: isFirstSession),
           style: AppTypography.headlineSmall,
         ),
+        if (stepsLeft > 0) ...[
+          const SizedBox(height: AppSpacing.space1),
+          Text(
+            '$stepsLeft step${stepsLeft == 1 ? '' : 's'} to your first job match.',
+            style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
+          ),
+        ],
         const SizedBox(height: AppSpacing.space4),
-        JourneyProgress(steps: [
-          JourneyStep(label: 'Profile built', state: stage1),
-          JourneyStep(label: 'First badge', state: stage2),
-          JourneyStep(label: 'Jobs explored', state: stage3),
-        ]),
         const SizedBox(height: AppSpacing.space4),
         CopilotPanel(message: copilot, onTap: () => _handleCopilotAction(context, ref, copilot)),
       ],
