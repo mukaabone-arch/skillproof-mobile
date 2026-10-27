@@ -35,6 +35,7 @@ class FeatureGrid extends ConsumerWidget {
         const gap = AppSpacing.space4;
         final tileWidth = (constraints.maxWidth - gap * (columns - 1)) / columns;
         return Wrap(
+          alignment: WrapAlignment.center,
           spacing: gap,
           runSpacing: AppSpacing.space5,
           children: [
