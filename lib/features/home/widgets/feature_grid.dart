@@ -3,10 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/api_config.dart';
 import '../../../core/external_link.dart';
-import '../../../core/web_handoff.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_typography.dart';
-import '../../auth/auth_controller.dart';
 import '../../root/root_tab_provider.dart';
 
 /// Home's launcher: one rounded icon per feature, phone-home-screen style.
@@ -22,10 +20,9 @@ class FeatureGrid extends ConsumerWidget {
 
     final features = <_Feature>[
       _Feature('Jobs', Icons.work_outline, () => openTab(RootTab.jobs)),
-      _Feature('Badges', Icons.verified_outlined, () => openTab(RootTab.badges)),
+      _Feature('Skills', Icons.verified_outlined, () => openTab(RootTab.badges)),
       _Feature('Interviews', Icons.event_note_outlined, () => openTab(RootTab.interviews)),
       _Feature('Profile', Icons.person_outline, () => openTab(RootTab.profile)),
-      _Feature('Assessments', Icons.quiz_outlined, () => _openAssessments(context, ref)),
       _Feature('Help', Icons.help_outline, () => _openHelp(context)),
     ];
 
@@ -46,14 +43,6 @@ class FeatureGrid extends ConsumerWidget {
         );
       },
     );
-  }
-
-  Future<void> _openAssessments(BuildContext context, WidgetRef ref) async {
-    try {
-      await openWebAuthenticated('/assessments', () => ref.read(authRepositoryProvider).createWebSessionCode());
-    } catch (_) {
-      if (context.mounted) _failed(context, 'assessments');
-    }
   }
 
   Future<void> _openHelp(BuildContext context) async {

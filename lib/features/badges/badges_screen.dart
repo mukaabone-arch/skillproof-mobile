@@ -8,6 +8,8 @@ import '../../models/assessment_catalog_entry.dart';
 import '../../models/badge.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
+import '../../widgets/app_button.dart';
+import '../../widgets/app_card.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/usage_meter.dart';
 import '../assessments/assessments_controller.dart';
@@ -17,17 +19,24 @@ import '../auth/auth_controller.dart';
 import '../entitlements/entitlements_controller.dart';
 import '../entitlements/entitlements_state.dart';
 import '../profile/profile_controller.dart';
+import '../profile/profile_repository.dart';
 import '../profile/profile_state.dart';
-import '../root/root_tab_provider.dart';
 import 'badges_controller.dart';
 import 'badges_highlight_provider.dart';
 import 'badges_state.dart';
 import 'widgets/earned_badges_section.dart';
 
-/// The candidate's badges: what's earned (GET /users/me) and what's
-/// available to verify (GET /assessments/catalog/summary). Each section
-/// loads and errors independently — a slow/broken catalog fetch shouldn't
-/// blank out badges the candidate has already earned, or vice versa.
+/// "Skills" (formerly "Badges"): what to verify next and what's already
+/// verified. Layout, top to bottom:
+///  1. A one-time "before your first skill check" form — only while the
+///     profile isn't ready (name + headline or years). Previously that gate
+///     was repeated on every catalog card with a disabled button; now it's
+///     asked once, inline, and the cards below simply unlock when it's saved.
+///  2. "Start here" — one recommended skill (the available one required on
+///     the most roles the candidate is close to, per relevanceCount).
+///  3. "More skills" — the rest of the catalog.
+///  4. "Your badges" — earned badges, shown only when there are any.
+/// Each section still loads and errors independently.
 class BadgesScreen extends ConsumerStatefulWidget {
   const BadgesScreen({super.key});
 
@@ -43,9 +52,9 @@ class _BadgesScreenState extends ConsumerState<BadgesScreen> {
   @override
   void initState() {
     super.initState();
-    // Now opened as a fresh page rather than kept alive in a tab stack, so a
-    // highlight set just before opening (Close the gap) won't reach the
-    // ref.listen below — read it once here instead.
+    // Opened as a fresh page rather than kept alive in a tab stack, so a
+    // highlight set just before opening (co-pilot "Close the gap") won't
+    // reach the ref.listen below — read it once here instead.
     _pendingHighlightSkillId = ref.read(badgesHighlightSkillIdProvider);
     if (_pendingHighlightSkillId != null) {
       WidgetsBinding.instance.addPostFrameCallback(
@@ -58,10 +67,6 @@ class _BadgesScreenState extends ConsumerState<BadgesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // BadgesScreen is kept alive in RootScreen's IndexedStack, so it won't
-    // rebuild from scratch on every tab switch — ref.listen (not a one-shot
-    // initState read) is what lets a later CTA tap re-trigger the
-    // scroll-and-highlight on an already-mounted screen.
     ref.listen<String?>(badgesHighlightSkillIdProvider, (previous, next) {
       if (next == null) return;
       _pendingHighlightSkillId = next;
@@ -79,7 +84,7 @@ class _BadgesScreenState extends ConsumerState<BadgesScreen> {
     final availableEmpty = assessmentsState is AssessmentsLoaded && assessmentsState.entries.isEmpty;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Badges')),
+      appBar: AppBar(title: const Text('Skills')),
       body: RefreshIndicator(
         onRefresh: () => Future.wait([
           ref.read(badgesControllerProvider.notifier).load(),
@@ -90,8 +95,8 @@ class _BadgesScreenState extends ConsumerState<BadgesScreen> {
                 children: [
                   EmptyState(
                     message: "You haven't earned any verified badges yet, and there's nothing "
-                        'to verify right now. Check back once new assessments open up.',
-                    actionLabel: 'Open assessments',
+                        'to verify right now. Check back once new skill checks open up.',
+                    actionLabel: 'Open skill checks',
                     onAction: () => _openAssessments(context),
                   ),
                 ],
@@ -99,37 +104,27 @@ class _BadgesScreenState extends ConsumerState<BadgesScreen> {
             : ListView(
                 padding: const EdgeInsets.all(AppSpacing.space4),
                 children: [
-                  // Framing copy mirrors apps/web/app/assessments/page.tsx's
-                  // two intro paragraphs — keep the two in sync.
                   Text(
-                    "Pass an assessment to earn a verified skill badge for your profile. Employers can see "
-                    "every badge you've earned — it's verified badges, not self-reported skills, that drive "
-                    'your job matches.',
-                    style: AppTypography.bodyMedium,
+                    'Prove a skill with a short check and earn a verified badge. Employers see every badge '
+                    "you earn — it's verified skills, not self-reported ones, that drive your job matches.",
+                    style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
                   ),
-                  const SizedBox(height: AppSpacing.space3),
-                  Text(
-                    'Each skill has three levels — Foundational, Practitioner, and Advanced — '
-                    'each one more rigorous than the last. Employers see exactly which level you\'ve reached '
-                    'for every skill.',
-                    style: AppTypography.bodyMedium,
-                  ),
-                  const SizedBox(height: AppSpacing.space6),
-                  Text('Earned', style: AppTypography.titleMedium),
-                  const SizedBox(height: AppSpacing.space3),
-                  EarnedBadgesSection(
-                    state: badgesState,
-                    onOpenCertificate: (b) => _openCertificate(context, b),
-                    emptyMessage: 'No verified badges yet — earn one below.',
-                  ),
-                  const SizedBox(height: AppSpacing.space6),
-                  Text('Available to verify', style: AppTypography.titleMedium),
-                  const SizedBox(height: AppSpacing.space3),
+                  const SizedBox(height: AppSpacing.space4),
+                  const _ProfileQuickForm(),
                   _AvailableSection(
                     state: assessmentsState,
                     keyFor: _keyFor,
                     highlightedSkillId: _highlightedSkillId,
                   ),
+                  if (!earnedEmpty) ...[
+                    const SizedBox(height: AppSpacing.space6),
+                    Text('Your badges', style: AppTypography.titleMedium),
+                    const SizedBox(height: AppSpacing.space3),
+                    EarnedBadgesSection(
+                      state: badgesState,
+                      onOpenCertificate: (b) => _openCertificate(context, b),
+                    ),
+                  ],
                 ],
               ),
       ),
@@ -164,7 +159,7 @@ class _BadgesScreenState extends ConsumerState<BadgesScreen> {
     try {
       await openWebAuthenticated('/assessments', () => ref.read(authRepositoryProvider).createWebSessionCode());
     } catch (_) {
-      if (context.mounted) _showOpenFailedSnackBar(context, 'assessments');
+      if (context.mounted) _showOpenFailedSnackBar(context, 'skill checks');
     }
   }
 
@@ -173,6 +168,131 @@ class _BadgesScreenState extends ConsumerState<BadgesScreen> {
       SnackBar(content: Text('Could not open $what. Please try again.')),
     );
   }
+}
+
+/// The profile-readiness gate (CandidateProfile.readyToApply — name plus a
+/// headline or years of experience; the API enforces the same rule on
+/// assessment start), asked ONCE here instead of on every catalog card.
+/// Renders nothing while the profile is loading, failed, or already ready.
+class _ProfileQuickForm extends ConsumerStatefulWidget {
+  const _ProfileQuickForm();
+
+  @override
+  ConsumerState<_ProfileQuickForm> createState() => _ProfileQuickFormState();
+}
+
+class _ProfileQuickFormState extends ConsumerState<_ProfileQuickForm> {
+  final _name = TextEditingController();
+  final _headline = TextEditingController();
+  final _years = TextEditingController();
+  bool _prefilled = false;
+  bool _saving = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _headline.dispose();
+    _years.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final name = _name.text.trim();
+    final headline = _headline.text.trim();
+    final yearsText = _years.text.trim();
+    final years = yearsText.isEmpty ? null : double.tryParse(yearsText);
+
+    if (name.isEmpty) {
+      setState(() => _error = 'Add your name.');
+      return;
+    }
+    if (yearsText.isNotEmpty && (years == null || years < 0 || years > 60)) {
+      setState(() => _error = 'Years of experience should be a number, like 2 or 3.5.');
+      return;
+    }
+    if (headline.isEmpty && years == null) {
+      setState(() => _error = 'Add a headline or your years of experience.');
+      return;
+    }
+
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    try {
+      await ref.read(profileRepositoryProvider).update(
+            fullName: name,
+            headline: headline.isEmpty ? null : headline,
+            yearsOfExp: years,
+          );
+      // Re-fetch so readyToApply flips and every card below unlocks.
+      await ref.read(profileControllerProvider.notifier).load();
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Could not save. Please try again.');
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final profileState = ref.watch(profileControllerProvider);
+    if (profileState is! ProfileLoaded) return const SizedBox.shrink();
+    final profile = profileState.profile;
+    if (profile.readyToApply) return const SizedBox.shrink();
+
+    if (!_prefilled) {
+      _name.text = profile.fullName ?? '';
+      _headline.text = profile.headline ?? '';
+      _years.text = profile.yearsOfExp == null ? '' : _trimNumber(profile.yearsOfExp!);
+      _prefilled = true;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.space4),
+      child: AppCard(
+        elevated: true,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Before your first skill check', style: AppTypography.titleMedium),
+            const SizedBox(height: AppSpacing.space1),
+            Text('Employers see these with your result.', style: AppTypography.bodySmall),
+            const SizedBox(height: AppSpacing.space3),
+            TextField(
+              controller: _name,
+              enabled: !_saving,
+              textCapitalization: TextCapitalization.words,
+              decoration: const InputDecoration(labelText: 'Full name'),
+            ),
+            const SizedBox(height: AppSpacing.space2),
+            TextField(
+              controller: _headline,
+              enabled: !_saving,
+              decoration: const InputDecoration(labelText: 'Headline', hintText: 'e.g. ML engineer'),
+            ),
+            const SizedBox(height: AppSpacing.space2),
+            TextField(
+              controller: _years,
+              enabled: !_saving,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(labelText: 'Years of experience'),
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: AppSpacing.space2),
+              Text(_error!, style: AppTypography.bodySmall.copyWith(color: AppColors.errorBright)),
+            ],
+            const SizedBox(height: AppSpacing.space3),
+            AppButton(label: _saving ? 'Saving…' : 'Save & continue', expand: true, onPressed: _saving ? null : _save),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static String _trimNumber(double v) => v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
 }
 
 class _AvailableSection extends ConsumerWidget {
@@ -187,31 +307,34 @@ class _AvailableSection extends ConsumerWidget {
     final entitlementsState = ref.watch(entitlementsControllerProvider);
     final entitlements = entitlementsState is EntitlementsLoaded ? entitlementsState.entitlements : null;
 
-    // Reads the same profileControllerProvider the Profile tab already
-    // watches — BadgesScreen is kept alive in RootScreen's IndexedStack
-    // alongside it (see BadgesScreen's own doc comment), so this is a
-    // second subscriber to an already-fetched value, not a new /profiles/me
-    // call. Defaults to ready while the profile is still loading or failed
-    // to load, matching apps/web/app/assessments/page.tsx's own "assumed
-    // ready until the profile actually loads and says otherwise" — a ready
-    // candidate should never see a flash of a disabled button, and the
-    // server enforces the real gate regardless of what this shows.
+    // Assumed ready while the profile loads/fails (server enforces the real
+    // gate) — same default as before. When NOT ready, the one-time
+    // _ProfileQuickForm above explains why; the cards no longer each repeat it.
     final profileState = ref.watch(profileControllerProvider);
     final profile = profileState is ProfileLoaded ? profileState.profile : null;
     final profileReady = profile?.readyToApply ?? true;
-    final profileGateMessage = profile?.readinessGateMessage;
 
-    // Mirrors apps/web/app/assessments/page.tsx's CategorySection exactly:
-    // gated on tier + limits.singleSkillRestriction, not on freeSkillLock
-    // alone (see PlanLimits.singleSkillRestriction's own doc comment for
-    // why a null lock is ambiguous without it). Computed once per build,
-    // then compared per entry below — the catalog endpoint itself carries
-    // no lock information (confirmed against the API), so this
-    // cross-reference is the only way to know.
+    // Same FREE single-skill lock as before (mirrors web's CategorySection).
     final freeSkillLock =
         (entitlements != null && entitlements.tier == 'FREE' && entitlements.limits.singleSkillRestriction)
             ? entitlements.freeSkillLock
             : null;
+    String? lockedFor(AssessmentCatalogEntry e) =>
+        freeSkillLock != null && freeSkillLock.skillId != e.skillId ? freeSkillLock.skillName : null;
+
+    Widget cardFor(AssessmentCatalogEntry entry, {bool recommended = false}) => Padding(
+          key: keyFor(entry.skillId),
+          padding: const EdgeInsets.only(bottom: AppSpacing.space3),
+          child: AssessmentCatalogCard(
+            entry: entry,
+            highlighted: recommended || entry.skillId == highlightedSkillId,
+            premium: entitlements?.isPremium ?? false,
+            profileReady: profileReady,
+            showProfileGateNotice: false,
+            freeSkillLocked: lockedFor(entry),
+            onTakeAssessment: () => _takeAssessment(context, ref, entry),
+          ),
+        );
 
     return switch (state) {
       AssessmentsLoading() => const Padding(
@@ -222,54 +345,52 @@ class _AvailableSection extends ConsumerWidget {
         Text(message, style: AppTypography.bodySmall.copyWith(color: AppColors.errorBright)),
       AssessmentsLoaded(:final entries) when entries.isEmpty =>
         Text('Nothing new to verify right now — check back later.', style: AppTypography.bodySmall),
-      AssessmentsLoaded(:final entries) => Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Shown before the wall is hit, not after — see UsageMeter's own
-            // doc comment. Renders nothing on an unlimited plan.
-            if (entitlements != null) ...[
-              UsageMeter(
-                label: 'assessment starts',
-                used: entitlements.assessmentsUsage.used,
-                limit: entitlements.assessmentsUsage.limit,
-                resetsAt: entitlements.assessmentsUsage.resetsAt,
-              ),
-              const SizedBox(height: AppSpacing.space4),
-            ],
-            // Nothing is paginated or held back here — say so explicitly
-            // rather than leaving a short list looking broken. Mirrors the
-            // intent of apps/web's "showing the full assessment catalog"
-            // note, worded for this screen's filtered (next-level-only) view.
-            Text(
-              'Showing everything available to verify — ${entries.length} skill${entries.length == 1 ? '' : 's'} '
-              'right now.',
-              style: AppTypography.bodySmall,
-            ),
-            const SizedBox(height: AppSpacing.space3),
-            for (final entry in entries)
-              Padding(
-                key: keyFor(entry.skillId),
-                padding: const EdgeInsets.only(bottom: AppSpacing.space3),
-                child: AssessmentCatalogCard(
-                  entry: entry,
-                  highlighted: entry.skillId == highlightedSkillId,
-                  premium: entitlements?.isPremium ?? false,
-                  profileReady: profileReady,
-                  profileGateMessage: profileGateMessage,
-                  freeSkillLocked:
-                      freeSkillLock != null && freeSkillLock.skillId != entry.skillId ? freeSkillLock.skillName : null,
-                  // No Navigator.popUntil dance here unlike
-                  // job_detail_screen.dart's identical prompt — this card
-                  // lives directly in a bottom-nav tab (BadgesScreen), not
-                  // a pushed route on top of one, so switching the tab
-                  // index alone is already visible.
-                  onCompleteProfile: () => ref.read(rootTabIndexProvider.notifier).state = RootTab.profile,
-                  onTakeAssessment: () => _takeAssessment(context, ref, entry),
+      AssessmentsLoaded(:final entries) => () {
+          final recommended = _pickRecommended(entries, lockedFor);
+          final rest = [for (final e in entries) if (e.skillId != recommended?.skillId) e];
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (entitlements != null) ...[
+                UsageMeter(
+                  label: 'skill checks',
+                  used: entitlements.assessmentsUsage.used,
+                  limit: entitlements.assessmentsUsage.limit,
+                  resetsAt: entitlements.assessmentsUsage.resetsAt,
                 ),
-              ),
-          ],
-        ),
+                const SizedBox(height: AppSpacing.space4),
+              ],
+              if (recommended != null) ...[
+                Text('START HERE', style: AppTypography.metaLabel(color: AppColors.primary)),
+                const SizedBox(height: AppSpacing.space2),
+                cardFor(recommended, recommended: true),
+                const SizedBox(height: AppSpacing.space3),
+              ],
+              if (rest.isNotEmpty) ...[
+                Text(recommended != null ? 'More skills' : 'Skills to verify', style: AppTypography.titleMedium),
+                const SizedBox(height: AppSpacing.space3),
+                for (final entry in rest) cardFor(entry),
+              ],
+            ],
+          );
+        }(),
     };
+  }
+
+  /// The available skill required on the most roles the candidate is close
+  /// to (relevanceCount, from the catalog endpoint); ties keep catalog order.
+  /// Skips skills a FREE candidate is locked out of. Null when nothing is
+  /// startable (all in progress / cooling down / locked).
+  static AssessmentCatalogEntry? _pickRecommended(
+    List<AssessmentCatalogEntry> entries,
+    String? Function(AssessmentCatalogEntry) lockedFor,
+  ) {
+    AssessmentCatalogEntry? best;
+    for (final e in entries) {
+      if (e.state != AssessmentCatalogState.available || lockedFor(e) != null) continue;
+      if (best == null || e.relevanceCount > best.relevanceCount) best = e;
+    }
+    return best;
   }
 
   Future<void> _takeAssessment(BuildContext context, WidgetRef ref, AssessmentCatalogEntry entry) async {
@@ -278,7 +399,7 @@ class _AvailableSection extends ConsumerWidget {
     } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open the assessment. Please try again.')),
+          const SnackBar(content: Text('Could not open the skill check. Please try again.')),
         );
       }
     }

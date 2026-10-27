@@ -115,7 +115,7 @@ void main() {
       // The disabled AppButton still renders "Take assessment" (the reason
       // — the ActionableNotice above it — is what changes, not the button's
       // own label) but tapping it must not fire onTakeAssessment.
-      await tester.tap(find.widgetWithText(FilledButton, 'Take assessment'));
+      await tester.tap(find.widgetWithText(FilledButton, 'Start skill check'));
       await tester.pump();
       expect(tookAssessmentTapped, isFalse);
 

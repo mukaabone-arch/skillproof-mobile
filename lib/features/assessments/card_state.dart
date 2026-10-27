@@ -62,20 +62,20 @@ AssessmentCardDisplay resolveCardDisplay(
       if (freeSkillLocked != null) {
         return const AssessmentCardDisplay(
           state: AssessmentCatalogState.available,
-          buttonLabel: 'Take assessment',
+          buttonLabel: 'Start skill check',
           buttonEnabled: false,
         );
       }
       if (!profileReady) {
         return const AssessmentCardDisplay(
           state: AssessmentCatalogState.available,
-          buttonLabel: 'Take assessment',
+          buttonLabel: 'Start skill check',
           buttonEnabled: false,
         );
       }
       return const AssessmentCardDisplay(
         state: AssessmentCatalogState.available,
-        buttonLabel: 'Take assessment',
+        buttonLabel: 'Start skill check',
         buttonEnabled: true,
       );
     case AssessmentCatalogState.inProgress:
@@ -101,7 +101,7 @@ AssessmentCardDisplay resolveCardDisplay(
       if (at == null) {
         return AssessmentCardDisplay(
           state: AssessmentCatalogState.cooldown,
-          buttonLabel: 'Take assessment',
+          buttonLabel: 'Start skill check',
           buttonEnabled: false,
           metaText: "You've used all retakes allowed for this skill — this cap doesn't reset."
               '${premium ? '' : ' Premium allows more retakes per skill.'}',
@@ -111,7 +111,7 @@ AssessmentCardDisplay resolveCardDisplay(
       // mirrors apps/web's DiscussionAction cooldown copy.
       return AssessmentCardDisplay(
         state: AssessmentCatalogState.cooldown,
-        buttonLabel: 'Take assessment',
+        buttonLabel: 'Start skill check',
         buttonEnabled: false,
         metaText: 'Retakes are limited so badges stay credible to employers — you can try again '
             'from ${_formatLocalDate(at)}.'

@@ -25,7 +25,7 @@ void main() {
       final display = resolveCardDisplay(_entry(state: AssessmentCatalogState.available));
 
       expect(display.buttonEnabled, isTrue);
-      expect(display.buttonLabel, 'Take assessment');
+      expect(display.buttonLabel, 'Start skill check');
       expect(display.metaText, isNull);
     });
 
@@ -88,7 +88,7 @@ void main() {
       );
 
       expect(display.buttonEnabled, isFalse);
-      expect(display.buttonLabel, 'Take assessment');
+      expect(display.buttonLabel, 'Start skill check');
       expect(display.metaText, isNull);
     });
 
@@ -129,7 +129,7 @@ void main() {
       );
 
       expect(display.buttonEnabled, isFalse);
-      expect(display.buttonLabel, 'Take assessment');
+      expect(display.buttonLabel, 'Start skill check');
       expect(display.metaText, isNull);
     });
 
@@ -141,7 +141,7 @@ void main() {
       );
 
       expect(display.buttonEnabled, isFalse);
-      expect(display.buttonLabel, 'Take assessment');
+      expect(display.buttonLabel, 'Start skill check');
     });
 
     test('in_progress, locked to a different skill: still resumable — the lock only gates new starts', () {

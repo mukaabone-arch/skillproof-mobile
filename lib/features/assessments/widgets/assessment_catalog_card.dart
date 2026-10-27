@@ -27,6 +27,7 @@ class AssessmentCatalogCard extends StatelessWidget {
     this.profileReady = true,
     this.profileGateMessage,
     this.onCompleteProfile,
+    this.showProfileGateNotice = true,
     this.freeSkillLocked,
     super.key,
   });
@@ -53,6 +54,11 @@ class AssessmentCatalogCard extends StatelessWidget {
   final String? profileGateMessage;
   final VoidCallback? onCompleteProfile;
 
+  /// False on the Skills screen, which asks for the missing profile fields
+  /// once at the top instead of repeating the notice on every card. The
+  /// button stays disabled either way until the profile is ready.
+  final bool showProfileGateNotice;
+
   /// This skill's name if a FREE candidate is locked to a *different* skill,
   /// else null — the caller (BadgesScreen's _AvailableSection) computes this
   /// per entry from entitlementsControllerProvider, same as web's
@@ -69,7 +75,8 @@ class AssessmentCatalogCard extends StatelessWidget {
       freeSkillLocked: freeSkillLocked,
     );
     final showLockGate = entry.state == AssessmentCatalogState.available && freeSkillLocked != null;
-    final showProfileGate = entry.state == AssessmentCatalogState.available && !showLockGate && !profileReady;
+    final showProfileGate =
+        entry.state == AssessmentCatalogState.available && !showLockGate && !profileReady && showProfileGateNotice;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
