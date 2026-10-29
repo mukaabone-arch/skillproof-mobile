@@ -101,13 +101,13 @@ void main() {
     await tester.enterText(find.widgetWithText(TextField, 'Email'), 'jane@example.com');
     await tester.tap(find.widgetWithText(FilledButton, 'Send OTP'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.widgetWithText(TextField, 'OTP (dev: 123456)'), '123456');
+    await tester.enterText(find.widgetWithText(TextField, 'OTP'), '123456');
 
     await tester.tap(find.text('Phone'));
     await tester.pumpAndSettle();
 
     expect(find.widgetWithText(FilledButton, 'Send OTP'), findsOneWidget);
-    expect(find.widgetWithText(TextField, 'OTP (dev: 123456)'), findsNothing);
+    expect(find.widgetWithText(TextField, 'OTP'), findsNothing);
     expect(find.text('+91'), findsOneWidget);
   });
 
@@ -117,7 +117,7 @@ void main() {
     await tester.enterText(find.widgetWithText(TextField, 'Email'), 'jane@example.com');
     await tester.tap(find.widgetWithText(FilledButton, 'Send OTP'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.widgetWithText(TextField, 'OTP (dev: 123456)'), '123456');
+    await tester.enterText(find.widgetWithText(TextField, 'OTP'), '123456');
     await tester.tap(find.widgetWithText(FilledButton, 'Verify OTP'));
     await tester.pumpAndSettle();
 

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// Persists auth tokens in the platform keystore (Android Keystore /
@@ -26,7 +27,9 @@ class TokenStorage {
   /// the login screen shows instead.
   Future<String?> _safeRead(String key) async {
     try {
-      return await _storage.read(key: key).timeout(const Duration(seconds: 5));
+      final read = _storage.read(key: key);
+      // The hang was Android-only; a timer elsewhere just leaks into tests.
+      return Platform.isAndroid ? await read.timeout(const Duration(seconds: 5)) : await read;
     } catch (_) {
       try {
         await _storage.deleteAll().timeout(const Duration(seconds: 5));
