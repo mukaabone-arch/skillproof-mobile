@@ -15,9 +15,25 @@ class TokenStorage {
   static const _accessTokenKey = 'sp_access_token';
   static const _refreshTokenKey = 'sp_refresh_token';
 
-  Future<String?> readAccessToken() => _storage.read(key: _accessTokenKey);
+  Future<String?> readAccessToken() => _safeRead(_accessTokenKey);
 
-  Future<String?> readRefreshToken() => _storage.read(key: _refreshTokenKey);
+  Future<String?> readRefreshToken() => _safeRead(_refreshTokenKey);
+
+  /// A token restored by Android backup (or left by an older install) can't be
+  /// decrypted on this device — the read throws, or on some Android 16 builds
+  /// never returns, and the app sat on the splash forever. Treat any such
+  /// failure as "signed out": wipe the unreadable store and return null so
+  /// the login screen shows instead.
+  Future<String?> _safeRead(String key) async {
+    try {
+      return await _storage.read(key: key).timeout(const Duration(seconds: 5));
+    } catch (_) {
+      try {
+        await _storage.deleteAll().timeout(const Duration(seconds: 5));
+      } catch (_) {}
+      return null;
+    }
+  }
 
   Future<void> saveTokens({
     required String accessToken,
