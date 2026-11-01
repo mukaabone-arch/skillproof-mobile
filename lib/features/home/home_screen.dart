@@ -20,6 +20,7 @@ import 'widgets/hero_section.dart';
 import 'widgets/jobs_close_to.dart';
 import 'widgets/onboarding_checklist.dart';
 import 'widgets/status_cards.dart';
+import '../staffing/widgets/staffing_confirm_nudge.dart';
 
 /// Candidate dashboard: greeting + one next step (HeroSection's co-pilot),
 /// a short "what's left" checklist while onboarding, the jobs they're
@@ -66,6 +67,7 @@ class HomeScreen extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(AppSpacing.space4, AppSpacing.space4, AppSpacing.space4, AppSpacing.space6),
           children: const [
             HeroSection(),
+            StaffingConfirmNudge(),
             OnboardingChecklist(),
             JobsCloseTo(),
             _ProgressStats(),

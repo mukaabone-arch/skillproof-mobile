@@ -10,6 +10,7 @@ import 'interviews_controller.dart';
 import 'interviews_state.dart';
 import 'widgets/interview_card.dart';
 import 'widgets/interview_prep_section.dart';
+import '../staffing/widgets/staffing_requests_section.dart';
 
 /// The candidate's own view of every pipeline they're in, across every
 /// employer — mirrors apps/web/components/CandidateInterviews.tsx. No
@@ -35,6 +36,7 @@ class InterviewsScreen extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.all(AppSpacing.space4),
               children: const [
+                StaffingRequestsSection(),
                 EmptyState(
                   message: "No interviews yet — when an employer invites you, it'll show here.",
                 ),
@@ -67,6 +69,7 @@ class _InterviewsList extends ConsumerWidget {
       child: ListView(
         padding: const EdgeInsets.all(AppSpacing.space4),
         children: [
+          const StaffingRequestsSection(),
           if (actionError != null) ...[
             Text(actionError!, style: AppTypography.bodySmall.copyWith(color: AppColors.errorBright)),
             const SizedBox(height: AppSpacing.space3),

@@ -20,6 +20,8 @@ import '../certifications/certifications_controller.dart';
 import '../certifications/certifications_state.dart';
 import '../certifications/widgets/certifications_section.dart';
 import '../entitlements/entitlements_controller.dart';
+import '../staffing/staffing_controller.dart';
+import '../staffing/widgets/staffing_profile_section.dart';
 import 'profile_controller.dart';
 import 'profile_state.dart';
 import 'profile_viewers_controller.dart';
@@ -79,6 +81,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ref.read(profileControllerProvider.notifier).load(),
               ref.read(profileViewersControllerProvider.notifier).load(),
               ref.read(entitlementsControllerProvider.notifier).load(),
+              ref.read(staffingAvailabilityProvider.notifier).load(),
             ]),
             child: ListView(
               padding: const EdgeInsets.all(AppSpacing.space4),
@@ -128,6 +131,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   title: 'Profile viewers',
                   child: ProfileViewersSection(),
                 ),
+                const SizedBox(height: AppSpacing.space3),
+                const StaffingProfileSection(),
                 const SizedBox(height: AppSpacing.space3),
                 const ResumeExportCard(),
                 const SizedBox(height: AppSpacing.space3),

@@ -16,6 +16,7 @@ import '../jobs/jobs_screen.dart';
 import '../jobs/matched_controller.dart';
 import '../profile/profile_controller.dart';
 import '../profile/profile_screen.dart';
+import '../staffing/staffing_controller.dart';
 import 'root_tab_provider.dart';
 
 /// Post-login shell: a bottom bar (Home · Skills · Jobs · Interviews ·
@@ -69,6 +70,8 @@ class _RootScreenState extends ConsumerState<RootScreen> with WidgetsBindingObse
     ref.read(interviewsControllerProvider.notifier).load();
     ref.read(entitlementsControllerProvider.notifier).load();
     ref.read(copilotPlanControllerProvider.notifier).load();
+    ref.read(staffingAvailabilityProvider.notifier).load();
+    ref.read(staffingRequestsProvider.notifier).load();
     // Catches a deactivation made from another device/session while this
     // one was backgrounded — AccountStatusGate wraps RootScreen, so a
     // flip to deactivated here surfaces ReactivateScreen on the next build.
