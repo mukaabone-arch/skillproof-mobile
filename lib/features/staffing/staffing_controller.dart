@@ -82,3 +82,43 @@ class StaffingRequestsController extends StateNotifier<AsyncValue<List<StaffingR
     }
   }
 }
+
+/// Staffing companies asking to put the candidate forward to a named client,
+/// and where each approved submission stands.
+final staffingSubmissionsProvider =
+    StateNotifierProvider.autoDispose<StaffingSubmissionsController, AsyncValue<List<StaffingSubmission>>>((ref) {
+  return StaffingSubmissionsController(ref.read(staffingRepositoryProvider))..load();
+});
+
+class StaffingSubmissionsController extends StateNotifier<AsyncValue<List<StaffingSubmission>>> {
+  StaffingSubmissionsController(this._repository) : super(const AsyncLoading());
+
+  final StaffingRepository _repository;
+
+  Future<void> load() async {
+    try {
+      state = AsyncData(await _repository.submissions());
+    } catch (e, st) {
+      if (state is! AsyncData) state = AsyncError(e, st);
+    }
+  }
+
+  /// Returns an error message to show, or null. Reloads afterwards — the
+  /// server decides the resulting status (an approval can be refused if
+  /// another company already represents the candidate to that client).
+  Future<String?> decide(String id, {required bool approve}) => _act(() => _repository.decideSubmission(id, approve: approve));
+
+  Future<String?> withdraw(String id) => _act(() => _repository.withdrawSubmission(id));
+
+  Future<String?> _act(Future<void> Function() call) async {
+    try {
+      await call();
+      await load();
+      return null;
+    } on ApiException catch (e) {
+      return e.message;
+    } catch (e) {
+      return e.toString();
+    }
+  }
+}

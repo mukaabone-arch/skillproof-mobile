@@ -72,6 +72,7 @@ class _RootScreenState extends ConsumerState<RootScreen> with WidgetsBindingObse
     ref.read(copilotPlanControllerProvider.notifier).load();
     ref.read(staffingAvailabilityProvider.notifier).load();
     ref.read(staffingRequestsProvider.notifier).load();
+    ref.read(staffingSubmissionsProvider.notifier).load();
     // Catches a deactivation made from another device/session while this
     // one was backgrounded — AccountStatusGate wraps RootScreen, so a
     // flip to deactivated here surfaces ReactivateScreen on the next build.

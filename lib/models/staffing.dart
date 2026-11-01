@@ -213,3 +213,52 @@ class StaffingRequest {
         expiresAt: expiresAt,
       );
 }
+
+// ---- Phase 2a: submissions to a staffing company's client ----
+
+const Map<String, String> submissionStatusLabels = {
+  'PENDING_CONSENT': 'Waiting for your approval',
+  'DECLINED': 'You declined',
+  'SUBMITTED': 'Submitted to the client',
+  'INTERVIEWING': 'Interviewing',
+  'OFFER': 'Offer',
+  'PLACED': 'Placed',
+  'NOT_SELECTED': 'Not selected',
+  'WITHDRAWN': 'Withdrawn',
+  'EXPIRED': 'Approval expired',
+};
+
+class StaffingSubmission {
+  StaffingSubmission({
+    required this.id,
+    required this.orgName,
+    required this.clientName,
+    required this.clientIndustry,
+    required this.roleTitle,
+    required this.status,
+    required this.consentExpiresAt,
+  });
+
+  factory StaffingSubmission.fromJson(Map<String, dynamic> json) => StaffingSubmission(
+        id: json['id'] as String,
+        orgName: json['orgName'] as String? ?? 'A staffing company',
+        clientName: json['clientName'] as String? ?? 'a client',
+        clientIndustry: json['clientIndustry'] as String?,
+        roleTitle: json['roleTitle'] as String? ?? '',
+        status: json['status'] as String? ?? 'PENDING_CONSENT',
+        consentExpiresAt: _date(json['consentExpiresAt']) ?? DateTime.now(),
+      );
+
+  final String id;
+  final String orgName;
+  final String clientName;
+  final String? clientIndustry;
+  final String roleTitle;
+  final String status;
+  final DateTime consentExpiresAt;
+
+  bool get awaitingApproval => status == 'PENDING_CONSENT' && consentExpiresAt.isAfter(DateTime.now());
+
+  /// Mirrors the API's candidateCanWithdraw: any time before a placement.
+  bool get canWithdraw => status == 'SUBMITTED' || status == 'INTERVIEWING' || status == 'OFFER';
+}

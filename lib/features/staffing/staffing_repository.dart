@@ -36,4 +36,19 @@ class StaffingRepository {
       'block': block,
     });
   }
+
+  // ---- Phase 2a: submissions ----
+
+  Future<List<StaffingSubmission>> submissions() async {
+    final list = await apiClient.get('/staffing/me/submissions') as List<dynamic>;
+    return list.map((s) => StaffingSubmission.fromJson(s as Map<String, dynamic>)).toList();
+  }
+
+  Future<void> decideSubmission(String id, {required bool approve}) async {
+    await apiClient.post('/staffing/me/submissions/$id/decide', {'approve': approve});
+  }
+
+  Future<void> withdrawSubmission(String id) async {
+    await apiClient.post('/staffing/me/submissions/$id/withdraw');
+  }
 }
