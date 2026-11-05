@@ -59,8 +59,9 @@ class FirebasePushMessaging implements PushMessaging {
 
   static PushPermission _map(AuthorizationStatus s) => switch (s) {
         AuthorizationStatus.authorized || AuthorizationStatus.provisional => PushPermission.granted,
-        AuthorizationStatus.denied => PushPermission.denied,
         AuthorizationStatus.notDetermined => PushPermission.notDetermined,
+        // denied, deniedPermanently (newer plugin versions) and anything added later.
+        _ => PushPermission.denied,
       };
 
   @override

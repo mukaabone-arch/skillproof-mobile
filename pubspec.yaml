@@ -19,6 +19,9 @@ dependencies:
   flutter_web_auth_2: ^5.1.0
   crypto: ^3.0.7
   sign_in_with_apple: ^8.2.0
+  firebase_core: ^5.1.0
+  firebase_messaging: ^17.0.1
+  package_info_plus: ^9.0.1
 
 dev_dependencies:
   flutter_test:
