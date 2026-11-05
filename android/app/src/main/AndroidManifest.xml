@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Runtime permission on Android 13+ (targetSdk 36). Asked only at a
+         meaningful moment, never on first launch: see PushService.askAtMeaningfulMoment. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:allowBackup="false"
         android:fullBackupContent="false"
@@ -32,6 +35,15 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- Push: status-bar icon must be a white-on-transparent silhouette
+             (a full-colour launcher icon renders as a white square). -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_myambii" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notification_accent" />
 
         <!-- flutter_web_auth_2's own redirect-capture activity (GitHub
              sign-in — see lib/features/auth/auth_repository.dart's

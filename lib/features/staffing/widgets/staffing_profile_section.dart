@@ -6,6 +6,7 @@ import '../../../theme/app_colors.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_button.dart';
 import '../../../widgets/collapsible_section.dart';
+import '../../push/push_providers.dart';
 import '../staffing_controller.dart';
 
 /// Profile → "Staffing companies": opt in, availability, work types and
@@ -82,6 +83,8 @@ class _StaffingFormState extends ConsumerState<_StaffingForm> {
       if (_rateUnit != null) 'expectedRateUnit': _rateUnit,
     });
     if (!mounted) return;
+    // Recruiter checks expire in 48 hours — the clearest case for a push.
+    if (error == null && _open) ref.read(pushServiceProvider).askAtMeaningfulMoment();
     setState(() {
       _saving = false;
       _message = error ?? 'Saved';

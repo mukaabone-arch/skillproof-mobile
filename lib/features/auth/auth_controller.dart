@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers.dart';
+import '../push/push_providers.dart';
+import '../push/push_service.dart';
 import 'auth_repository.dart';
 import 'auth_state.dart';
 
@@ -13,17 +15,23 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 
 final authControllerProvider =
     StateNotifierProvider<AuthController, AuthState>((ref) {
-  final controller = AuthController(ref.read(authRepositoryProvider));
+  final controller = AuthController(ref.read(authRepositoryProvider), push: ref.read(pushServiceProvider));
   ref.read(apiClientProvider).onSessionExpired = controller.handleSessionExpired;
   return controller;
 });
 
 class AuthController extends StateNotifier<AuthState> {
-  AuthController(this._repository) : super(const AuthInitial()) {
+  AuthController(this._repository, {PushService? push})
+      : _push = push,
+        super(const AuthInitial()) {
     _restoreSession();
   }
 
   final AuthRepository _repository;
+
+  /// Push token bookkeeping on sign-out (sign-in registration is driven by
+  /// PushCoordinator, which watches this controller's state).
+  final PushService? _push;
 
   Future<void> _restoreSession() async {
     if (!await _repository.hasStoredSession()) {
@@ -163,14 +171,22 @@ class AuthController extends StateNotifier<AuthState> {
     state = AuthAuthenticated(result.user);
   }
 
+  /// Every sign-out in the app comes through here (profile, verify screen,
+  /// reactivate screen, account deletion). The push token travels with
+  /// /auth/logout so the API forgets this phone, then is deleted locally —
+  /// the next account to sign in here must never receive this one's
+  /// notifications.
   Future<void> logout() async {
-    await _repository.logout();
+    final deviceToken = await _push?.tokenForLogout();
+    await _repository.logout(deviceToken: deviceToken);
+    await _push?.onSignedOut();
     state = const AuthUnauthenticated();
   }
 
   /// Invoked by [ApiClient] when a background token refresh is rejected
   /// by the server (expired/revoked refresh token).
   void handleSessionExpired() {
+    _push?.onSessionExpired();
     state = const AuthUnauthenticated(
       error: 'Your session expired. Please sign in again.',
     );

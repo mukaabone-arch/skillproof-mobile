@@ -7,6 +7,7 @@ import 'features/auth/auth_state.dart';
 import 'features/auth/login_screen.dart';
 import 'features/auth/verify_screen.dart';
 import 'features/entitlements/widgets/limit_reached_listener.dart';
+import 'features/push/push_coordinator.dart';
 import 'features/root/root_screen.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
@@ -28,6 +29,8 @@ class MyambiiApp extends ConsumerWidget {
       theme: AppTheme.dark,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.dark,
+      scaffoldMessengerKey: pushMessengerKey,
+      builder: (context, child) => PushCoordinator(child: child ?? const SizedBox.shrink()),
       home: switch (authState) {
         // A hard gate, not a nag: every route except /users/me and
         // /auth/* 400s with CANDIDATE_VERIFICATION_INCOMPLETE for an

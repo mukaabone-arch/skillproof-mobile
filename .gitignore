@@ -59,3 +59,8 @@ signin*.txt
 gsi.log
 *.logcat
 *.p8
+
+# Firebase client config (push). Kept out of this public repo; each build
+# machine keeps its own copy — Windows (Android), Mac (iOS).
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
