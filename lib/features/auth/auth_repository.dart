@@ -381,11 +381,16 @@ class AuthRepository {
     return LinkEmailResult(user: user, switchedAccount: switchedAccount, message: response['message'] as String?);
   }
 
-  Future<void> logout() async {
+  /// [deviceToken]: this install's push token, so the API forgets the
+  /// device in the same call (see AuthController.logout).
+  Future<void> logout({String? deviceToken}) async {
     final refreshToken = await tokenStorage.readRefreshToken();
-    if (refreshToken != null) {
+    if (refreshToken != null || deviceToken != null) {
       try {
-        await apiClient.post('/auth/logout', {'refreshToken': refreshToken});
+        await apiClient.post('/auth/logout', {
+          if (refreshToken != null) 'refreshToken': refreshToken,
+          if (deviceToken != null) 'deviceToken': deviceToken,
+        });
       } catch (_) {
         // Best-effort server-side revoke; the local session is cleared
         // regardless of whether this call succeeds.

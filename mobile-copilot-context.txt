@@ -1,0 +1,780 @@
+--- lib/core/api_client.dart
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+
+import '../config/api_config.dart';
+import 'limit_reached.dart';
+import 'token_storage.dart';
+
+class ApiException implements Exception {
+  ApiException(this.message, this.statusCode, [this.body]);
+
+  final String message;
+  final int statusCode;
+
+  /// Raw decoded error body, when the response was JSON. Nest exceptions
+  /// like `BadRequestException({ code: '...', message: '...' })` put a
+  /// machine-readable `code` here so callers can react to specific failure
+  /// reasons instead of pattern-matching on [message].
+  final dynamic body;
+
+  @override
+  String toString() => message;
+}
+
+/// REST client mirroring apps/web/lib/api.ts:
+/// - attaches the stored access token as a Bearer header
+/// - on a 401, attempts a single token refresh (rotating both tokens)
+///   and retries the original request once
+/// - if the refresh itself fails, clears the stored session and notifies
+///   [onSessionExpired] so the UI can route back to the login screen
+class ApiClient {
+  ApiClient({http.Client? httpClient, TokenStorage? tokenStorage})
+      : _http = httpClient ?? http.Client(),
+        _tokens = tokenStorage ?? TokenStorage();
+
+  final http.Client _http;
+  final TokenStorage _tokens;
+
+  /// Wired up by the auth controller; called when a refresh attempt is
+  /// rejected by the server (expired/revoked refresh token).
+  void Function()? onSessionExpired;
+
+  Future<dynamic> get(String path) => _send('GET', path);
+
+  Future<dynamic> post(String path, [Map<String, dynamic>? body]) =>
+      _send('POST', path, body);
+
+  Future<dynamic> patch(String path, [Map<String, dynamic>? body]) =>
+      _send('PATCH', path, body);
+
+  Future<dynamic> delete(String path) => _send('DELETE', path);
+
+  /// Multipart file upload (used for the profile photo; the resume path
+  /// this was originally written for is still commented out below it —
+  /// see profile_repository.dart) — separate from [_send] since a
+  /// multipart body can't be built by the same jsonEncode-a-Map path, but
+  /// shares the same 401→refresh→retry contract. [file] is re-read from
+  /// disk on a retry, not just replayed from a consumed stream, since a
+  /// fresh [http.MultipartFile] has to be built per attempt anyway.
+  Future<dynamic> postMultipart(
+    String path, {
+    required File file,
+    required String fieldName,
+    MediaType? contentType,
+  }) {
+    return multipart('POST', path, file: file, fileField: fieldName, fileContentType: contentType);
+  }
+
+  /// General multipart request — text [fields] plus an optional [file],
+  /// over either POST or PATCH. Added for the certifications feature
+  /// (name/issuer/dates alongside an optional upload, and PATCH for edits —
+  /// neither of which [postMultipart] above supported), but written as the
+  /// general case; [postMultipart] now just delegates to this with no
+  /// [fields] and a fixed method, so existing callers are unaffected.
+  Future<dynamic> multipart(
+    String method,
+    String path, {
+    Map<String, String> fields = const {},
+    File? file,
+    String? fileField,
+    MediaType? fileContentType,
+  }) async {
+    var response = await _rawMultipartRequest(
+      method,
+      path,
+      fields: fields,
+      file: file,
+      fileField: fileField,
+      contentType: fileContentType,
+    );
+    if (response.statusCode == 401 && await _tryRefresh()) {
+      response = await _rawMultipartRequest(
+        method,
+        path,
+        fields: fields,
+        file: file,
+        fileField: fileField,
+        contentType: fileContentType,
+      );
+    }
+    return _decode(response);
+  }
+
+  /// Fetches raw bytes from an authenticated endpoint whose response isn't
+  /// JSON (the profile photo proxy) — same auth/refresh contract as
+  /// [_send], but skips [_decode] since there's no JSON body to parse.
+  /// Returns null on a 404 (no photo set) rather than throwing, since
+  /// that's an expected, common outcome here, not a request failure.
+  Future<Uint8List?> getBytes(String path) async {
+    var response = await _rawRequest('GET', path, null);
+    if (response.statusCode == 401 && await _tryRefresh()) {
+      response = await _rawRequest('GET', path, null);
+    }
+    if (response.statusCode == 404) return null;
+    if (response.statusCode >= 400) {
+      throw ApiException('Request failed (${response.statusCode})', response.statusCode);
+    }
+    return response.bodyBytes;
+  }
+
+  void close() => _http.close();
+
+  Future<dynamic> _send(
+    String method,
+    String path, [
+    Map<String, dynamic>? body,
+  ]) async {
+    var response = await _rawRequest(method, path, body);
+
+    if (response.statusCode == 401 && await _tryRefresh()) {
+      response = await _rawRequest(method, path, body);
+    }
+
+    return _decode(response);
+  }
+
+  Future<http.Response> _rawRequest(
+    String method,
+    String path,
+    Map<String, dynamic>? body,
+  ) async {
+    final token = await _tokens.readAccessToken();
+    final uri = Uri.parse('${ApiConfig.baseUrl}$path');
+    final headers = {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+
+    switch (method) {
+      case 'GET':
+        return _http.get(uri, headers: headers);
+      case 'POST':
+        return _http.post(uri, headers: headers, body: jsonEncode(body ?? {}));
+      case 'PATCH':
+        return _http.patch(uri, headers: headers, body: jsonEncode(body ?? {}));
+      case 'DELETE':
+        return _http.delete(uri, headers: headers);
+      default:
+        throw UnimplementedError('Unsupported method: $method');
+    }
+  }
+
+  Future<http.Response> _rawMultipartRequest(
+    String method,
+    String path, {
+    Map<String, String> fields = const {},
+    File? file,
+    String? fileField,
+    MediaType? contentType,
+  }) async {
+    final token = await _tokens.readAccessToken();
+    final uri = Uri.parse('${ApiConfig.baseUrl}$path');
+    final request = http.MultipartRequest(method, uri);
+    if (token != null) request.headers['Authorization'] = 'Bearer $token';
+    request.fields.addAll(fields);
+    if (file != null) {
+      request.files.add(
+        await http.MultipartFile.fromPath(fileField!, file.path, contentType: contentType),
+      );
+    }
+    final streamedResponse = await _http.send(request);
+    return http.Response.fromStream(streamedResponse);
+  }
+
+  Future<bool> _tryRefresh() async {
+    final refreshToken = await _tokens.readRefreshToken();
+    if (refreshToken == null) return false;
+
+    try {
+      final response = await _http.post(
+        Uri.parse('${ApiConfig.baseUrl}/auth/refresh'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'refreshToken': refreshToken}),
+      );
+
+      if (response.statusCode >= 400) {
+        // Refresh token expired or revoked server-side: the session is
+        // over, not just this one request.
+        await _tokens.clear();
+        onSessionExpired?.call();
+        return false;
+      }
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      // /auth/refresh rotates the refresh token too, so both must be
+      // overwritten, not just the access token.
+      await _tokens.saveTokens(
+        accessToken: data['accessToken'] as String,
+        refreshToken: data['refreshToken'] as String,
+      );
+      return true;
+    } catch (_) {
+      // Network error: leave the session intact and let the original
+      // 401 surface as a request failure.
+      return false;
+    }
+  }
+
+  dynamic _decode(http.Response response) {
+    final decoded =
+        response.body.isEmpty ? const <String, dynamic>{} : jsonDecode(response.body);
+    if (response.statusCode >= 400) {
+      final message = decoded is Map && decoded['message'] != null
+          ? decoded['message'].toString()
+          : 'Request failed (${response.statusCode})';
+      // Central 402 handling (per apps/api's entitlements README): every
+      // call site throws through this one path, so nothing has to
+      // special-case { code: 'LIMIT_REACHED' } itself — it just publishes
+      // to LimitReachedBus, which LimitReachedListener (mounted once,
+      // wrapping RootScreen) is the sole subscriber of.
+      if (response.statusCode == 402 && decoded is Map && decoded['code'] == 'LIMIT_REACHED') {
+        LimitReachedBus.instance.emit(LimitReachedPayload(
+          metric: decoded['metric'] as String,
+          limit: decoded['limit'] as int?,
+          resetsAt: decoded['resetsAt'] == null ? null : DateTime.parse(decoded['resetsAt'] as String),
+        ));
+      }
+      throw ApiException(message, response.statusCode, decoded);
+    }
+    return decoded;
+  }
+}
+
+--- lib/core/providers.dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'api_client.dart';
+import 'token_storage.dart';
+
+final tokenStorageProvider = Provider<TokenStorage>((ref) => TokenStorage());
+
+final apiClientProvider = Provider<ApiClient>((ref) {
+  final client = ApiClient(tokenStorage: ref.read(tokenStorageProvider));
+  ref.onDispose(client.close);
+  return client;
+});
+
+--- lib/features/jobs/jobs_repository.dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../core/api_client.dart';
+import '../../core/providers.dart';
+import '../../models/application.dart';
+import '../../models/job.dart';
+import '../../models/matched_job.dart';
+import '../../models/skill.dart';
+
+final jobsRepositoryProvider = Provider<JobsRepository>((ref) {
+  return JobsRepository(apiClient: ref.read(apiClientProvider));
+});
+
+/// Total count alongside the page of jobs, so the Browse tab can show
+/// "N jobs found" without a second round trip.
+class JobsPage {
+  JobsPage({required this.total, required this.jobs});
+
+  final int total;
+  final List<Job> jobs;
+}
+
+/// Talks to the candidate-facing job endpoints: browse/search LIVE jobs,
+/// the personalized match ranking, job detail, applying, and the
+/// candidate's own application history. Field names below must match the
+/// API's response shape exactly, same constraint as AuthRepository.
+class JobsRepository {
+  JobsRepository({required this.apiClient});
+
+  final ApiClient apiClient;
+
+  Future<JobsPage> browse({
+    String? skillId,
+    String? location,
+    bool? remote,
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    final query = <String, String>{
+      if (skillId != null && skillId.isNotEmpty) 'skillId': skillId,
+      if (location != null && location.isNotEmpty) 'location': location,
+      if (remote != null) 'remote': remote.toString(),
+      'limit': limit.toString(),
+      'offset': offset.toString(),
+    };
+    final path = Uri(path: '/jobs/browse', queryParameters: query).toString();
+    final response = await apiClient.get(path) as Map<String, dynamic>;
+    return JobsPage(
+      total: response['total'] as int,
+      jobs: (response['jobs'] as List<dynamic>)
+          .map((j) => Job.fromJson(j as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  /// GET /taxonomy for the Browse tab's skill filter — same source and
+  /// `skillId` query param as apps/web/components/CandidateJobs.tsx's own
+  /// search form. The API groups skills by domain; flattened here since
+  /// this app's dropdowns are plain flat lists (see Skill's doc comment).
+  Future<List<Skill>> taxonomySkills() async {
+    final response = await apiClient.get('/taxonomy') as List<dynamic>;
+    return [
+      for (final domainJson in response)
+        for (final skillJson in (domainJson as Map<String, dynamic>)['skills'] as List<dynamic>)
+          Skill.fromJson(skillJson as Map<String, dynamic>),
+    ];
+  }
+
+  Future<Job> browseOne(String id) async {
+    final response = await apiClient.get('/jobs/browse/$id') as Map<String, dynamic>;
+    return Job.fromJson(response);
+  }
+
+  /// Empty when the candidate has no verified skill claim yet — scoring
+  /// against zero verified skills would rank every job 0, so the API
+  /// short-circuits to `{ jobs: [] }` rather than returning a wall of
+  /// zeroes. Callers should treat an empty list as "no verified skills yet",
+  /// not "no jobs available".
+  Future<List<MatchedJob>> matched() async {
+    final response = await apiClient.get('/jobs/matched') as Map<String, dynamic>;
+    return (response['jobs'] as List<dynamic>)
+        .map((j) => MatchedJob.fromJson(j as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// On failure the API returns 400 with a machine-readable `code`
+  /// (PROFILE_INCOMPLETE / RESUME_REQUIRED / AI_EXPERIENCE_REQUIRED /
+  /// BADGE_REQUIRED) inside [ApiException.body] — callers should branch on
+  /// that instead of showing the raw message.
+  Future<void> apply(String jobId) => apiClient.post('/jobs/$jobId/apply');
+
+  Future<List<Application>> myApplications() async {
+    final response = await apiClient.get('/applications/me') as List<dynamic>;
+    return response.map((a) => Application.fromJson(a as Map<String, dynamic>)).toList();
+  }
+}
+
+--- lib/features/jobs/matched_controller.dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'jobs_repository.dart';
+import 'jobs_state.dart';
+
+final matchedControllerProvider =
+    StateNotifierProvider.autoDispose<MatchedController, MatchedState>((ref) {
+  return MatchedController(ref.read(jobsRepositoryProvider))..load();
+});
+
+class MatchedController extends StateNotifier<MatchedState> {
+  MatchedController(this._repository) : super(const MatchedLoading());
+
+  final JobsRepository _repository;
+
+  Future<void> load() async {
+    state = const MatchedLoading();
+    try {
+      final jobs = await _repository.matched();
+      state = MatchedLoaded(jobs);
+    } catch (e) {
+      state = MatchedError(e.toString());
+    }
+  }
+}
+
+--- lib/features/jobs/jobs_state.dart
+import '../../models/application.dart';
+import '../../models/job.dart';
+import '../../models/matched_job.dart' show MatchedJob, SkillMatch;
+
+sealed class MatchedState {
+  const MatchedState();
+}
+
+class MatchedLoading extends MatchedState {
+  const MatchedLoading();
+}
+
+class MatchedLoaded extends MatchedState {
+  const MatchedLoaded(this.jobs);
+
+  final List<MatchedJob> jobs;
+}
+
+class MatchedError extends MatchedState {
+  const MatchedError(this.message);
+
+  final String message;
+}
+
+sealed class BrowseState {
+  const BrowseState();
+}
+
+/// No search has been run yet — Browse is search-first, matching
+/// apps/web/components/CandidateJobs.tsx's `total === null` sentinel
+/// (see that file's own comment: "search-first: the tab no longer
+/// auto-loads"). Results, including a filterless "show everything" search,
+/// only appear once the candidate presses Search.
+class BrowseInitial extends BrowseState {
+  const BrowseInitial();
+}
+
+class BrowseLoading extends BrowseState {
+  const BrowseLoading();
+}
+
+class BrowseLoaded extends BrowseState {
+  const BrowseLoaded({required this.jobs, required this.total});
+
+  final List<Job> jobs;
+  final int total;
+}
+
+class BrowseError extends BrowseState {
+  const BrowseError(this.message);
+
+  final String message;
+}
+
+sealed class ApplicationsState {
+  const ApplicationsState();
+}
+
+class ApplicationsLoading extends ApplicationsState {
+  const ApplicationsLoading();
+}
+
+class ApplicationsLoaded extends ApplicationsState {
+  const ApplicationsLoaded(this.applications);
+
+  final List<Application> applications;
+}
+
+class ApplicationsError extends ApplicationsState {
+  const ApplicationsError(this.message);
+
+  final String message;
+}
+
+sealed class JobDetailState {
+  const JobDetailState();
+}
+
+class JobDetailLoading extends JobDetailState {
+  const JobDetailLoading();
+}
+
+class JobDetailError extends JobDetailState {
+  const JobDetailError(this.message);
+
+  final String message;
+}
+
+class JobDetailLoaded extends JobDetailState {
+  const JobDetailLoaded({
+    required this.job,
+    this.applying = false,
+    this.applyIssueCode,
+    this.applyIssueMessage,
+    this.applyError,
+    this.missing = const [],
+    this.skillFrequency = const {},
+  });
+
+  final Job job;
+  final bool applying;
+
+  /// 'PROFILE_INCOMPLETE', 'RESUME_REQUIRED', 'AI_EXPERIENCE_REQUIRED', or
+  /// 'BADGE_REQUIRED' — drives an actionable prompt in place of the raw API
+  /// error text.
+  final String? applyIssueCode;
+  final String? applyIssueMessage;
+  final String? applyError;
+
+  /// This job's skill gap against the candidate's own verified skills —
+  /// best-effort, from GET /jobs/matched (see JobDetailController.load).
+  /// Empty when the candidate has no verified skills yet, or when the
+  /// matched fetch itself fails; either way there's nothing to show, not
+  /// an error worth surfacing on top of the job detail itself.
+  final List<SkillMatch> missing;
+
+  /// skillId -> how many of the candidate's matched jobs (not just this
+  /// one) also list it as missing — the "role impact" signal
+  /// _GapAnalysis ranks by on the detailed tier. Computed across the same
+  /// GET /jobs/matched response `missing` above is drawn from.
+  final Map<String, int> skillFrequency;
+
+  JobDetailLoaded copyWith({
+    Job? job,
+    bool? applying,
+    String? applyIssueCode,
+    String? applyIssueMessage,
+    String? applyError,
+    List<SkillMatch>? missing,
+    Map<String, int>? skillFrequency,
+  }) {
+    return JobDetailLoaded(
+      job: job ?? this.job,
+      applying: applying ?? this.applying,
+      applyIssueCode: applyIssueCode ?? this.applyIssueCode,
+      applyIssueMessage: applyIssueMessage ?? this.applyIssueMessage,
+      applyError: applyError ?? this.applyError,
+      missing: missing ?? this.missing,
+      skillFrequency: skillFrequency ?? this.skillFrequency,
+    );
+  }
+}
+
+--- lib/features/root/root_tab_provider.dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+/// Named bottom-nav tab indices — every jump-to-tab call site should use
+/// these rather than a bare int. A reorder (Profile moving to last is what
+/// prompted adding this) can then be done by changing this class plus
+/// [RootScreen]'s destination/tab order, with the compiler pointing at
+/// every call site in between rather than a grep-and-hope.
+abstract final class RootTab {
+  static const int home = 0;
+  static const int jobs = 1;
+  static const int badges = 2;
+  static const int interviews = 3;
+  static const int profile = 4;
+}
+
+/// Which bottom-nav tab is active in [RootScreen] — a provider rather than
+/// [RootScreen]'s own local State, so other screens can switch tabs
+/// programmatically: Profile's verified-badge count links straight to the
+/// Badges tab, and a job's PROFILE_INCOMPLETE prompt jumps to the Profile
+/// tab. See [RootTab] for the current index-to-tab mapping.
+final rootTabIndexProvider = StateProvider<int>((ref) => RootTab.home);
+
+--- lib/features/root/root_screen.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../account/account_status_controller.dart';
+import '../assessments/assessments_controller.dart';
+import '../badges/badges_controller.dart';
+import '../badges/badges_screen.dart';
+import '../certifications/certifications_controller.dart';
+import '../entitlements/entitlements_controller.dart';
+import '../home/home_screen.dart';
+import '../interviews/interviews_controller.dart';
+import '../interviews/interviews_screen.dart';
+import '../jobs/applications_controller.dart';
+import '../jobs/jobs_screen.dart';
+import '../jobs/matched_controller.dart';
+import '../profile/profile_controller.dart';
+import '../profile/profile_screen.dart';
+import 'root_tab_provider.dart';
+
+/// Post-login shell: Home is a launcher; Jobs / Badges / Interviews /
+/// Profile open as pushed pages — see [RootTab] for the index each position maps to. Each tab
+/// is its own Scaffold (with its own AppBar), kept alive in an
+/// [IndexedStack] so switching tabs doesn't lose in-flight state like the
+/// Jobs filters. The active index lives in [rootTabIndexProvider] rather
+/// than local State so other screens can switch tabs programmatically.
+///
+/// Also owns the app-resume refetch: assessments run on the web app (see
+/// core/external_link.dart), so the candidate leaves and comes back mid- or
+/// post-assessment with no in-app signal of what happened out there.
+/// Refetching everything on [AppLifecycleState.resumed] is what makes a
+/// newly-earned badge, an in-progress card, or the Home co-pilot's next
+/// suggestion show up without a manual pull-to-refresh.
+class RootScreen extends ConsumerStatefulWidget {
+  const RootScreen({super.key});
+
+  @override
+  ConsumerState<RootScreen> createState() => _RootScreenState();
+}
+
+class _RootScreenState extends ConsumerState<RootScreen> with WidgetsBindingObserver {
+
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _refetchAll();
+  }
+
+  void _refetchAll() {
+    ref.read(profileControllerProvider.notifier).load();
+    ref.read(badgesControllerProvider.notifier).load();
+    ref.read(certificationsControllerProvider.notifier).load();
+    ref.read(matchedControllerProvider.notifier).load();
+    ref.read(applicationsControllerProvider.notifier).load();
+    ref.read(assessmentsControllerProvider.notifier).load();
+    ref.read(interviewsControllerProvider.notifier).load();
+    ref.read(entitlementsControllerProvider.notifier).load();
+    // Catches a deactivation made from another device/session while this
+    // one was backgrounded — AccountStatusGate wraps RootScreen, so a
+    // flip to deactivated here surfaces ReactivateScreen on the next build.
+    ref.read(accountStatusControllerProvider.notifier).load();
+  }
+
+  /// The screen each [RootTab] opens as a full page (with its own back arrow).
+  Widget _screenFor(int tab) => switch (tab) {
+        RootTab.jobs => const JobsScreen(),
+        RootTab.badges => const BadgesScreen(),
+        RootTab.interviews => const InterviewsScreen(),
+        RootTab.profile => const ProfileScreen(),
+        _ => const HomeScreen(),
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    // Home is now a launcher (see FeatureGrid) — no bottom bar. Any code that
+    // sets rootTabIndexProvider (the grid, Close-the-gap, "Go to Profile")
+    // lands here: return to Home, then push that feature as its own page.
+    // Reset to home afterwards so tapping the same feature again still fires.
+    ref.listen<int>(rootTabIndexProvider, (previous, next) {
+      if (next == RootTab.home) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ref.read(rootTabIndexProvider.notifier).state = RootTab.home;
+        final nav = Navigator.of(context);
+        nav.popUntil((route) => route.isFirst);
+        nav.push(MaterialPageRoute<void>(builder: (_) => _screenFor(next)));
+      });
+    });
+
+    return const HomeScreen();
+  }
+}
+
+--- lib/features/interviews/interviews_screen.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../models/interview.dart';
+import '../../theme/app_colors.dart';
+import '../../theme/app_typography.dart';
+import '../../widgets/app_button.dart';
+import '../../widgets/empty_state.dart';
+import 'interviews_controller.dart';
+import 'interviews_state.dart';
+import 'widgets/interview_card.dart';
+import 'widgets/interview_prep_section.dart';
+
+/// The candidate's own view of every pipeline they're in, across every
+/// employer — mirrors apps/web/components/CandidateInterviews.tsx. No
+/// detail screen (there's no detail endpoint to back one); each card shows
+/// everything GET /interviews/mine has for that employer.
+class InterviewsScreen extends ConsumerWidget {
+  const InterviewsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(interviewsControllerProvider);
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Interviews')),
+      body: switch (state) {
+        InterviewsLoading() => const Center(child: CircularProgressIndicator()),
+        InterviewsError(:final message) => _ErrorRetry(
+            message: message,
+            onRetry: () => ref.read(interviewsControllerProvider.notifier).load(),
+          ),
+        InterviewsLoaded(:final interviews) when interviews.isEmpty => RefreshIndicator(
+            onRefresh: () => ref.read(interviewsControllerProvider.notifier).load(),
+            child: ListView(
+              padding: const EdgeInsets.all(AppSpacing.space4),
+              children: const [
+                EmptyState(
+                  message: "No interviews yet — when an employer invites you, it'll show here.",
+                ),
+                SizedBox(height: AppSpacing.space4),
+                InterviewPrepSection(),
+              ],
+            ),
+          ),
+        InterviewsLoaded(:final interviews, :final busyId, :final actionError) => _InterviewsList(
+            interviews: interviews,
+            busyId: busyId,
+            actionError: actionError,
+          ),
+      },
+    );
+  }
+}
+
+class _InterviewsList extends ConsumerWidget {
+  const _InterviewsList({required this.interviews, required this.busyId, required this.actionError});
+
+  final List<Interview> interviews;
+  final String? busyId;
+  final String? actionError;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return RefreshIndicator(
+      onRefresh: () => ref.read(interviewsControllerProvider.notifier).load(),
+      child: ListView(
+        padding: const EdgeInsets.all(AppSpacing.space4),
+        children: [
+          if (actionError != null) ...[
+            Text(actionError!, style: AppTypography.bodySmall.copyWith(color: AppColors.errorBright)),
+            const SizedBox(height: AppSpacing.space3),
+          ],
+          for (final interview in interviews)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.space3),
+              child: InterviewCard(
+                interview: interview,
+                busy: busyId == interview.id,
+                onRespondInvite: (response) =>
+                    ref.read(interviewsControllerProvider.notifier).respondInvite(interview.id, response),
+                onRespondOffer: (response) =>
+                    ref.read(interviewsControllerProvider.notifier).respondOffer(interview.id, response),
+              ),
+            ),
+          const SizedBox(height: AppSpacing.space3),
+          const InterviewPrepSection(),
+        ],
+      ),
+    );
+  }
+}
+
+class _ErrorRetry extends StatelessWidget {
+  const _ErrorRetry({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.space7),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: AppTypography.bodyMedium.copyWith(color: AppColors.errorBright),
+            ),
+            const SizedBox(height: AppSpacing.space3),
+            AppButton(label: 'Retry', variant: AppButtonVariant.secondary, onPressed: onRetry),
+          ],
+        ),
+      ),
+    );
+  }
+}
+

@@ -13,6 +13,7 @@ import '../../widgets/usage_meter.dart';
 import '../auth/auth_controller.dart';
 import '../entitlements/entitlements_controller.dart';
 import '../entitlements/entitlements_state.dart';
+import '../push/push_providers.dart';
 import '../root/root_tab_provider.dart';
 import 'job_detail_controller.dart';
 import 'jobs_state.dart';
@@ -124,7 +125,16 @@ class _JobDetailBody extends ConsumerWidget {
             AppButton(
               label: job.alreadyApplied ? 'Applied' : 'Apply',
               busy: state.applying,
-              onPressed: job.alreadyApplied ? null : () => ref.read(jobDetailControllerProvider(jobId).notifier).apply(),
+              onPressed: job.alreadyApplied
+                  ? null
+                  : () async {
+                      await ref.read(jobDetailControllerProvider(jobId).notifier).apply();
+                      // The moment a status update is plainly worth getting.
+                      final after = ref.read(jobDetailControllerProvider(jobId));
+                      if (after is JobDetailLoaded && after.job.alreadyApplied) {
+                        ref.read(pushServiceProvider).askAtMeaningfulMoment();
+                      }
+                    },
             ),
             if (job.alreadyApplied) ...[
               const SizedBox(width: AppSpacing.space3),

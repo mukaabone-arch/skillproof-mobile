@@ -78,63 +78,73 @@ Future<_FakeAuthRepository> _pump(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('defaults to the email tab and sends the OTP to the email endpoint', (tester) async {
+  testWidgets('one field: an email goes to the email endpoint, and the code is verified there', (tester) async {
     final repo = await _pump(tester);
 
-    expect(find.text('Email'), findsWidgets);
-    expect(find.text('Phone number'), findsNothing);
-    // The +91 prefill belongs to the phone tab only.
-    expect(find.text('+91'), findsNothing);
-
-    await tester.enterText(find.widgetWithText(TextField, 'Email'), '  jane@example.com ');
-    await tester.tap(find.widgetWithText(FilledButton, 'Send OTP'));
+    expect(find.text('Email'), findsNothing); // no tabs any more
+    await tester.enterText(find.widgetWithText(TextField, 'Email or mobile number'), '  jane@example.com ');
+    await tester.tap(find.widgetWithText(FilledButton, 'Send code'));
     await tester.pumpAndSettle();
 
     expect(repo.emailRequests, ['jane@example.com']);
     expect(repo.phoneRequests, isEmpty);
-    expect(find.widgetWithText(FilledButton, 'Verify OTP'), findsOneWidget);
-  });
+    expect(find.text('We sent a code to jane@example.com', findRichText: true), findsOneWidget);
 
-  testWidgets('switching tabs after an OTP is sent clears the OTP state', (tester) async {
-    await _pump(tester);
-
-    await tester.enterText(find.widgetWithText(TextField, 'Email'), 'jane@example.com');
-    await tester.tap(find.widgetWithText(FilledButton, 'Send OTP'));
+    // Six digits verify on their own — typed or filled in by the keyboard.
+    await tester.enterText(find.widgetWithText(TextField, '6-digit code'), '123456');
     await tester.pumpAndSettle();
-    await tester.enterText(find.widgetWithText(TextField, 'OTP'), '123456');
-
-    await tester.tap(find.text('Phone'));
-    await tester.pumpAndSettle();
-
-    expect(find.widgetWithText(FilledButton, 'Send OTP'), findsOneWidget);
-    expect(find.widgetWithText(TextField, 'OTP'), findsNothing);
-    expect(find.text('+91'), findsOneWidget);
-  });
-
-  testWidgets('a returning candidate signs in by email without the phone endpoints', (tester) async {
-    final repo = await _pump(tester);
-
-    await tester.enterText(find.widgetWithText(TextField, 'Email'), 'jane@example.com');
-    await tester.tap(find.widgetWithText(FilledButton, 'Send OTP'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.widgetWithText(TextField, 'OTP'), '123456');
-    await tester.tap(find.widgetWithText(FilledButton, 'Verify OTP'));
-    await tester.pumpAndSettle();
-
     expect(repo.emailVerifies, ['jane@example.com:123456']);
     expect(repo.phoneVerifies, isEmpty);
   });
 
-  testWidgets('phone tab still uses the phone endpoints', (tester) async {
+  testWidgets('a mobile number goes to the phone endpoints, with +91 added to a bare 10-digit number', (tester) async {
     final repo = await _pump(tester);
 
-    await tester.tap(find.text('Phone'));
+    await tester.enterText(find.widgetWithText(TextField, 'Email or mobile number'), '98765 43210');
+    await tester.tap(find.widgetWithText(FilledButton, 'Send code'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Send OTP'));
+    await tester.enterText(find.widgetWithText(TextField, '6-digit code'), '654321');
     await tester.pumpAndSettle();
 
-    expect(repo.phoneRequests, ['+91']);
+    expect(repo.phoneRequests, ['+919876543210']);
+    expect(repo.phoneVerifies, ['+919876543210:654321']);
     expect(repo.emailRequests, isEmpty);
+  });
+
+  testWidgets('something that is neither is caught before any request', (tester) async {
+    final repo = await _pump(tester);
+
+    await tester.enterText(find.widgetWithText(TextField, 'Email or mobile number'), 'jane');
+    await tester.tap(find.widgetWithText(FilledButton, 'Send code'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Enter your email address or mobile number.'), findsOneWidget);
+    expect(repo.emailRequests, isEmpty);
+    expect(repo.phoneRequests, isEmpty);
+  });
+
+  testWidgets('changing the address after a code is sent drops the code', (tester) async {
+    await _pump(tester);
+
+    await tester.enterText(find.widgetWithText(TextField, 'Email or mobile number'), 'jane@example.com');
+    await tester.tap(find.widgetWithText(FilledButton, 'Send code'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextField, '6-digit code'), '12');
+    await tester.tap(find.text('Use a different email or number'));
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(TextField, '6-digit code'), findsNothing);
+    expect(find.widgetWithText(FilledButton, 'Send code'), findsOneWidget);
+  });
+
+  test('parseLoginIdentifier', () {
+    expect(parseLoginIdentifier(' a@b.co '), isA<EmailIdentifier>());
+    expect(parseLoginIdentifier('a@b'), isNull);
+    expect((parseLoginIdentifier('+971 50 123 4567') as PhoneIdentifier).e164, '+971501234567');
+    expect((parseLoginIdentifier('09876543210') as PhoneIdentifier).e164, '+919876543210');
+    expect((parseLoginIdentifier('(987) 654-3210') as PhoneIdentifier).e164, '+919876543210');
+    expect(parseLoginIdentifier('12345'), isNull);
+    expect(parseLoginIdentifier(''), isNull);
   });
 
   test('requestCandidateEmailOtp posts to the candidate endpoint, not the employer one', () async {
