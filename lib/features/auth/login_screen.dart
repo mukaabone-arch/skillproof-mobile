@@ -7,7 +7,6 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../../widgets/app_button.dart';
-import '../../widgets/app_card.dart';
 import 'auth_controller.dart';
 
 /// Apple guideline 4.8: an iOS app that offers third-party sign-in must also

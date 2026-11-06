@@ -88,7 +88,7 @@ void main() {
 
     expect(repo.emailRequests, ['jane@example.com']);
     expect(repo.phoneRequests, isEmpty);
-    expect(find.text('jane@example.com'), findsOneWidget);
+    expect(find.text('We sent a code to jane@example.com', findRichText: true), findsOneWidget);
 
     // Six digits verify on their own — typed or filled in by the keyboard.
     await tester.enterText(find.widgetWithText(TextField, '6-digit code'), '123456');
