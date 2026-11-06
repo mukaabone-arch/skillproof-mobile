@@ -1,6 +1,6 @@
 # Push notifications
 
-Phase 1 (this release, 1.0.2+11): the app registers its FCM token with the
+Phase 1 (this release, 1.1.0+11): the app registers its FCM token with the
 API and handles taps; the API stores tokens and **sends nothing**. Phase 2 is
 API-only (the sender) and ships once tokens have accumulated.
 
