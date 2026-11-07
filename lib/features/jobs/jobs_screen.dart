@@ -17,6 +17,7 @@ import 'jobs_state.dart';
 import 'matched_controller.dart';
 import 'taxonomy_controller.dart';
 import 'widgets/job_card.dart';
+import '../../core/store_policy.dart';
 
 /// applicationStatusDetail: false collapses the 5 raw ApplicationStatus
 /// values into 3 coarser buckets — still fully honest (nothing that
@@ -368,7 +369,7 @@ class _ApplicationsTab extends ConsumerWidget {
                           ),
                         ],
                       ),
-                      if (!detailed) ...[
+                      if (!detailed && mentionPaidPlans) ...[
                         const SizedBox(height: AppSpacing.space1),
                         Text(
                           'Exact status is part of MyAmbii Premium.',

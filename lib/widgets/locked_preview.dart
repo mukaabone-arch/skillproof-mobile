@@ -1,10 +1,10 @@
-import 'dart:io' show Platform;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
+import '../core/store_policy.dart';
 
 /// The canonical locked-state pattern: a Premium feature stays *visible but
 /// withheld* rather than absent — [teaser] is always real data (e.g. a
@@ -33,7 +33,7 @@ class LockedPreview extends StatelessWidget {
     // App Store guideline 3.1.1: on iOS, no "Premium unlocks…" upsell for a
     // plan the app doesn't sell via in-app purchase. The teaser is always
     // real data (see class doc), so it still stands on its own.
-    if (Platform.isIOS) return Text(teaser, style: AppTypography.bodyMedium);
+    if (!mentionPaidPlans) return Text(teaser, style: AppTypography.bodyMedium);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

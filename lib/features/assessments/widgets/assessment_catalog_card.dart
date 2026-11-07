@@ -8,6 +8,7 @@ import '../../../widgets/app_button.dart';
 import '../../../widgets/app_card.dart';
 import '../card_state.dart';
 import '../level_info.dart';
+import '../../../core/store_policy.dart';
 
 /// One "available to verify" skill on the Badges screen. Deliberately
 /// brand, not [SkillBadge]'s success-green — this is an *offered* level,
@@ -134,8 +135,11 @@ class AssessmentCatalogCard extends StatelessWidget {
               // if the Tier B advisers confirm linking out is acceptable
               // under India's framework.
               ActionableNotice(
-                message: '🔒 Your free plan\'s assessments are locked to $freeSkillLocked. '
-                    'Attempting ${entry.skillName} is part of MyAmbii Premium.',
+                message: mentionPaidPlans
+                    ? '🔒 Your free plan\'s assessments are locked to $freeSkillLocked. '
+                        'Attempting ${entry.skillName} is part of MyAmbii Premium.'
+                    // iOS: same fact, no plan named (see store_policy.dart).
+                    : '🔒 Your skill checks are set to $freeSkillLocked on this account.',
               ),
             ] else if (showProfileGate) ...[
               const SizedBox(height: AppSpacing.space2),

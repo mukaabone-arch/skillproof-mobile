@@ -30,6 +30,7 @@ import 'widgets/profile_photo_section.dart';
 import 'widgets/profile_view.dart';
 import 'widgets/profile_viewers_section.dart';
 import 'widgets/resume_export_card.dart';
+import '../../core/store_policy.dart';
 // TODO(resume upload): blocked — see ProfileRepository.uploadResume's own
 // TODO for the current (2026-09) reason.
 // import 'widgets/resume_section.dart';
@@ -293,8 +294,12 @@ class _AccountLinksCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AppButton(label: 'Billing documents', variant: AppButtonVariant.secondary, onPressed: onOpenBilling),
-          const SizedBox(height: AppSpacing.space2),
+          // Billing documents are Premium tax invoices — iOS shows no paid
+          // plan at all (see store_policy.dart).
+          if (mentionPaidPlans) ...[
+            AppButton(label: 'Billing documents', variant: AppButtonVariant.secondary, onPressed: onOpenBilling),
+            const SizedBox(height: AppSpacing.space2),
+          ],
           AppButton(label: 'Account settings', variant: AppButtonVariant.secondary, onPressed: onOpenAccountSettings),
         ],
       ),

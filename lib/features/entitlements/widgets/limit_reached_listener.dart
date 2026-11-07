@@ -1,4 +1,3 @@
-import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 
@@ -6,6 +5,7 @@ import '../../../core/limit_reached.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_button.dart';
+import '../../../core/store_policy.dart';
 
 /// Wraps RootScreen — the one place a 402 { code: 'LIMIT_REACHED' } response
 /// ever becomes UI. Subscribes to LimitReachedBus (populated by
@@ -96,10 +96,11 @@ class _LimitReachedSheet extends StatelessWidget {
             Text("You've used all ${limit ?? ''} of your $label this month", style: AppTypography.titleMedium),
             const SizedBox(height: AppSpacing.space3),
             Text(
-              'Free plans include $limit $label per calendar month$resetLine.'
-              // App Store guideline 3.1.1: iOS can't point to a paid plan
-              // that isn't sold through in-app purchase.
-              '${Platform.isIOS ? '' : ' Unlimited $label is part of MyAmbii Premium.'}',
+              mentionPaidPlans
+                  ? 'Free plans include $limit $label per calendar month$resetLine. '
+                      'Unlimited $label is part of MyAmbii Premium.'
+                  // iOS: no plan named (see store_policy.dart).
+                  : 'Your account includes $limit $label per calendar month$resetLine.',
               style: AppTypography.bodyMedium,
             ),
             const SizedBox(height: AppSpacing.space5),

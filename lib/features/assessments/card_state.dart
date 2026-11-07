@@ -1,4 +1,5 @@
 import '../../models/assessment_catalog_entry.dart';
+import '../../core/store_policy.dart';
 
 /// What the catalog card actually renders for a given entry — the state
 /// machine's only job is this mapping (available/in_progress/cooldown are
@@ -104,7 +105,7 @@ AssessmentCardDisplay resolveCardDisplay(
           buttonLabel: 'Start skill check',
           buttonEnabled: false,
           metaText: "You've used all retakes allowed for this skill — this cap doesn't reset."
-              '${premium ? '' : ' Premium allows more retakes per skill.'}',
+              '${premium || !mentionPaidPlans ? '' : ' Premium allows more retakes per skill.'}',
         );
       }
       // Explains *why* the retake is locked, not just the bare date —
@@ -115,7 +116,7 @@ AssessmentCardDisplay resolveCardDisplay(
         buttonEnabled: false,
         metaText: 'Retakes are limited so badges stay credible to employers — you can try again '
             'from ${_formatLocalDate(at)}.'
-            '${premium ? '' : ' Premium removes retake cooldowns entirely.'}',
+            '${premium || !mentionPaidPlans ? '' : ' Premium removes retake cooldowns entirely.'}',
       );
   }
 }
