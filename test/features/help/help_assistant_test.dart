@@ -150,8 +150,7 @@ void main() {
       debugMentionPaidPlansOverride = false;
       await pumpScreen(tester, consented: true);
 
-      await tester.enterText(find.byType(TextField), 'How do I get a badge?');
-      await tester.tap(find.byTooltip('Send'));
+      await tester.tap(find.text('How do I get my first verified badge?'));
       await tester.pumpAndSettle();
 
       expect(find.text('Open Assessments and pick a skill.'), findsOneWidget);
