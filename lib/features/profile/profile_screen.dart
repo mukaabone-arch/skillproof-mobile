@@ -12,6 +12,7 @@ import '../../widgets/app_card.dart';
 import '../../widgets/collapsible_section.dart';
 import '../account/account_settings_screen.dart';
 import '../auth/auth_controller.dart';
+import '../help/help_assistant_screen.dart';
 import '../documents/documents_screen.dart';
 import '../badges/badges_controller.dart';
 import '../badges/badges_state.dart';
@@ -138,6 +139,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 const ResumeExportCard(),
                 const SizedBox(height: AppSpacing.space3),
                 _AccountLinksCard(
+                  onOpenHelp: () =>
+                      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HelpAssistantScreen())),
                   onOpenBilling: () =>
                       Navigator.of(context).push(MaterialPageRoute(builder: (_) => const DocumentsScreen())),
                   onOpenAccountSettings: () =>
@@ -283,8 +286,9 @@ class _IncompleteProfileHint extends StatelessWidget {
 /// reasoning as web's own separate /profile/account and /profile/billing
 /// pages linked from /profile rather than sections embedded in it.
 class _AccountLinksCard extends StatelessWidget {
-  const _AccountLinksCard({required this.onOpenBilling, required this.onOpenAccountSettings});
+  const _AccountLinksCard({required this.onOpenHelp, required this.onOpenBilling, required this.onOpenAccountSettings});
 
+  final VoidCallback onOpenHelp;
   final VoidCallback onOpenBilling;
   final VoidCallback onOpenAccountSettings;
 
@@ -301,6 +305,13 @@ class _AccountLinksCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.space2),
           ],
           AppButton(label: 'Account settings', variant: AppButtonVariant.secondary, onPressed: onOpenAccountSettings),
+          const SizedBox(height: AppSpacing.space2),
+          AppButton(
+            label: 'Help',
+            icon: const Icon(Icons.help_outline, size: 18),
+            variant: AppButtonVariant.secondary,
+            onPressed: onOpenHelp,
+          ),
         ],
       ),
     );
