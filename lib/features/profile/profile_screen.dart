@@ -12,6 +12,7 @@ import '../../widgets/app_card.dart';
 import '../../widgets/collapsible_section.dart';
 import '../account/account_settings_screen.dart';
 import '../auth/auth_controller.dart';
+import '../help/help_assistant_screen.dart';
 import '../documents/documents_screen.dart';
 import '../badges/badges_controller.dart';
 import '../badges/badges_state.dart';
@@ -30,6 +31,7 @@ import 'widgets/profile_photo_section.dart';
 import 'widgets/profile_view.dart';
 import 'widgets/profile_viewers_section.dart';
 import 'widgets/resume_export_card.dart';
+import '../../core/store_policy.dart';
 // TODO(resume upload): blocked — see ProfileRepository.uploadResume's own
 // TODO for the current (2026-09) reason.
 // import 'widgets/resume_section.dart';
@@ -137,6 +139,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 const ResumeExportCard(),
                 const SizedBox(height: AppSpacing.space3),
                 _AccountLinksCard(
+                  onOpenHelp: () => openHelpAssistant(context),
                   onOpenBilling: () =>
                       Navigator.of(context).push(MaterialPageRoute(builder: (_) => const DocumentsScreen())),
                   onOpenAccountSettings: () =>
@@ -282,8 +285,9 @@ class _IncompleteProfileHint extends StatelessWidget {
 /// reasoning as web's own separate /profile/account and /profile/billing
 /// pages linked from /profile rather than sections embedded in it.
 class _AccountLinksCard extends StatelessWidget {
-  const _AccountLinksCard({required this.onOpenBilling, required this.onOpenAccountSettings});
+  const _AccountLinksCard({required this.onOpenHelp, required this.onOpenBilling, required this.onOpenAccountSettings});
 
+  final VoidCallback onOpenHelp;
   final VoidCallback onOpenBilling;
   final VoidCallback onOpenAccountSettings;
 
@@ -293,9 +297,20 @@ class _AccountLinksCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AppButton(label: 'Billing documents', variant: AppButtonVariant.secondary, onPressed: onOpenBilling),
-          const SizedBox(height: AppSpacing.space2),
+          // Billing documents are Premium tax invoices — iOS shows no paid
+          // plan at all (see store_policy.dart).
+          if (mentionPaidPlans) ...[
+            AppButton(label: 'Billing documents', variant: AppButtonVariant.secondary, onPressed: onOpenBilling),
+            const SizedBox(height: AppSpacing.space2),
+          ],
           AppButton(label: 'Account settings', variant: AppButtonVariant.secondary, onPressed: onOpenAccountSettings),
+          const SizedBox(height: AppSpacing.space2),
+          AppButton(
+            label: 'Help',
+            icon: const Icon(Icons.help_outline, size: 18),
+            variant: AppButtonVariant.secondary,
+            onPressed: onOpenHelp,
+          ),
         ],
       ),
     );

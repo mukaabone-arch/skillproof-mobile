@@ -1,4 +1,3 @@
-import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +8,7 @@ import '../../../widgets/app_card.dart';
 import '../../../widgets/locked_preview.dart';
 import '../../entitlements/entitlements_controller.dart';
 import '../../entitlements/entitlements_state.dart';
+import '../../../core/store_policy.dart';
 
 class _Guide {
   const _Guide(this.title, this.body);
@@ -60,7 +60,7 @@ class InterviewPrepSection extends ConsumerWidget {
     if (interviewPrep == null) return const SizedBox.shrink();
     // iOS: hide the whole card for Free — its locked teaser is an upsell, and
     // App Store guideline 3.1.1 rules that out (see LockedPreview).
-    if (!interviewPrep && Platform.isIOS) return const SizedBox.shrink();
+    if (!interviewPrep && !mentionPaidPlans) return const SizedBox.shrink();
 
     return AppCard(
       child: Column(

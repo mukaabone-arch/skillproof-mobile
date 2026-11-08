@@ -9,6 +9,7 @@ import '../../../widgets/app_card.dart';
 import '../../auth/auth_controller.dart';
 import '../../entitlements/entitlements_controller.dart';
 import '../../entitlements/entitlements_state.dart';
+import '../../../core/store_policy.dart';
 
 /// Entry point only — the actual AI resume builder + PDF generation is a
 /// full multi-step web flow (see apps/web/app/resume/page.tsx) that isn't
@@ -35,7 +36,7 @@ class ResumeExportCard extends ConsumerWidget {
             'Build a resume from your profile and verified badges — opens in your browser.',
             style: AppTypography.bodyMedium,
           ),
-          if (limits != null) ...[
+          if (limits != null && mentionPaidPlans) ...[
             const SizedBox(height: AppSpacing.space2),
             Text(
               limits.resumeBranding

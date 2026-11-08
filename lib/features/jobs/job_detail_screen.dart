@@ -17,6 +17,7 @@ import '../push/push_providers.dart';
 import '../root/root_tab_provider.dart';
 import 'job_detail_controller.dart';
 import 'jobs_state.dart';
+import '../../core/store_policy.dart';
 
 class JobDetailScreen extends ConsumerWidget {
   const JobDetailScreen({required this.jobId, super.key});
@@ -247,11 +248,13 @@ class _GapAnalysis extends StatelessWidget {
             'Missing: ${missing.map((m) => '${m.skillName} (${m.requiredLevel})').join(', ')}',
             style: AppTypography.bodyMedium,
           ),
-          const SizedBox(height: AppSpacing.space2),
-          Text(
-            'Gap ranking across your matches is part of MyAmbii Premium.',
-            style: AppTypography.bodySmall.copyWith(color: AppColors.primary),
-          ),
+          if (mentionPaidPlans) ...[
+            const SizedBox(height: AppSpacing.space2),
+            Text(
+              'Gap ranking across your matches is part of MyAmbii Premium.',
+              style: AppTypography.bodySmall.copyWith(color: AppColors.primary),
+            ),
+          ],
         ],
       );
     }
