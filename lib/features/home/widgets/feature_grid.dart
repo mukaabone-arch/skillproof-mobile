@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../config/api_config.dart';
+import '../../../core/external_link.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_typography.dart';
-import '../../help/help_assistant_screen.dart';
 import '../../root/root_tab_provider.dart';
 
 /// Home's launcher: one rounded icon per feature, phone-home-screen style.
 /// In-app features open by setting [rootTabIndexProvider] — RootScreen
 /// listens and pushes the matching screen (see root_screen.dart), the same
 /// path every other "go to X" button in the app already uses.
-/// Help pushes the Ask MyAmbii assistant (help_assistant_screen.dart).
 class FeatureGrid extends ConsumerWidget {
   const FeatureGrid({super.key});
 
@@ -23,11 +23,7 @@ class FeatureGrid extends ConsumerWidget {
       _Feature('Skills', Icons.verified_outlined, () => openTab(RootTab.badges)),
       _Feature('Interviews', Icons.event_note_outlined, () => openTab(RootTab.interviews)),
       _Feature('Profile', Icons.person_outline, () => openTab(RootTab.profile)),
-      _Feature(
-        'Help',
-        Icons.help_outline,
-        () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HelpAssistantScreen())),
-      ),
+      _Feature('Help', Icons.help_outline, () => _openHelp(context)),
     ];
 
     // Wrap rather than GridView: GridView gives every cell a fixed height
@@ -50,6 +46,17 @@ class FeatureGrid extends ConsumerWidget {
     );
   }
 
+  Future<void> _openHelp(BuildContext context) async {
+    try {
+      await openInBrowser('${ApiConfig.webBaseUrl}/help/candidate');
+    } catch (_) {
+      if (context.mounted) _failed(context, 'help');
+    }
+  }
+
+  void _failed(BuildContext context, String what) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not open $what. Please try again.')));
+  }
 }
 
 class _Feature {

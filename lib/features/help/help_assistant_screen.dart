@@ -11,6 +11,10 @@ import 'help_controller.dart';
 import 'help_models.dart';
 import 'help_repository.dart';
 
+/// Opens the assistant — used by Home's top bar and avatar menu, and Profile.
+Future<void> openHelpAssistant(BuildContext context) =>
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const HelpAssistantScreen()));
+
 const _starters = [
   'How do I get my first verified badge?',
   'How does the live discussion work?',
@@ -18,8 +22,8 @@ const _starters = [
   'How do I let recruiters find me?',
 ];
 
-/// "Ask MyAmbii" — the signed-in help assistant, replacing the old Help
-/// tile's trip to the web guide. Mirrors apps/web/components/help/
+/// "Ask MyAmbii" — the signed-in help assistant, opened from the ? in
+/// Home's top bar, the avatar menu, and Profile's Help button. Mirrors apps/web/components/help/
 /// HelpAssistant.tsx: first-use AI notice, starter questions, answers with
 /// the guide sections they came from, and Report on every answer.
 ///

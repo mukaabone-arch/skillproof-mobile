@@ -9,6 +9,7 @@ import '../badges/badges_state.dart';
 import '../certifications/certifications_controller.dart';
 import '../certifications/certifications_state.dart';
 import '../entitlements/entitlements_controller.dart';
+import '../help/help_assistant_screen.dart';
 import '../jobs/applications_controller.dart';
 import '../jobs/jobs_state.dart';
 import '../jobs/matched_controller.dart';
@@ -26,7 +27,8 @@ import '../staffing/widgets/staffing_confirm_nudge.dart';
 /// a short "what's left" checklist while onboarding, the jobs they're
 /// closest to, and the status numbers — the last only once there's
 /// progress to report (no "0%, 0, 0" wall on day one). Navigation lives in
-/// RootScreen's bottom bar; log-out sits behind the avatar menu. Every
+/// RootScreen's bottom bar; Help (the Ask MyAmbii assistant) is the ? in the
+/// top bar and in the avatar menu; log-out sits behind the avatar menu. Every
 /// section loads and fails independently, reusing the existing controllers.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -48,7 +50,14 @@ class HomeScreen extends ConsumerWidget {
             Text('MyAmbii'),
           ],
         ),
-        actions: const [_AccountMenu()],
+        actions: [
+          IconButton(
+            tooltip: 'Help',
+            icon: const Icon(Icons.help_outline),
+            onPressed: () => openHelpAssistant(context),
+          ),
+          const _AccountMenu(),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -118,12 +127,15 @@ class _AccountMenu extends ConsumerWidget {
       onSelected: (value) {
         if (value == 'profile') {
           ref.read(rootTabIndexProvider.notifier).state = RootTab.profile;
+        } else if (value == 'help') {
+          openHelpAssistant(context);
         } else if (value == 'logout') {
           ref.read(authControllerProvider.notifier).logout();
         }
       },
       itemBuilder: (_) => const [
         PopupMenuItem(value: 'profile', child: Text('Profile & account')),
+        PopupMenuItem(value: 'help', child: Text('Help')),
         PopupMenuItem(value: 'logout', child: Text('Log out')),
       ],
       child: Padding(

@@ -139,8 +139,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 const ResumeExportCard(),
                 const SizedBox(height: AppSpacing.space3),
                 _AccountLinksCard(
-                  onOpenHelp: () =>
-                      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HelpAssistantScreen())),
+                  onOpenHelp: () => openHelpAssistant(context),
                   onOpenBilling: () =>
                       Navigator.of(context).push(MaterialPageRoute(builder: (_) => const DocumentsScreen())),
                   onOpenAccountSettings: () =>
