@@ -43,6 +43,12 @@ class _FakeAuthRepository extends AuthRepository {
   @override
   Future<bool> hasStoredSession() async => false;
 
+  /// After sign-in, AuthController checks /users/me when the account still
+  /// looks unverified (it learns there whether a phone is required). Answer
+  /// from here so the test never reaches the real API client.
+  @override
+  Future<MyambiiUser> fetchMe() async => user;
+
   @override
   Future<void> requestCandidateEmailOtp(String email) async => emailRequests.add(email);
 
