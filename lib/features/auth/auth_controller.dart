@@ -53,7 +53,7 @@ class AuthController extends StateNotifier<AuthState> {
     state = const AuthLoading();
     try {
       final user = await _repository.verifyOtp(phone: phone, otp: otp);
-      state = AuthAuthenticated(user);
+      state = AuthAuthenticated(await _withRequirements(user));
     } catch (e) {
       state = AuthUnauthenticated(error: e.toString());
       rethrow;
@@ -69,7 +69,7 @@ class AuthController extends StateNotifier<AuthState> {
     state = const AuthLoading();
     try {
       final user = await _repository.verifyCandidateEmailOtp(email: email, otp: otp);
-      state = AuthAuthenticated(user);
+      state = AuthAuthenticated(await _withRequirements(user));
     } catch (e) {
       state = AuthUnauthenticated(error: e.toString());
       rethrow;
@@ -83,7 +83,7 @@ class AuthController extends StateNotifier<AuthState> {
     state = const AuthLoading();
     try {
       final user = await _repository.signInWithGoogle();
-      state = AuthAuthenticated(user);
+      state = AuthAuthenticated(await _withRequirements(user));
     } on GoogleSignInCancelled {
       // Not an error — back to how things were, no error message, so the
       // login screen doesn't show a banner for an ordinary cancel.
@@ -106,7 +106,7 @@ class AuthController extends StateNotifier<AuthState> {
     state = const AuthLoading();
     try {
       final user = await _repository.signInWithApple();
-      state = AuthAuthenticated(user);
+      state = AuthAuthenticated(await _withRequirements(user));
     } on AppleSignInCancelled {
       state = const AuthUnauthenticated();
     } catch (e) {
@@ -125,7 +125,7 @@ class AuthController extends StateNotifier<AuthState> {
     state = const AuthLoading();
     try {
       final user = await _repository.signInWithGithub();
-      state = AuthAuthenticated(user);
+      state = AuthAuthenticated(await _withRequirements(user));
     } on GithubSignInCancelled {
       // Same as GoogleSignInCancelled above — an ordinary cancel, not an
       // error, so no message for the login screen to show.
@@ -147,7 +147,7 @@ class AuthController extends StateNotifier<AuthState> {
 
   Future<void> verifyLinkPhoneOtp({required String phone, required String otp}) async {
     final user = await _repository.verifyLinkPhoneOtp(phone: phone, otp: otp);
-    state = AuthAuthenticated(user);
+    state = AuthAuthenticated(await _withRequirements(user));
   }
 
   Future<void> requestLinkEmailOtp(String email) => _repository.requestLinkEmailOtp(email);
@@ -169,6 +169,29 @@ class AuthController extends StateNotifier<AuthState> {
   /// See [verifyLinkEmailOtp]'s own doc comment on why this is separate.
   void applyLinkEmailResult(LinkEmailResult result) {
     state = AuthAuthenticated(result.user);
+    // Outside India the email is all that's needed, but the link response
+    // doesn't say so — ask /users/me and let it clear the verify screen.
+    if (!result.user.isVerified) _refreshRequirements();
+  }
+
+  /// Sign-in and link responses don't say whether this candidate needs a
+  /// phone (a verified phone is required only in India), so an account
+  /// that looks unverified is checked against GET /users/me, which does.
+  /// Falls back to [user] (the strict rule) if that call fails.
+  Future<MyambiiUser> _withRequirements(MyambiiUser user) async {
+    if (user.isVerified) return user;
+    try {
+      return await _repository.fetchMe();
+    } catch (_) {
+      return user;
+    }
+  }
+
+  Future<void> _refreshRequirements() async {
+    final current = state;
+    if (current is! AuthAuthenticated) return;
+    final user = await _withRequirements(current.user);
+    if (state is AuthAuthenticated) state = AuthAuthenticated(user);
   }
 
   /// Every sign-out in the app comes through here (profile, verify screen,

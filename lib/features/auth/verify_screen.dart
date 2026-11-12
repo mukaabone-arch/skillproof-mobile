@@ -48,14 +48,18 @@ class VerifyScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: AppSpacing.space3),
                   Text(
-                    'Add and verify both a phone number and an email address '
-                    'to continue — this keeps every account reachable and '
-                    'reduces duplicate/fraudulent signups.',
+                    user?.phoneRequired == false
+                        ? 'Add and verify an email address to continue — '
+                            'it keeps your account reachable and lets you get back in.'
+                        : 'Add and verify both a phone number and an email address '
+                            'to continue — this keeps every account reachable and '
+                            'reduces duplicate/fraudulent signups.',
                     textAlign: TextAlign.center,
                     style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
                   ),
                   const SizedBox(height: AppSpacing.space7),
-                  if (user?.phone == null) ...[
+                  // A verified phone is required only in India (see MyambiiUser.phoneRequired).
+                  if (user?.phone == null && user?.phoneRequired != false) ...[
                     const _LinkPhoneCard(),
                     const SizedBox(height: AppSpacing.space5),
                   ],

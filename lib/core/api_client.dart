@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
 import '../config/api_config.dart';
+import 'client_country.dart';
 import 'limit_reached.dart';
 import 'token_storage.dart';
 
@@ -147,6 +148,8 @@ class ApiClient {
     final headers = {
       'Content-Type': 'application/json',
       if (token != null) 'Authorization': 'Bearer $token',
+      // Decides whether a candidate must verify a phone (India only).
+      'X-Client-Country': clientCountry(),
     };
 
     switch (method) {
@@ -175,6 +178,7 @@ class ApiClient {
     final uri = Uri.parse('${ApiConfig.baseUrl}$path');
     final request = http.MultipartRequest(method, uri);
     if (token != null) request.headers['Authorization'] = 'Bearer $token';
+    request.headers['X-Client-Country'] = clientCountry();
     request.fields.addAll(fields);
     if (file != null) {
       request.files.add(
