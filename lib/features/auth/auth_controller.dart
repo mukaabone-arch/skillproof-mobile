@@ -6,6 +6,7 @@ import '../push/push_providers.dart';
 import '../push/push_service.dart';
 import 'auth_repository.dart';
 import 'auth_state.dart';
+import '../../models/user.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository(
