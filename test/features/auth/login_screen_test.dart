@@ -117,6 +117,18 @@ void main() {
     expect(repo.emailRequests, isEmpty);
   });
 
+  testWidgets('a number outside India is told to use email, with no request sent', (tester) async {
+    final repo = await _pump(tester);
+
+    await tester.enterText(find.widgetWithText(TextField, 'Email or mobile number'), '+1 732 309 5108');
+    await tester.tap(find.widgetWithText(FilledButton, 'Send code'));
+    await tester.pumpAndSettle();
+
+    expect(find.text(kOutsideIndiaMessage), findsOneWidget);
+    expect(repo.phoneRequests, isEmpty);
+    expect(repo.emailRequests, isEmpty);
+  });
+
   testWidgets('something that is neither is caught before any request', (tester) async {
     final repo = await _pump(tester);
 

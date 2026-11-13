@@ -36,6 +36,11 @@ class PhoneIdentifier extends LoginIdentifier {
 /// (see the web app's per-region settings).
 const String kDefaultDialCode = '+91';
 
+/// Shown for a mobile number outside India: our OTP SMS route only reaches
+/// +91 numbers, so everyone else signs in with email (or Google/Apple).
+const String kOutsideIndiaMessage =
+    'Phone verification is available for Indian (+91) numbers only. Outside India, please sign in with your email.';
+
 /// One field, two kinds of sign-in: anything with an "@" is an email;
 /// otherwise digits (spaces, dashes and brackets ignored) are a mobile
 /// number — a bare 10-digit number gets [kDefaultDialCode]. Returns null
@@ -90,6 +95,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final id = parseLoginIdentifier(_idController.text);
     if (id == null) {
       setState(() => _error = 'Enter your email address or mobile number.');
+      return;
+    }
+    // Our SMS codes only reach Indian numbers (see kOutsideIndiaMessage).
+    if (id is PhoneIdentifier && !id.e164.startsWith(kDefaultDialCode)) {
+      setState(() => _error = kOutsideIndiaMessage);
       return;
     }
     setState(() {
@@ -217,7 +227,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         textInputAction: TextInputAction.send,
                         onSubmitted: (_) => _sendCode(),
                         style: AppTypography.bodyLarge,
-                        decoration: const InputDecoration(labelText: 'Email or mobile number'),
+                        decoration: const InputDecoration(
+                          labelText: 'Email or mobile number',
+                          helperText: 'Mobile numbers: India (+91) only. Elsewhere, use your email.',
+                          helperMaxLines: 2,
+                        ),
                       )
                     else ...[
                       Text.rich(
